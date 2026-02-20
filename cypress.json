@@ -1,0 +1,13 @@
+{
+    "pageLoadTimeout": 300000,
+    "viewportWidth": 1024,
+    "projectId": "gq3eir",
+    "numTestsKeptInMemory": 139,
+    "chromeWebSecurity": false,
+    "videoCompression": false,
+    "video": false,
+    "chromeWebSecurity": false,
+    "contenteditable": "true",
+    "parseSpecialCharSequences": false,
+    "restartBrowserBetweenSpecFiles": true
+}

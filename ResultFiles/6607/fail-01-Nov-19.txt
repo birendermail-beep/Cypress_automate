@@ -1,0 +1,49 @@
+||
+<<group: 6607
+<<testCaseId: 118
+<<timestamp: 01-Nov-19
+<<video: ank.mp4
+<<image: 118.js--hide_timer_in_pre_assesment(failed)53271.png
+<<file_name: 1/118.js
+||
+<<group: 6607
+<<testCaseId: 121
+<<timestamp: 01-Nov-19
+<<video: ank.mp4
+<<image: 121.js--Bookmark_confidence_and_notes_are_saved_and_seen_in_pre_assesment(failed)55901.png
+<<file_name: 1/121.js
+||
+<<group: 6607
+<<testCaseId: 123
+<<timestamp: 01-Nov-19
+<<video: ank.mp4
+<<image: 123.js--Bookmark_confidence_and_notes_are_saved_once_test_in_pre_assesment(failed)18915.png
+<<file_name: 1/123.js
+||
+<<group: 6607
+<<testCaseId: 127
+<<timestamp: 01-Nov-19
+<<video: ank.mp4
+<<image: 127.js--In_side_pane_check_all_the_questions_that_are_rate(failed)49545.png
+<<file_name: 1/127.js
+||
+<<group: 6607
+<<testCaseId: 128
+<<timestamp: 01-Nov-19
+<<video: ank.mp4
+<<image: 128.js--In_side_pane_check_all_the_questions_that_are_rate(failed)36173.png
+<<file_name: 1/128.js
+||
+<<group: 6607
+<<testCaseId: 132
+<<timestamp: 01-Nov-19
+<<video: ank.mp4
+<<image: 132.js--To_check_if_all_Font_family_mentioned_is_getting(failed)58447.png
+<<file_name: 1/132.js
+||
+<<group: 6607
+<<testCaseId: 134
+<<timestamp: 01-Nov-19
+<<video: ank.mp4
+<<image: 134.js--clicking_on_the_lessons_in_the_area_where_it_defin(failed)89042.png
+<<file_name: 1/134.js

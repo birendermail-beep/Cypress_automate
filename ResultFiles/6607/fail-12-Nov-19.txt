@@ -1,0 +1,56 @@
+||
+<<video: 
+<<group: 6607
+<<testCaseId: 1
+<<timestamp: 12-Nov-19
+<<image: 
+<<file_name: 1/1.js
+||
+<<video: 
+<<group: 6607
+<<testCaseId: 113
+<<timestamp: 12-Nov-19
+<<image: 
+<<file_name: 1/113.js
+||
+<<video: 
+<<group: 6607
+<<testCaseId: 114
+<<timestamp: 12-Nov-19
+<<image: 
+<<file_name: 1/114.js
+||
+<<video: 
+<<group: 6607
+<<testCaseId: 2
+<<timestamp: 12-Nov-19
+<<image: 
+<<file_name: 1/2.js
+||
+<<video: https://s3.amazonaws.com/ucertify_user/6607/1.js10329.mp4
+<<group: 6607
+<<testCaseId: 1
+<<timestamp: 12-Nov-19
+<<image: 1.js--Login_via_surya.mani@ucertify.com(failed)96311.png
+<<file_name: 1/1.js
+||
+<<video: 
+<<group: 6607
+<<testCaseId: 113
+<<timestamp: 12-Nov-19
+<<image: 
+<<file_name: 1/113.js
+||
+<<video: 
+<<group: 6607
+<<testCaseId: 114
+<<timestamp: 12-Nov-19
+<<image: 
+<<file_name: 1/114.js
+||
+<<video: 
+<<group: 6607
+<<testCaseId: 2
+<<timestamp: 12-Nov-19
+<<image: 
+<<file_name: 1/2.js
