@@ -42,7 +42,6 @@ export default class StudentPage extends BasePage {
         this.dismissPublicOverlays()
 
         cy.contains(/^\s*My Library\s*$/i, { timeout: 30000 })
-            .filter(':visible')
             .last()
             .click({ force: true })
     }
