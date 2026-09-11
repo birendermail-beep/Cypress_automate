@@ -13,6 +13,10 @@ module.exports = defineConfig({
     runMode: 1,
     openMode: 0,
   },
+  env: {
+    login_username: process.env.CYPRESS_USERNAME || '',
+    login_password: process.env.CYPRESS_PASSWORD || '',
+  },
   e2e: {
     baseUrl: process.env.CYPRESS_BASE_URL || 'https://www.jigyaasa.info',
     // Keep the legacy suite in place while Jigyaasa flows are repaired incrementally.
