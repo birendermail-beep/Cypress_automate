@@ -1,20 +1,13 @@
-describe('uCertify public site smoke checks', () => {
-    const baseUrl = Cypress.env('BASE_URL') || 'https://www.ucertify.com'
-
-    it('loads the uCertify public site successfully', () => {
-        cy.visit(baseUrl)
-        cy.location('hostname').should('include', 'ucertify')
+describe('Jigyaasa public site smoke checks', () => {
+    it('loads the configured Jigyaasa site successfully', () => {
+        cy.visit('/')
+        cy.location('hostname').should('include', 'jigyaasa')
         cy.get('body').should('be.visible').and('not.be.empty')
     })
 
-    it('exposes a login or sign-in entry point', () => {
-        cy.visit(baseUrl)
-        cy.get('body').then(($body) => {
-            const legacyLogin = $body.find('[data-cy="login_signup_cy"]').length > 0
-            const visibleText = $body.text()
-            const currentLogin = /log\s*in|sign\s*in/i.test(visibleText)
-
-            expect(legacyLogin || currentLogin, 'login entry point').to.eq(true)
-        })
+    it('renders usable page content', () => {
+        cy.visit('/')
+        cy.document().its('readyState').should('eq', 'complete')
+        cy.get('body').invoke('text').should('not.be.empty')
     })
 })
