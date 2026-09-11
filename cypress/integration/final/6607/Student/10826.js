@@ -72,20 +72,10 @@ describe('Post Assessment - all modes', () => {
                 return
             }
 
-            const candidates = [...$body.find('button, a, [role="button"], div')]
-                .filter((element) => Cypress.$(element).is(':visible'))
-                .map((element) => ({
-                    element,
-                    text: (element.innerText || element.textContent || '').replace(/\s+/g, ' ').trim(),
-                }))
-                .filter(({ text }) => new RegExp(`^${mode}(\\s|$)`, 'i').test(text))
-                .sort((a, b) => a.text.length - b.text.length)
-
-            if (!candidates.length) {
-                throw new Error(`${mode} mode control not found. Current URL: ${window.location.href}`)
-            }
-
-            cy.wrap(candidates[0].element).click({ force: true })
+            cy.contains('button, a, [role="button"], div', new RegExp(`^\\s*${mode}\\b`, 'i'), { timeout: 30000 })
+                .filter(':visible')
+                .last()
+                .click({ force: true })
         })
     }
 
