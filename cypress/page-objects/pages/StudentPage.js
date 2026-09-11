@@ -2,14 +2,67 @@ import BasePage from '../BasePage'
 import LoginPage from './LoginPage'
 
 export default class StudentPage extends BasePage {
+    static dismissPublicOverlays() {
+        cy.get('body').then(($body) => {
+            const closeCandidates = [
+                '.modal:visible .close',
+                '.modal:visible [data-dismiss="modal"]',
+                '.modal:visible button[aria-label="Close"]',
+                '.modal:visible .btn-close',
+            ]
+
+            const closeSelector = closeCandidates.find((selector) => $body.find(selector).length)
+            if (closeSelector) {
+                cy.get(closeSelector).first().click({ force: true })
+            } else {
+                const visibleClose = $body
+                    .find('button, a, span')
+                    .filter(':visible')
+                    .filter((_, element) => /^\s*[×x]\s*$/i.test(element.innerText || element.textContent || ''))
+
+                if (visibleClose.length) {
+                    cy.wrap(visibleClose.first()).click({ force: true })
+                }
+            }
+        })
+
+        cy.get('body').then(($body) => {
+            const acceptCookie = $body
+                .find('button, a')
+                .filter(':visible')
+                .filter((_, element) => /^\s*accept\s*$/i.test(element.innerText || element.textContent || ''))
+
+            if (acceptCookie.length) {
+                cy.wrap(acceptCookie.first()).click({ force: true })
+            }
+        })
+    }
+
     static openMyLibrary() {
-        cy.get('[data-cy="mylibrary"]').should('be.visible').click({ force: true })
+        this.dismissPublicOverlays()
+
+        cy.get('body').then(($body) => {
+            if ($body.find('[data-cy="mylibrary"]').filter(':visible').length) {
+                cy.get('[data-cy="mylibrary"]').filter(':visible').first().click({ force: true })
+                return
+            }
+
+            cy.contains('a, button', /^\s*My Library\s*$/i, { timeout: 30000 })
+                .should('be.visible')
+                .click({ force: true })
+        })
     }
 
     static searchAndManageCourse(searchText, crn) {
         this.openMyLibrary()
-        cy.get('[data-cy="searchbox"]').should('be.visible').clear().type(searchText, { force: true })
-        cy.get(`[crn="${crn}"]`).should('exist').contains('Manage').click({ force: true })
+        cy.get('[data-cy="searchbox"]', { timeout: 30000 })
+            .should('be.visible')
+            .clear()
+            .type(searchText, { force: true })
+        cy.get(`[crn="${crn}"]`, { timeout: 30000 })
+            .should('exist')
+            .contains(/manage|open|launch/i)
+            .click({ force: true })
     }
 
     static openStudentDashboard() {
@@ -109,11 +162,11 @@ export default class StudentPage extends BasePage {
     }
 
     static visitLOAplusCompleteCourse() {
-        const course = Cypress.env('STUDENT_COURSE_CRN') || 'Demo.AA1'
-        const deskCopy = Cypress.env('STUDENT_DESK_COPY') || '1'
+        const courseCrn = Cypress.env('STUDENT_COURSE_CRN') || 'Demo.AA1'
+        const searchText = Cypress.env('STUDENT_COURSE_SEARCH') || 'Platform Demo'
 
-        cy.visit(`/?func=load_course&course=${encodeURIComponent(course)}&desk_copy=${encodeURIComponent(deskCopy)}`)
-        cy.contains('POST ASSESSMENT', { timeout: 30000 }).should('be.visible')
+        this.searchAndManageCourse(searchText, courseCrn)
+        cy.contains(/POST\s*ASSESSMENT/i, { timeout: 30000 }).should('be.visible')
     }
 
     static loadCourse() {
