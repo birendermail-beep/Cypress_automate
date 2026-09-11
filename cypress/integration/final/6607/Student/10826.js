@@ -6,7 +6,7 @@
 @story_name: Post Assessment in Test Mode
 @path: final/6607/Student
 @test_case_name: Post Assessment in Test Mode.js
-@description: Open post assessment and verify navigation in test mode.
+@description: Verify Post Assessment Test Mode timer, question navigation, item list, and test completion.
 */
 import {
     Navbar,
@@ -17,7 +17,7 @@ import {
 } from '../../../../page-objects/pages/index'
 
 describe('Post Assessment in Test Mode', () => {
-    it('opens Post Assessment, navigates questions, and ends the test', () => {
+    it('verifies Test Mode timer, question navigation, item list, and end-test flow', () => {
         cy.visit('/')
         Navbar.clickOnLogin()
         LoginPage.loginPage(login_username, login_password)
@@ -68,7 +68,21 @@ describe('Post Assessment in Test Mode', () => {
             .click({ force: true })
 
         cy.get('div[intro-id="item_info"]', { timeout: 30000 }).should('exist')
+        cy.get('div[intro-id="timer"], [intro-id="timer"]', { timeout: 30000 }).should('exist')
+
+        cy.get('div[intro-id="item_info"]').invoke('text').then((text) => {
+            const normalized = text.replace(/\s+/g, ' ').trim()
+            expect(normalized).to.match(/^1\s*of\s*\d+$/i)
+        })
+
+        cy.get('#previous').should('be.disabled')
         cy.questionNavigation()
+
+        cy.get('#btntxt', { timeout: 30000 }).should('exist').click({ force: true })
+        cy.contains(/Attempted/i).should('exist')
+        cy.contains(/Unattempted/i).should('exist')
+        cy.get('#btntxt').click({ force: true })
+
         StudentPage.endTest()
     })
 })
