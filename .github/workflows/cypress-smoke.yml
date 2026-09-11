@@ -13,6 +13,10 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      CYPRESS_BASE_URL: https://www.jigyaasa.info
+      CYPRESS_USERNAME: ${{ secrets.CYPRESS_USERNAME }}
+      CYPRESS_PASSWORD: ${{ secrets.CYPRESS_PASSWORD }}
 
     steps:
       - name: Checkout repository
@@ -28,5 +32,11 @@ jobs:
 
       - name: Run Jigyaasa public smoke tests
         run: npx cypress run --e2e --spec "cypress/integration/smoke/public-site.smoke.js" --browser chrome
-        env:
-          CYPRESS_BASE_URL: https://www.jigyaasa.info
+
+      - name: Run authenticated Student Post Assessment test
+        if: ${{ env.CYPRESS_USERNAME != '' && env.CYPRESS_PASSWORD != '' }}
+        run: npx cypress run --e2e --spec "cypress/integration/final/6607/Student/10826.js" --browser chrome
+
+      - name: Authenticated test setup reminder
+        if: ${{ env.CYPRESS_USERNAME == '' || env.CYPRESS_PASSWORD == '' }}
+        run: echo "Authenticated Student test skipped because CYPRESS_USERNAME/CYPRESS_PASSWORD repository secrets are not configured."
