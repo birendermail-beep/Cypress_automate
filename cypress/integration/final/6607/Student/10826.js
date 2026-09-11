@@ -6,7 +6,7 @@
 @story_name: Post Assessment - Test, Learn and Review Modes
 @path: final/6607/Student
 @test_case_name: Post Assessment all modes.js
-@description: Verify Test Mode, Learn Mode, Review Mode, and return to Dashboard in one end-to-end flow.
+@description: Verify Test Mode, Learn Mode, Review Mode, and finish on the course Dashboard in one end-to-end flow.
 */
 import {
     Navbar,
@@ -58,6 +58,33 @@ describe('Post Assessment - all modes', () => {
         })
     }
 
+    const selectMode = (mode) => {
+        const modeSelectors = {
+            Test: '#test_mode',
+            Learn: '#learn_mode',
+            Review: '#review_mode',
+        }
+        const selector = modeSelectors[mode]
+
+        cy.get('body', { timeout: 30000 }).then(($body) => {
+            if ($body.find(selector).length) {
+                cy.get(selector).first().click({ force: true })
+                return
+            }
+
+            const modeControl = $body
+                .find('button, a, [role="button"], div')
+                .filter(':visible')
+                .filter((_, element) => new RegExp(`^\\s*${mode}\\s*$`, 'i').test(element.innerText || element.textContent || ''))
+
+            if (!modeControl.length) {
+                throw new Error(`${mode} mode control not found. Current URL: ${window.location.href}`)
+            }
+
+            cy.wrap(modeControl.last()).click({ force: true })
+        })
+    }
+
     const clickGoBack = () => {
         cy.contains('a, button, [role="button"]', /^\s*GO BACK\s*$/i, { timeout: 30000 })
             .filter(':visible')
@@ -67,7 +94,19 @@ describe('Post Assessment - all modes', () => {
         cy.contains(/POST\s*ASSESSMENT/i, { timeout: 30000 }).should('exist')
     }
 
-    it('runs Test Mode, Learn Mode, Review Mode, then returns to Dashboard', () => {
+    const finishOnDashboard = () => {
+        clickGoBack()
+
+        cy.contains('a, button, [role="button"]', /^\s*DASHBOARD\s*$/i, { timeout: 30000 })
+            .filter(':visible')
+            .last()
+            .click({ force: true })
+
+        cy.contains(/POST\s*ASSESSMENT/i, { timeout: 30000 }).should('exist')
+        cy.contains(/PRACTICE\s*TESTS/i).should('exist')
+    }
+
+    it('runs Test Mode, Learn Mode, Review Mode, then finishes on Dashboard', () => {
         cy.visit('/')
         Navbar.clickOnLogin()
         LoginPage.loginPage(login_username, login_password)
@@ -79,10 +118,7 @@ describe('Post Assessment - all modes', () => {
         // TEST MODE
         openPostAssessment()
         discardIncompleteTestIfPresent()
-
-        cy.contains(/^\s*Test\s*$/i, { timeout: 30000 })
-            .last()
-            .click({ force: true })
+        selectMode('Test')
 
         cy.get('div[intro-id="item_info"]', { timeout: 30000 }).should('exist')
         cy.get('div[intro-id="timer"], [intro-id="timer"]', { timeout: 30000 }).should('exist')
@@ -100,10 +136,7 @@ describe('Post Assessment - all modes', () => {
         // LEARN MODE
         openPostAssessment()
         discardIncompleteTestIfPresent()
-
-        cy.contains(/^\s*Learn\s*$/i, { timeout: 30000 })
-            .last()
-            .click({ force: true })
+        selectMode('Learn')
 
         cy.get('div[intro-id="item_info"]', { timeout: 30000 }).should('exist')
         cy.get('div[intro-id="timer"], [intro-id="timer"]').should('not.exist')
@@ -128,10 +161,7 @@ describe('Post Assessment - all modes', () => {
         // REVIEW MODE
         openPostAssessment()
         discardIncompleteTestIfPresent()
-
-        cy.contains(/^\s*Review\s*$/i, { timeout: 30000 })
-            .last()
-            .click({ force: true })
+        selectMode('Review')
 
         cy.get('div[intro-id="item_info"]', { timeout: 30000 }).should('exist')
         cy.get('div[intro-id="timer"], [intro-id="timer"]').should('not.exist')
@@ -140,7 +170,7 @@ describe('Post Assessment - all modes', () => {
 
         cy.get('body').then(($body) => {
             const explanationSelectors = ['#item_explanation', '[data-cy="item_explanation"]', '[intro-id="item_explanation"]']
-            const explanationSelector = explanationSelectors.find((selector) => $body.find(selector).length)
+            const explanationSelector = explanationSelectors.find((candidate) => $body.find(candidate).length)
 
             if (explanationSelector) {
                 cy.get(explanationSelector).should('exist')
@@ -150,8 +180,6 @@ describe('Post Assessment - all modes', () => {
         })
 
         cy.questionNavigation()
-        clickGoBack()
-
-        cy.contains(/POST\s*ASSESSMENT/i, { timeout: 30000 }).should('exist')
+        finishOnDashboard()
     })
 })
