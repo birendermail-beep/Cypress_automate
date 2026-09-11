@@ -26,7 +26,25 @@ describe('Post Assessment in Test Mode', () => {
             StudentPage.visitLOAplusCompleteCourse(data)
         })
 
-        cy.get('[data-cy="post_assesment"]').should('be.visible').click({ force: true })
+        cy.get('body').then(($body) => {
+            const selectors = [
+                '[data-cy="post_assesment"]',
+                '[data-cy="post_assessment"]',
+                '[intro-id="post_assessment"]',
+            ]
+            const matchedSelector = selectors.find((selector) => $body.find(selector).length)
+
+            if (matchedSelector) {
+                cy.get(matchedSelector).first().should('be.visible').click({ force: true })
+                return
+            }
+
+            cy.contains('a, button, [role="button"], .menu-item', /post\s*assessment/i)
+                .first()
+                .should('be.visible')
+                .click({ force: true })
+        })
+
         StudentPage.terminatePreAssessment()
 
         cy.get('#test_mode').should('be.visible').click({ force: true })
