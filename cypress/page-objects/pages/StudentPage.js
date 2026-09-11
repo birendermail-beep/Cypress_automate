@@ -1,81 +1,125 @@
-import BasePage from "../BasePage";
-import LoginPage from '../../page-objects/pages/LoginPage'
+import BasePage from '../BasePage'
+import LoginPage from './LoginPage'
+
 export default class StudentPage extends BasePage {
+    static openMyLibrary() {
+        cy.get('[data-cy="mylibrary"]').should('be.visible').click({ force: true })
+    }
+
+    static searchAndManageCourse(searchText, crn) {
+        this.openMyLibrary()
+        cy.get('[data-cy="searchbox"]').should('be.visible').clear().type(searchText, { force: true })
+        cy.get(`[crn="${crn}"]`).should('exist').contains('Manage').click({ force: true })
+    }
+
     static openStudentDashboard() {
-        cy.get('[data-cy="mylibrary"]').click({ force: true })
-        cy.get('[data-cy="searchbox"]').type('lo-a', { force: true })
-        cy.get('[crn="LO-Aplus-complete"]').contains('Manage').click({ force: true })
+        const courseCrn = Cypress.env('STUDENT_COURSE_CRN') || 'LO-Aplus-complete'
+        const searchText = Cypress.env('STUDENT_COURSE_SEARCH') || 'lo-a'
+        this.searchAndManageCourse(searchText, courseCrn)
     }
 
     static studentDashboard(crn) {
-        cy.get('[data-cy="mylibrary"]').click({ force: true })
-        cy.get(crn).contains('Manage').click({ force: true })
+        this.openMyLibrary()
+        cy.get(crn).should('exist').contains('Manage').click({ force: true })
     }
+
     static openurl() {
-        cy.get('[data-cy="mylibrary"]').click({ force: true })
-        cy.get('[data-cy="searchbox"]').type('platform Demo', { force: true })
-        cy.get('[crn="Demo.AA1"]').contains('Manage').click({ force: true })
+        const courseCrn = Cypress.env('DEMO_COURSE_CRN') || 'Demo.AA1'
+        const searchText = Cypress.env('DEMO_COURSE_SEARCH') || 'platform Demo'
+        this.searchAndManageCourse(searchText, courseCrn)
         LoginPage.visitOnClick('.span13 > .btn-outline-primary')
     }
+
     static terminateTest() {
-        cy.get('#container').then(($text) => {
-            if ($text.text().includes('Last test was not completed. Do you want to continue?')) {
-                cy.get('#terminate_test').click()
-                cy.get('.terminate_current_test').click()
+        cy.get('body').then(($body) => {
+            if ($body.text().includes('Last test was not completed. Do you want to continue?')) {
+                cy.get('#terminate_test').should('be.visible').click({ force: true })
+                cy.get('.terminate_current_test, [data-cy="terminate_currecnt_test"]')
+                    .filter(':visible')
+                    .first()
+                    .click({ force: true })
             }
         })
     }
+
     static clickOnNext() {
-        cy.get('[intro-id="item_next"]').click({ force: true })
-        cy.wait(2000)
-        cy.get('[intro-id="item_next"]').click({ force: true })
-        cy.wait(2000)
-    }
-    static goTotest() {
-        cy.get('.icomoon-256px-practice-performance').click()
-        cy.contains('Go to test history').click({ force: true })
-        cy.get('.icomoon-new-24px-gear-1').eq(0).click({ force: true })
-    }
-    static endTest() {
-        cy.get('#show_result').click({ force: true })
-        cy.wait(10000)
-        cy.get('#btn-confirmed').click({ force: true })
-    }
-    static clickOnBrowse() {
-        cy.get('.navbar_shop > li').each(($el, index, $list) => {
-            cy.wrap($list).eq(index).trigger('mouseover', { force: true })
-            cy.wait(1000)
+        cy.get('[intro-id="item_info"]').invoke('text').then((firstItem) => {
+            cy.get('[intro-id="item_next"]').should('be.enabled').click({ force: true })
+            cy.get('[intro-id="item_info"]').should(($item) => {
+                expect($item.text().trim()).not.to.eq(firstItem.trim())
+            })
+
+            cy.get('[intro-id="item_next"]').should('be.enabled').click({ force: true })
+            cy.get('[intro-id="item_info"]').should(($item) => {
+                expect($item.text().trim()).not.to.eq(firstItem.trim())
+            })
         })
     }
+
+    static goTotest() {
+        cy.get('.icomoon-256px-practice-performance').should('be.visible').click()
+        cy.contains('Go to test history').should('be.visible').click({ force: true })
+        cy.get('.icomoon-new-24px-gear-1').first().click({ force: true })
+    }
+
+    static endTest() {
+        cy.get('#show_result').should('be.visible').click({ force: true })
+        cy.get('#btn-confirmed', { timeout: 30000 }).should('be.visible').click({ force: true })
+    }
+
+    static clickOnBrowse() {
+        cy.get('.navbar_shop > li').each(($item) => {
+            cy.wrap($item).trigger('mouseover', { force: true })
+        })
+    }
+
     static terminatePreAssessment() {
-        cy.get('#test_form').then(($text) => {
-            if ($text.text().includes('Last test was not completed. Do you want to continue?')) {
-                cy.get('#terminate_test_pre').click()
-                cy.get('.terminate_current_test').click()
+        cy.get('body').then(($body) => {
+            if ($body.text().includes('Last test was not completed. Do you want to continue?')) {
+                cy.get('#terminate_test_pre').should('be.visible').click({ force: true })
+                cy.get('.terminate_current_test, [data-cy="terminate_currecnt_test"]')
+                    .filter(':visible')
+                    .first()
+                    .click({ force: true })
             }
         })
     }
+
     static setSelectionText(paraid) {
-        cy.get(paraid).trigger('mousedown').then(($el) => {
-            const el = $el[0]
-            const document = el.ownerDocument
-            const range = document.createRange()
-            range.selectNodeContents(el)
-            document.getSelection().removeAllRanges(range)
-            document.getSelection().addRange(range)
-        }).trigger('mouseup')
+        cy.get(paraid)
+            .trigger('mousedown')
+            .then(($el) => {
+                const el = $el[0]
+                const document = el.ownerDocument
+                const range = document.createRange()
+                range.selectNodeContents(el)
+                document.getSelection().removeAllRanges()
+                document.getSelection().addRange(range)
+            })
+            .trigger('mouseup')
         cy.document().trigger('selectionchange')
     }
-    static visitCourse(url) {
-        cy.visit(url + '/?func=load_course&course_code=03Hy5&class_code=05SOh')
+
+    static visitCourse(url, courseCode, classCode) {
+        const targetUrl = url || Cypress.config('baseUrl')
+        const targetCourseCode = courseCode || Cypress.env('COURSE_CODE') || '03Hy5'
+        const targetClassCode = classCode || Cypress.env('CLASS_CODE') || '05SOh'
+
+        cy.visit(`${targetUrl}/?func=load_course&course_code=${targetCourseCode}&class_code=${targetClassCode}`)
     }
+
     static visitLOAplusCompleteCourse(data) {
-        cy.visit(data.url + '/?func=load_course&course=LO-Aplus-complete&class_code=' + data.class_code[10])
+        const targetUrl = Cypress.config('baseUrl') || data.url
+        const course = Cypress.env('STUDENT_COURSE_CRN') || 'LO-Aplus-complete'
+        const classCode = Cypress.env('STUDENT_CLASS_CODE') || data.class_code[10]
+
+        cy.visit(`${targetUrl}/?func=load_course&course=${course}&class_code=${classCode}`)
     }
 
     static loadCourse() {
-        cy.get('[data-cy=project] > .ml').click({ force: true });
-        cy.get('[data-cy=searchbox]').type('PHP From Beginning', { force: true });
-        cy.get('[data-cy=author]').eq(0).click({ force: true });
+        const courseName = Cypress.env('AUTHOR_COURSE_SEARCH') || 'PHP From Beginning'
+        cy.get('[data-cy="project"] > .ml').should('be.visible').click({ force: true })
+        cy.get('[data-cy="searchbox"]').should('be.visible').clear().type(courseName, { force: true })
+        cy.get('[data-cy="author"]').first().click({ force: true })
     }
 }

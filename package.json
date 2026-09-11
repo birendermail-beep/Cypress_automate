@@ -1,15 +1,16 @@
 {
-  "name": "cypress-test",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "ucertify-cypress-automation",
+  "version": "2.0.0",
+  "private": true,
+  "description": "uCertify end-to-end Cypress automation suite",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "cy:open": "cypress open --e2e",
+    "cy:run": "cypress run --e2e --browser chrome",
+    "test": "npm run cy:run",
+    "verify": "cypress verify"
   },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-  "cypress": "4.8.0",
-  "prettier": "^2.0.5"
+  "devDependencies": {
+    "cypress": "15.21.1",
+    "prettier": "^3.6.2"
   }
 }

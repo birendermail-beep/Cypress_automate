@@ -1,20 +1,42 @@
 export default class Navbar {
-    //this function is used to click on login icon
     static clickOnLogin() {
-        cy.get('[data-cy="login_signup_cy"]').click({ force: true })
+        cy.get('body').then(($body) => {
+            if ($body.find('[data-cy="login_signup_cy"]').length) {
+                cy.get('[data-cy="login_signup_cy"]').first().click({ force: true })
+                return
+            }
+            cy.contains('a, button', /log\s*in|sign\s*in/i).first().click({ force: true })
+        })
     }
-    //this function is used to click on cart icon
+
     static clickonViewCart() {
-        cy.get('[data-cy="cart_menu_cy"]').trigger('mouseover', { force: true })
-        cy.get('[data-cy="view_cart_cy"]').click({ force: true })
+        cy.get('body').then(($body) => {
+            if ($body.find('[data-cy="cart_menu_cy"]').length) {
+                cy.get('[data-cy="cart_menu_cy"]').trigger('mouseover', { force: true })
+                cy.get('[data-cy="view_cart_cy"]').click({ force: true })
+                return
+            }
+            cy.contains('a, button', /cart/i).first().click({ force: true })
+        })
     }
-    //this function is used to click on browse Title
+
     static clickonBrowseTitle() {
-        cy.get('[data-cy=brows_titles-cy]').click({ force: true })
+        cy.get('body').then(($body) => {
+            if ($body.find('[data-cy="brows_titles-cy"]').length) {
+                cy.get('[data-cy="brows_titles-cy"]').click({ force: true })
+                return
+            }
+            cy.contains('a, button', /browse|catalog/i).first().click({ force: true })
+        })
     }
 
     static clickContinueOnWelcomePage() {
-        cy.get('[data-cy=previous_page]').click({ force: true })
-        //cy.scrollTo("100%", "100%")
+        cy.get('body').then(($body) => {
+            if ($body.find('[data-cy="previous_page"]').length) {
+                cy.get('[data-cy="previous_page"]').click({ force: true })
+                return
+            }
+            cy.contains('a, button', /continue|previous|back/i).first().click({ force: true })
+        })
     }
 }
