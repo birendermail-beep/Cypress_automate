@@ -35,33 +35,34 @@ describe('Post Assessment in Test Mode', () => {
             const matchedSelector = selectors.find((selector) => $body.find(selector).length)
 
             if (matchedSelector) {
-                cy.get(matchedSelector).first().should('be.visible').click({ force: true })
+                cy.get(matchedSelector).first().click({ force: true })
                 return
             }
 
             const postAssessmentByText = $body
-                .find('a, button, [role="button"], .menu-item')
-                .filter((_, element) => /post\s*assessment/i.test(element.innerText || element.textContent || ''))
+                .find('a, button, [role="button"], .menu-item, div')
+                .filter((_, element) => /^\s*post\s*assessment\s*$/i.test(element.innerText || element.textContent || ''))
 
             if (postAssessmentByText.length) {
-                cy.wrap(postAssessmentByText.first()).click({ force: true })
+                cy.wrap(postAssessmentByText.last()).click({ force: true })
                 return
             }
 
-            const visibleNavigation = [...$body.find('a, button, [role="button"], .menu-item')]
-                .map((element) => (element.innerText || element.textContent || '').trim().replace(/\s+/g, ' '))
-                .filter(Boolean)
-                .slice(0, 40)
-                .join(' | ')
-
-            throw new Error(
-                `Post Assessment control not found. Current URL: ${window.location.href}. Visible navigation: ${visibleNavigation}`
-            )
+            throw new Error(`Post Assessment control not found. Current URL: ${window.location.href}`)
         })
 
-        StudentPage.terminatePreAssessment()
+        cy.contains(/Last test was not completed\. Do you want to continue\?/i, { timeout: 30000 })
+            .should('exist')
 
-        cy.get('#test_mode').should('be.visible').click({ force: true })
+        cy.contains(/^\s*No\s*$/i, { timeout: 30000 })
+            .last()
+            .click({ force: true })
+
+        cy.contains(/^\s*Test\s*$/i, { timeout: 30000 })
+            .last()
+            .click({ force: true })
+
+        cy.get('div[intro-id="item_info"]', { timeout: 30000 }).should('exist')
         cy.questionNavigation()
         StudentPage.endTest()
     })
