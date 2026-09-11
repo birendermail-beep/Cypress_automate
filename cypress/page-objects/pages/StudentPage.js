@@ -41,15 +41,23 @@ export default class StudentPage extends BasePage {
     static openMyLibrary() {
         this.dismissPublicOverlays()
 
-        cy.get('body').then(($body) => {
-            if ($body.find('[data-cy="mylibrary"]').filter(':visible').length) {
-                cy.get('[data-cy="mylibrary"]').filter(':visible').first().click({ force: true })
+        cy.get('body', { timeout: 30000 }).then(($body) => {
+            const dataCyLibrary = $body.find('[data-cy="mylibrary"]:visible')
+            if (dataCyLibrary.length) {
+                cy.wrap(dataCyLibrary.first()).click({ force: true })
                 return
             }
 
-            cy.contains('a, button', /^\s*My Library\s*$/i, { timeout: 30000 })
-                .should('be.visible')
-                .click({ force: true })
+            const visibleLibrary = $body
+                .find('a, button')
+                .filter(':visible')
+                .filter((_, element) => /^\s*My Library\s*$/i.test(element.innerText || element.textContent || ''))
+
+            if (!visibleLibrary.length) {
+                throw new Error('Unable to find a visible My Library control on the current Jigyaasa page.')
+            }
+
+            cy.wrap(visibleLibrary.first()).click({ force: true })
         })
     }
 
