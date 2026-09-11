@@ -2,9 +2,12 @@ import BasePage from '../BasePage'
 
 export default class LoginPage extends BasePage {
     static loginPage(username, password) {
-        if (!username || !password) {
+        const resolvedUsername = username || Cypress.env('login_username') || ''
+        const resolvedPassword = password || Cypress.env('login_password') || ''
+
+        if (!resolvedUsername || !resolvedPassword) {
             throw new Error(
-                'Missing Cypress login credentials. Set CYPRESS_USERNAME and CYPRESS_PASSWORD before running authenticated specs.'
+                'Missing Cypress login credentials. Configure CYPRESS_USERNAME and CYPRESS_PASSWORD before running authenticated specs.'
             )
         }
 
@@ -15,11 +18,11 @@ export default class LoginPage extends BasePage {
                 .find((selector) => $body.find(selector).length)
 
             if (!emailSelector || !passwordSelector) {
-                throw new Error('Unable to locate the current uCertify login fields.')
+                throw new Error('Unable to locate the current Jigyaasa login fields.')
             }
 
-            cy.get(emailSelector).first().clear().type(username, { log: false })
-            cy.get(passwordSelector).first().clear().type(password, { log: false })
+            cy.get(emailSelector).first().clear().type(resolvedUsername, { log: false })
+            cy.get(passwordSelector).first().clear().type(resolvedPassword, { log: false })
         })
 
         cy.get('body').then(($body) => {
@@ -27,7 +30,7 @@ export default class LoginPage extends BasePage {
                 .find((selector) => $body.find(selector).length)
 
             if (!submitSelector) {
-                throw new Error('Unable to locate the current uCertify login submit button.')
+                throw new Error('Unable to locate the current Jigyaasa login submit button.')
             }
 
             cy.get(submitSelector).first().click({ force: true })
