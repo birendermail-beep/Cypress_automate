@@ -58,19 +58,11 @@ describe('Post Assessment - all modes', () => {
         })
     }
 
-    const returnToDashboard = () => {
-        cy.get('body', { timeout: 30000 }).then(($body) => {
-            const goBack = $body
-                .find('a, button, [role="button"]')
-                .filter(':visible')
-                .filter((_, element) => /^\s*(GO BACK|DASHBOARD)\s*$/i.test(element.innerText || element.textContent || ''))
-
-            if (!goBack.length) {
-                throw new Error(`Unable to find Go Back/Dashboard control. Current URL: ${window.location.href}`)
-            }
-
-            cy.wrap(goBack.last()).click({ force: true })
-        })
+    const clickGoBack = () => {
+        cy.contains('a, button, [role="button"]', /^\s*GO BACK\s*$/i, { timeout: 30000 })
+            .filter(':visible')
+            .last()
+            .click({ force: true })
 
         cy.contains(/POST\s*ASSESSMENT/i, { timeout: 30000 }).should('exist')
     }
@@ -103,7 +95,7 @@ describe('Post Assessment - all modes', () => {
         cy.get('#btntxt').click({ force: true })
 
         StudentPage.endTest()
-        returnToDashboard()
+        clickGoBack()
 
         // LEARN MODE
         openPostAssessment()
@@ -131,7 +123,7 @@ describe('Post Assessment - all modes', () => {
 
         cy.questionNavigation()
         StudentPage.endTest()
-        returnToDashboard()
+        clickGoBack()
 
         // REVIEW MODE
         openPostAssessment()
@@ -158,7 +150,7 @@ describe('Post Assessment - all modes', () => {
         })
 
         cy.questionNavigation()
-        returnToDashboard()
+        clickGoBack()
 
         cy.contains(/POST\s*ASSESSMENT/i, { timeout: 30000 }).should('exist')
     })
