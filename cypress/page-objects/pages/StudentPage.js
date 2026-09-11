@@ -159,6 +159,12 @@ export default class StudentPage extends BasePage {
         const searchText = Cypress.env('STUDENT_COURSE_SEARCH') || 'Platform Demo'
 
         this.searchAndManageCourse(searchText, courseCrn)
+
+        cy.location('search', { timeout: 30000 }).should('include', 'func=manage_course')
+        cy.contains(/^\s*View Course\s*$/i, { timeout: 30000 })
+            .last()
+            .click({ force: true })
+
         cy.contains(/POST\s*ASSESSMENT/i, { timeout: 30000 }).should('be.visible')
     }
 
