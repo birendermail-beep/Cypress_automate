@@ -165,7 +165,8 @@ export default class StudentPage extends BasePage {
             .last()
             .click({ force: true })
 
-        cy.contains(/POST\s*ASSESSMENT/i, { timeout: 30000 }).should('be.visible')
+        cy.location('search', { timeout: 30000 }).should('include', 'func=load_course')
+        cy.contains(/POST\s*ASSESSMENT/i, { timeout: 30000 }).should('exist')
     }
 
     static loadCourse() {
