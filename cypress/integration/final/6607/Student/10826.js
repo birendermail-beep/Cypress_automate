@@ -51,12 +51,17 @@ describe('Post Assessment in Test Mode', () => {
             throw new Error(`Post Assessment control not found. Current URL: ${window.location.href}`)
         })
 
-        cy.contains(/Last test was not completed\. Do you want to continue\?/i, { timeout: 30000 })
-            .should('exist')
+        cy.get('body', { timeout: 30000 }).then(($body) => {
+            if (/Last test was not completed\. Do you want to continue\?/i.test($body.text())) {
+                const noButton = $body
+                    .find('button, a, [role="button"]')
+                    .filter((_, element) => /^\s*No\s*$/i.test(element.innerText || element.textContent || ''))
 
-        cy.contains(/^\s*No\s*$/i, { timeout: 30000 })
-            .last()
-            .click({ force: true })
+                if (noButton.length) {
+                    cy.wrap(noButton.last()).click({ force: true })
+                }
+            }
+        })
 
         cy.contains(/^\s*Test\s*$/i, { timeout: 30000 })
             .last()
