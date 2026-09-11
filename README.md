@@ -1,6 +1,6 @@
-# uCertify Cypress Automation
+# Jigyaasa Cypress Automation
 
-End-to-end automation tests for the uCertify application.
+End-to-end automation tests for the Jigyaasa application.
 
 ## Runtime
 
@@ -12,6 +12,23 @@ End-to-end automation tests for the uCertify application.
 ```bash
 npm install
 ```
+
+## Environment
+
+The default application under test is Jigyaasa. You can override it for another approved test environment without changing source code:
+
+```bash
+CYPRESS_BASE_URL=https://www.jigyaasa.info
+```
+
+Authenticated specs read credentials from environment variables instead of hard-coded source:
+
+```bash
+CYPRESS_USERNAME=<test-user>
+CYPRESS_PASSWORD=<test-password>
+```
+
+Do not commit real usernames, passwords, access keys, tokens, or production credentials.
 
 ## Run interactively
 
@@ -25,10 +42,16 @@ npm run cy:open
 npm test
 ```
 
+## Run only the public smoke checks
+
+```bash
+npx cypress run --e2e --spec "cypress/integration/smoke/public-site.smoke.js" --browser chrome
+```
+
 ## Migration status
 
-This repository originated on Cypress 4.8. The framework configuration has been migrated to the modern Cypress E2E runner while deliberately keeping `cypress/integration/**/*.js` as the spec location. This allows the existing uCertify tests to be repaired incrementally instead of moving hundreds of legacy specs at once.
+This repository originated on Cypress 4.8. The framework configuration has been migrated to the modern Cypress E2E runner while deliberately keeping `cypress/integration/**/*.js` as the spec location. This allows the existing Jigyaasa tests to be repaired incrementally instead of moving hundreds of legacy specs at once.
 
-The next migration phase is application-level repair: update obsolete uCertify selectors, URLs, authentication/navigation steps, waits, and assertions module by module.
+The legacy `cypress.json` configuration and stale Cypress 4 package lock have been removed. Run `npm install` with Node 22 to generate dependencies for the modern framework.
 
-Do not commit usernames, passwords, tokens, or other production credentials. Supply environment-specific values outside source control.
+The next migration phase is application-level repair: update obsolete Jigyaasa selectors, authentication/navigation steps, fixed waits, course data, and assertions module by module.
