@@ -1,21 +1,30 @@
-# Build and Release Folders
+# Dependencies
+node_modules/
+
+# Cypress generated output
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
+
+# Local Cypress environment / credentials
+cypress.env.json
+.env
+.env.*
+!.env.example
+
+# Build and release folders
 bin-debug/
 bin-release/
 [Oo]bj/
 [Bb]in/
 
-# Other files and folders
+# IDE / OS files
 .settings/
+.DS_Store
+Thumbs.db
 
 # Executables
 *.swf
 *.air
 *.ipa
 *.apk
-
-# Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
-# should NOT be excluded as they contain compiler settings and other important
-# information for Eclipse / Flash Builder.
-node_modules
-node_modules
-node_modules
