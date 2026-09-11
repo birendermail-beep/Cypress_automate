@@ -11,30 +11,41 @@ export default class LoginPage extends BasePage {
             )
         }
 
-        cy.get('body').then(($body) => {
-            const emailSelector = ['#email', 'input[type="email"]', 'input[name="email"]']
-                .find((selector) => $body.find(selector).length)
-            const passwordSelector = ['#password', 'input[type="password"]', 'input[name="password"]']
-                .find((selector) => $body.find(selector).length)
+        cy.location('pathname', { timeout: 30000 }).should('include', 'login.php')
 
-            if (!emailSelector || !passwordSelector) {
-                throw new Error('Unable to locate the current Jigyaasa login fields.')
-            }
+        cy.get(
+            '#email, input[type="email"], input[name="email"], input[placeholder="ENTER EMAIL"]',
+            { timeout: 30000 }
+        )
+            .filter(':visible')
+            .first()
+            .clear()
+            .type(resolvedUsername, { log: false })
 
-            cy.get(emailSelector).first().clear().type(resolvedUsername, { log: false })
-            cy.get(passwordSelector).first().clear().type(resolvedPassword, { log: false })
-        })
+        cy.get(
+            '#password, input[type="password"], input[name="password"], input[placeholder="ENTER PASSWORD"]',
+            { timeout: 30000 }
+        )
+            .filter(':visible')
+            .first()
+            .clear()
+            .type(resolvedPassword, { log: false })
 
         cy.get('body').then(($body) => {
             const submitSelector = ['#submit', 'button[type="submit"]', 'input[type="submit"]']
-                .find((selector) => $body.find(selector).length)
+                .find((selector) => $body.find(selector).filter(':visible').length)
 
-            if (!submitSelector) {
-                throw new Error('Unable to locate the current Jigyaasa login submit button.')
+            if (submitSelector) {
+                cy.get(submitSelector).filter(':visible').first().click({ force: true })
+                return
             }
 
-            cy.get(submitSelector).first().click({ force: true })
+            cy.contains('button', /^\s*SIGN IN\s*$/i, { timeout: 30000 })
+                .should('be.visible')
+                .click({ force: true })
         })
+
+        cy.location('pathname', { timeout: 30000 }).should('not.include', 'login.php')
     }
 
     static visitOnClick(selector) {
