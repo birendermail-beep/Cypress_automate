@@ -39,10 +39,24 @@ describe('Post Assessment in Test Mode', () => {
                 return
             }
 
-            cy.contains('a, button, [role="button"], .menu-item', /post\s*assessment/i)
-                .first()
-                .should('be.visible')
-                .click({ force: true })
+            const postAssessmentByText = $body
+                .find('a, button, [role="button"], .menu-item')
+                .filter((_, element) => /post\s*assessment/i.test(element.innerText || element.textContent || ''))
+
+            if (postAssessmentByText.length) {
+                cy.wrap(postAssessmentByText.first()).click({ force: true })
+                return
+            }
+
+            const visibleNavigation = [...$body.find('a, button, [role="button"], .menu-item')]
+                .map((element) => (element.innerText || element.textContent || '').trim().replace(/\s+/g, ' '))
+                .filter(Boolean)
+                .slice(0, 40)
+                .join(' | ')
+
+            throw new Error(
+                `Post Assessment control not found. Current URL: ${window.location.href}. Visible navigation: ${visibleNavigation}`
+            )
         })
 
         StudentPage.terminatePreAssessment()
