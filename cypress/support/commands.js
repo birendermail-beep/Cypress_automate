@@ -26,23 +26,40 @@ Cypress.Commands.add('checkAscSort', (tbodySelector, colSelector) => {
 })
 
 Cypress.Commands.add('questionNavigation', () => {
-    cy.get('div[intro-id="item_info"]').should('be.visible').invoke('text').then((initialInfo) => {
-        const initialText = initialInfo.trim()
+    const itemInfoSelector = 'div[intro-id="item_info"]'
+    const parseCounter = (text) => {
+        const normalized = text.replace(/\s+/g, ' ').trim()
+        const match = normalized.match(/(\d+)\s*of\s*(\d+)/i)
 
-        cy.get('#previous').then(($previous) => {
-            if (/\b1\b/.test(initialText)) {
-                cy.wrap($previous).should('be.disabled')
-            }
-        })
+        if (!match) {
+            throw new Error(`Unable to parse question counter: ${normalized}`)
+        }
+
+        return {
+            current: Number(match[1]),
+            total: Number(match[2]),
+        }
+    }
+
+    cy.get(itemInfoSelector).should('exist').invoke('text').then((initialInfo) => {
+        const initialCounter = parseCounter(initialInfo)
+
+        if (initialCounter.current === 1) {
+            cy.get('#previous').should('be.disabled')
+        }
 
         cy.get('#next').should('be.enabled').click({ force: true })
-        cy.get('div[intro-id="item_info"]').should(($itemInfo) => {
-            expect($itemInfo.text().trim()).not.to.eq(initialText)
+        cy.get(itemInfoSelector).should(($itemInfo) => {
+            const nextCounter = parseCounter($itemInfo.text())
+            expect(nextCounter.current).to.eq(initialCounter.current + 1)
+            expect(nextCounter.total).to.eq(initialCounter.total)
         })
 
         cy.get('#previous').should('be.enabled').click({ force: true })
-        cy.get('div[intro-id="item_info"]').should(($itemInfo) => {
-            expect($itemInfo.text().trim()).to.eq(initialText)
+        cy.get(itemInfoSelector).should(($itemInfo) => {
+            const previousCounter = parseCounter($itemInfo.text())
+            expect(previousCounter.current).to.eq(initialCounter.current)
+            expect(previousCounter.total).to.eq(initialCounter.total)
         })
     })
 })
