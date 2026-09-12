@@ -99,7 +99,7 @@ describe('Student Practice Tests - Learn, Test and Review Modes', () => {
                     .replace(/\s+/g, ' ')
                     .trim()
                 return (selector && $element.is(selector)) || labelPattern.test(text)
-            })
+            }, { timeout: 30000 })
             .should('have.length.at.least', 1)
             .last()
             .then(($label) => {
@@ -155,6 +155,17 @@ describe('Student Practice Tests - Learn, Test and Review Modes', () => {
 
     const clickGoBack = () => clickNavigationControl(/^GO\s*BACK(?:\s+TO\s+TEST\s+SELECTION)?$/i)
 
+    const returnFromResults = () => {
+        // endTest() only confirms submission; wait for the results page before
+        // looking for GO BACK so a control from the outgoing page is not clicked.
+        cy.location('search', { timeout: 30000 })
+            .should('include', 'func=navigate_items')
+        cy.contains(/Practice Test A/i, { timeout: 30000 }).should('be.visible')
+        clickGoBack()
+        cy.location('search', { timeout: 30000 })
+            .should('not.include', 'func=navigate_items')
+    }
+
     it('runs Practice Test Learn Mode, then Test Mode, Review Mode, and returns to Dashboard', () => {
         cy.visit('/')
         Navbar.clickOnLogin()
@@ -194,7 +205,7 @@ describe('Student Practice Tests - Learn, Test and Review Modes', () => {
         cy.get('#btntxt').click({ force: true })
 
         StudentPage.endTest()
-        clickGoBack()
+        returnFromResults()
 
         // TEST MODE: Practice Tests -> A -> Test
         openPracticeTests()
@@ -209,14 +220,15 @@ describe('Student Practice Tests - Learn, Test and Review Modes', () => {
 
         StudentPage.endTest()
 
-        // Result page -> GO BACK -> Review Mode
-        clickGoBack()
+        // Result page -> GO BACK -> Practice Tests -> A -> Review
+        returnFromResults()
+        openPracticeTests()
+        openPracticeTestA()
+        discardIncompleteTestIfPresent()
         selectMode('Review')
 
-        // Review should open the test review/result area. Verify something from that page,
-        // then return to the mode page using GO BACK.
-        cy.contains(/Practice Test A/i, { timeout: 30000 }).should('exist')
-        clickGoBack()
+        // Confirm the review/results page has loaded before returning.
+        returnFromResults()
 
         // Finish on Dashboard
         clickNavigationControl(/^DASHBOARD$/i)
