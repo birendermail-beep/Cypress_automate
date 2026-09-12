@@ -33,9 +33,9 @@ jobs:
       - name: Run Jigyaasa public smoke tests
         run: npx cypress run --e2e --spec "cypress/integration/smoke/public-site.smoke.js" --browser chrome
 
-      - name: Run authenticated Student Post Assessment test
+      - name: Run authenticated Student Post Assessment and Practice Test flows
         if: ${{ env.CYPRESS_USERNAME != '' && env.CYPRESS_PASSWORD != '' }}
-        run: npx cypress run --e2e --spec "cypress/integration/final/6607/Student/10826.js" --browser chrome
+        run: npx cypress run --e2e --spec "cypress/integration/final/6607/Student/10826.js,cypress/integration/final/6607/Student/10829.js" --browser chrome
 
       - name: Authenticated test setup reminder
         if: ${{ env.CYPRESS_USERNAME == '' || env.CYPRESS_PASSWORD == '' }}
