@@ -227,8 +227,21 @@ describe('Student Practice Tests - Learn, Test and Review Modes', () => {
         discardIncompleteTestIfPresent()
         selectMode('Review')
 
-        // Confirm the review/results page has loaded before returning.
-        returnFromResults()
+        // Review opens an individual item with its explanation, not the
+        // score summary headed "Practice Test A".
+        cy.location('search', { timeout: 30000 }).should((search) => {
+            const params = new URLSearchParams(search)
+            expect(params.get('func')).to.equal('navigate_items')
+            expect(params.get('item_sequence')).to.equal('1')
+        })
+        cy.contains(/^\s*Explanation\s*$/i, { timeout: 30000 })
+            .should('be.visible')
+
+        // Leave the reviewed item using the application's GO BACK control.
+        clickGoBack()
+        cy.location('search', { timeout: 30000 }).should((search) => {
+            expect(new URLSearchParams(search).has('item_sequence')).to.equal(false)
+        })
 
         // Finish on Dashboard
         clickNavigationControl(/^DASHBOARD$/i)
