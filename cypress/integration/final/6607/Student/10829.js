@@ -133,21 +133,27 @@ describe('Student Practice Tests - Learn, Test and Review Modes', () => {
         cy.get('div[intro-id="item_info"]', { timeout: 30000 }).should('exist')
     }
 
-    const clickGoBack = () => {
-        cy.get('body', { timeout: 30000 }).then(($body) => {
-            const goBack = $body
-                .find('a, button, [role="button"], div, span')
-                .filter(':visible')
-                .filter((_, element) => /GO\s*BACK/i.test((element.innerText || element.textContent || '').replace(/\s+/g, ' ').trim()))
-
-            if (!goBack.length) {
-                throw new Error(`GO BACK control not found. Current URL: ${window.location.href}`)
-            }
-
-            const target = goBack.last().closest('a, button, [role="button"], [onclick]')
-            cy.wrap(target.length ? target : goBack.last()).click({ force: true })
-        })
+    // Query again while navigation controls render after a page transition.
+    const clickNavigationControl = (labelPattern) => {
+        return cy.get('body', { timeout: 30000 })
+            .find('*', { timeout: 30000 })
+            .filter((_, element) => {
+                const text = (element.innerText || element.textContent || '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                return Cypress.$(element).is(':visible') && labelPattern.test(text)
+            }, { timeout: 30000 })
+            .should('have.length.at.least', 1)
+            .last()
+            .then(($label) => {
+                const $control = $label.closest('a, button, [role="button"], [onclick]')
+                return cy.wrap($control.length ? $control : $label)
+                    .should('be.visible')
+                    .click()
+            })
     }
+
+    const clickGoBack = () => clickNavigationControl(/^GO\s*BACK(?:\s+TO\s+TEST\s+SELECTION)?$/i)
 
     it('runs Practice Test Learn Mode, then Test Mode, Review Mode, and returns to Dashboard', () => {
         cy.visit('/')
@@ -213,18 +219,7 @@ describe('Student Practice Tests - Learn, Test and Review Modes', () => {
         clickGoBack()
 
         // Finish on Dashboard
-        cy.get('body', { timeout: 30000 }).then(($body) => {
-            const dashboard = $body
-                .find('a, button, [role="button"], div')
-                .filter(':visible')
-                .filter((_, element) => /^\s*DASHBOARD\s*$/i.test(element.innerText || element.textContent || ''))
-
-            if (!dashboard.length) {
-                throw new Error(`Dashboard control not found. Current URL: ${window.location.href}`)
-            }
-
-            cy.wrap(dashboard.last()).click({ force: true })
-        })
+        clickNavigationControl(/^DASHBOARD$/i)
 
         cy.contains(/PRACTICE\s*TESTS/i, { timeout: 30000 }).should('exist')
         cy.contains(/POST\s*ASSESSMENT/i).should('exist')
