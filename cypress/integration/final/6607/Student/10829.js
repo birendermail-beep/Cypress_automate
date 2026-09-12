@@ -97,10 +97,25 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
                 return
             }
 
-            // Current Practice Test UI selects the mode first, then requires
-            // the large PLAY / Start Test Prep control to actually open it.
+            // Existing Practice Test implementation uses #learn as a two-step
+            // launch control after #learn_mode is selected. The original spec
+            // also clicked #learn twice, so preserve that behavior here.
+            if (mode === 'Learn' && $body.find('#learn:visible').length) {
+                cy.get('#learn').filter(':visible').last().click({ force: true })
+                cy.wait(500)
+                cy.get('body').then(($afterFirstClick) => {
+                    if (
+                        !$afterFirstClick.find('div[intro-id="item_info"]').length &&
+                        $afterFirstClick.find('#learn:visible').length
+                    ) {
+                        cy.get('#learn').filter(':visible').last().click({ force: true })
+                    }
+                })
+                return
+            }
+
             const preferredSelectors = mode === 'Learn'
-                ? ['#learn', '[data-cy="learn"]', '[data-cy="start_test_prep"]']
+                ? ['[data-cy="learn"]', '[data-cy="start_test_prep"]']
                 : ['#test', '[data-cy="test"]', '[data-cy="start_test_prep"]']
 
             const matchedSelector = preferredSelectors.find((selector) => {
@@ -122,8 +137,6 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
                 return
             }
 
-            // Fallback for the current circular play icon, which can be an
-            // icon-only element immediately below "Start Test Prep".
             const startLabel = $body
                 .find('*')
                 .filter(':visible')
