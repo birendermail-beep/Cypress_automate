@@ -84,10 +84,14 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
                 return
             }
 
-            cy.contains('button, a, [role="button"], div', new RegExp(`^\\s*${mode}\\b`, 'i'), { timeout: 30000 })
+            const exactModeControl = $body
+                .find('button, a, [role="button"]')
                 .filter(':visible')
-                .last()
-                .click({ force: true })
+                .filter((_, element) => new RegExp(`^\\s*${mode}\\s*$`, 'i').test(element.innerText || element.textContent || ''))
+
+            if (exactModeControl.length) {
+                cy.wrap(exactModeControl.last()).click({ force: true })
+            }
         })
     }
 
@@ -97,65 +101,56 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
                 return
             }
 
-            // Existing Practice Test implementation uses #learn as a two-step
-            // launch control after #learn_mode is selected. The original spec
-            // also clicked #learn twice, so preserve that behavior here.
-            if (mode === 'Learn' && $body.find('#learn:visible').length) {
-                cy.get('#learn').filter(':visible').last().click({ force: true })
-                cy.wait(500)
-                cy.get('body').then(($afterFirstClick) => {
-                    if (
-                        !$afterFirstClick.find('div[intro-id="item_info"]').length &&
-                        $afterFirstClick.find('#learn:visible').length
-                    ) {
-                        cy.get('#learn').filter(':visible').last().click({ force: true })
-                    }
-                })
+            // First try known controls from the legacy Practice Test player.
+            const knownSelectors = mode === 'Learn'
+                ? ['#learn', '[data-cy="learn"]']
+                : ['#test', '[data-cy="test"]']
+
+            const knownSelector = knownSelectors.find((selector) => $body.find(selector).filter(':visible').length)
+            if (knownSelector) {
+                cy.get(knownSelector).filter(':visible').last().click({ force: true })
+                cy.wait(700)
+            }
+        })
+
+        // Current UI shows a large circular Play button directly below
+        // "Start Test Prep". Locate that label and click the element rendered
+        // under it instead of matching unrelated Learn/Play text elsewhere.
+        cy.get('body', { timeout: 30000 }).then(($body) => {
+            if ($body.find('div[intro-id="item_info"]').length) {
                 return
             }
 
-            const preferredSelectors = mode === 'Learn'
-                ? ['[data-cy="learn"]', '[data-cy="start_test_prep"]']
-                : ['#test', '[data-cy="test"]', '[data-cy="start_test_prep"]']
-
-            const matchedSelector = preferredSelectors.find((selector) => {
-                return $body.find(selector).filter(':visible').length
-            })
-
-            if (matchedSelector) {
-                cy.get(matchedSelector).filter(':visible').last().click({ force: true })
-                return
-            }
-
-            const startText = $body
-                .find('button, a, [role="button"], div')
-                .filter(':visible')
-                .filter((_, element) => /start\s*test\s*prep|^\s*play\s*$/i.test(element.innerText || element.textContent || ''))
-
-            if (startText.length) {
-                cy.wrap(startText.last()).click({ force: true })
-                return
-            }
-
-            const startLabel = $body
+            const labels = $body
                 .find('*')
                 .filter(':visible')
                 .filter((_, element) => /^\s*Start\s+Test\s+Prep\s*$/i.test(element.innerText || element.textContent || ''))
-                .last()
 
-            if (startLabel.length) {
-                const area = startLabel.parent()
-                const clickable = area
-                    .find('button, a, [role="button"], [onclick], .cursor-pointer, .pointer, svg')
-                    .filter(':visible')
+            if (!labels.length) {
+                throw new Error(`Start Test Prep label not found for ${mode} Mode. Current URL: ${window.location.href}`)
+            }
 
-                if (clickable.length) {
-                    cy.wrap(clickable.last()).click({ force: true })
-                    return
+            const label = labels.last()[0]
+            const rect = label.getBoundingClientRect()
+            const x = rect.left + rect.width / 2
+
+            // Probe below the label where the circular Play control is shown.
+            const offsets = [55, 70, 85, 100, 115]
+            let target = null
+            for (const offset of offsets) {
+                const element = label.ownerDocument.elementFromPoint(x, rect.bottom + offset)
+                if (element && element !== label) {
+                    target = element
+                    break
                 }
             }
 
-            throw new Error(`Unable to launch ${mode} Mode from Practice Test. Current URL: ${window.location.href}`)
+            if (!target) {
+                throw new Error(`Unable to locate Play control below Start Test Prep for ${mode} Mode.`)
+            }
+
+            const clickable = Cypress.$(target).closest('button, a, [role="button"], [onclick]')
+            cy.wrap(clickable.length ? clickable[0] : target).click({ force: true })
         })
 
         cy.get('div[intro-id="item_info"]', { timeout: 30000 }).should('exist')
