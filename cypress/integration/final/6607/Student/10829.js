@@ -91,6 +91,63 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
         })
     }
 
+    const launchSelectedMode = (mode) => {
+        cy.get('body', { timeout: 30000 }).then(($body) => {
+            if ($body.find('div[intro-id="item_info"]').length) {
+                return
+            }
+
+            // Current Practice Test UI selects the mode first, then requires
+            // the large PLAY / Start Test Prep control to actually open it.
+            const preferredSelectors = mode === 'Learn'
+                ? ['#learn', '[data-cy="learn"]', '[data-cy="start_test_prep"]']
+                : ['#test', '[data-cy="test"]', '[data-cy="start_test_prep"]']
+
+            const matchedSelector = preferredSelectors.find((selector) => {
+                return $body.find(selector).filter(':visible').length
+            })
+
+            if (matchedSelector) {
+                cy.get(matchedSelector).filter(':visible').last().click({ force: true })
+                return
+            }
+
+            const startText = $body
+                .find('button, a, [role="button"], div')
+                .filter(':visible')
+                .filter((_, element) => /start\s*test\s*prep|^\s*play\s*$/i.test(element.innerText || element.textContent || ''))
+
+            if (startText.length) {
+                cy.wrap(startText.last()).click({ force: true })
+                return
+            }
+
+            // Fallback for the current circular play icon, which can be an
+            // icon-only element immediately below "Start Test Prep".
+            const startLabel = $body
+                .find('*')
+                .filter(':visible')
+                .filter((_, element) => /^\s*Start\s+Test\s+Prep\s*$/i.test(element.innerText || element.textContent || ''))
+                .last()
+
+            if (startLabel.length) {
+                const area = startLabel.parent()
+                const clickable = area
+                    .find('button, a, [role="button"], [onclick], .cursor-pointer, .pointer, svg')
+                    .filter(':visible')
+
+                if (clickable.length) {
+                    cy.wrap(clickable.last()).click({ force: true })
+                    return
+                }
+            }
+
+            throw new Error(`Unable to launch ${mode} Mode from Practice Test. Current URL: ${window.location.href}`)
+        })
+
+        cy.get('div[intro-id="item_info"]', { timeout: 30000 }).should('exist')
+    }
+
     const clickGoBack = () => {
         cy.contains('a, button, [role="button"]', /^\s*GO BACK\s*$/i, { timeout: 30000 })
             .filter(':visible')
@@ -112,8 +169,8 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
         openFirstPracticeTest()
         discardIncompleteTestIfPresent()
         selectMode('Learn')
+        launchSelectedMode('Learn')
 
-        cy.get('div[intro-id="item_info"]', { timeout: 30000 }).should('exist')
         cy.get('div[intro-id="timer"], [intro-id="timer"]').should('not.exist')
 
         cy.get('body').then(($body) => {
@@ -145,8 +202,8 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
         openFirstPracticeTest()
         discardIncompleteTestIfPresent()
         selectMode('Test')
+        launchSelectedMode('Test')
 
-        cy.get('div[intro-id="item_info"]', { timeout: 30000 }).should('exist')
         cy.get('div[intro-id="timer"], [intro-id="timer"]', { timeout: 30000 }).should('exist')
         cy.get('#previous').should('be.disabled')
         cy.questionNavigation()
