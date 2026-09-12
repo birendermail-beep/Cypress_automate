@@ -85,26 +85,29 @@ describe('Student Practice Tests - Learn, Test and Review Modes', () => {
         }
         const selector = modeSelectors[mode]
 
-        cy.get('body', { timeout: 30000 }).then(($body) => {
-            if (selector && $body.find(`${selector}:visible`).length) {
-                cy.get(selector).filter(':visible').last().click({ force: true })
-                return
-            }
+        // Retry the lookup while the mode page renders. Labels may be nested
+        // in spans/headings, and their cards also contain descriptive text.
+        const labelPattern = new RegExp(`^${mode}(?: Mode)?$`, 'i')
 
-            const modeControl = $body
-                .find('a, button, [role="button"], div')
-                .filter(':visible')
-                .filter((_, element) => {
-                    const text = (element.innerText || element.textContent || '').replace(/\s+/g, ' ').trim()
-                    return new RegExp(`^${mode}(?: Mode)?$`, 'i').test(text)
-                })
+        return cy.get('body', { timeout: 30000 })
+            .find('*', { timeout: 30000 })
+            .filter((_, element) => {
+                const $element = Cypress.$(element)
+                if (!$element.is(':visible')) return false
 
-            if (!modeControl.length) {
-                throw new Error(`${mode} Mode control not found. Current URL: ${window.location.href}`)
-            }
-
-            cy.wrap(modeControl.last()).click({ force: true })
-        })
+                const text = (element.innerText || element.textContent || '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                return (selector && $element.is(selector)) || labelPattern.test(text)
+            })
+            .should('have.length.at.least', 1)
+            .last()
+            .then(($label) => {
+                const $control = $label.closest('a, button, [role="button"], [onclick]')
+                return cy.wrap($control.length ? $control : $label)
+                    .should('be.visible')
+                    .click()
+            })
     }
 
     const launchLearnModeIfNeeded = () => {
