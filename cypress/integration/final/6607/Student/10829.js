@@ -5,7 +5,7 @@
 @story_id: 10829
 @story_name: Access Practice Test
 @path: final/6607/Student
-@description: Verify current Practice Test Learn Mode and Test Mode flows in one end-to-end run.
+@description: Verify current Practice Test Learn Mode, Test Mode, Review Mode, then return to Dashboard.
 */
 import {
     Navbar,
@@ -15,11 +15,9 @@ import {
     StudentPage,
 } from '../../../../page-objects/pages/index'
 
-describe('Student Practice Tests - Learn and Test Modes', () => {
+describe('Student Practice Tests - Learn, Test and Review Modes', () => {
     const openPracticeTests = () => {
         cy.get('body', { timeout: 30000 }).then(($body) => {
-            // On the dashboard the text itself is not the navigation control.
-            // Find PRACTICE TESTS and click its clickable/card ancestor.
             const labels = $body
                 .find('*')
                 .filter(':visible')
@@ -47,8 +45,6 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
             }
         })
 
-        // Do not fail repeatedly just because the dashboard card DOM changes.
-        // If the UI click did not navigate, use the known Practice Tests route.
         cy.wait(500)
         cy.url().then((url) => {
             if (!/action=practice/i.test(url)) {
@@ -70,7 +66,8 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
         cy.get('body', { timeout: 30000 }).then(($body) => {
             if (/Last test was not completed\. Do you want to continue\?/i.test($body.text())) {
                 const noButton = $body
-                    .find('button, a, [role="button"]')
+                    .find('button, a, [role="button"], div')
+                    .filter(':visible')
                     .filter((_, element) => /^\s*No\s*$/i.test(element.innerText || element.textContent || ''))
 
                 if (noButton.length) {
@@ -84,12 +81,30 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
         const modeSelectors = {
             Test: '#test_mode',
             Learn: '#learn_mode',
+            Review: '#review_mode',
         }
         const selector = modeSelectors[mode]
 
-        cy.get(selector, { timeout: 30000 })
-            .should('be.visible')
-            .click({ force: true })
+        cy.get('body', { timeout: 30000 }).then(($body) => {
+            if (selector && $body.find(`${selector}:visible`).length) {
+                cy.get(selector).filter(':visible').last().click({ force: true })
+                return
+            }
+
+            const modeControl = $body
+                .find('a, button, [role="button"], div')
+                .filter(':visible')
+                .filter((_, element) => {
+                    const text = (element.innerText || element.textContent || '').replace(/\s+/g, ' ').trim()
+                    return new RegExp(`^${mode}(?: Mode)?$`, 'i').test(text)
+                })
+
+            if (!modeControl.length) {
+                throw new Error(`${mode} Mode control not found. Current URL: ${window.location.href}`)
+            }
+
+            cy.wrap(modeControl.last()).click({ force: true })
+        })
     }
 
     const launchLearnModeIfNeeded = () => {
@@ -116,13 +131,22 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
     }
 
     const clickGoBack = () => {
-        cy.contains('a, button, [role="button"]', /^\s*GO BACK\s*$/i, { timeout: 30000 })
-            .filter(':visible')
-            .last()
-            .click({ force: true })
+        cy.get('body', { timeout: 30000 }).then(($body) => {
+            const goBack = $body
+                .find('a, button, [role="button"], div, span')
+                .filter(':visible')
+                .filter((_, element) => /GO\s*BACK/i.test((element.innerText || element.textContent || '').replace(/\s+/g, ' ').trim()))
+
+            if (!goBack.length) {
+                throw new Error(`GO BACK control not found. Current URL: ${window.location.href}`)
+            }
+
+            const target = goBack.last().closest('a, button, [role="button"], [onclick]')
+            cy.wrap(target.length ? target : goBack.last()).click({ force: true })
+        })
     }
 
-    it('runs Practice Test Learn Mode, then Test Mode, and returns to Dashboard', () => {
+    it('runs Practice Test Learn Mode, then Test Mode, Review Mode, and returns to Dashboard', () => {
         cy.visit('/')
         Navbar.clickOnLogin()
         LoginPage.loginPage(login_username, login_password)
@@ -163,7 +187,7 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
         StudentPage.endTest()
         clickGoBack()
 
-        // TEST MODE: Dashboard/cover -> Practice Tests -> A -> Test
+        // TEST MODE: Practice Tests -> A -> Test
         openPracticeTests()
         openPracticeTestA()
         discardIncompleteTestIfPresent()
@@ -175,12 +199,29 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
         cy.questionNavigation()
 
         StudentPage.endTest()
+
+        // Result page -> GO BACK -> Review Mode
+        clickGoBack()
+        selectMode('Review')
+
+        // Review should open the test review/result area. Verify something from that page,
+        // then return to the mode page using GO BACK.
+        cy.contains(/Practice Test A/i, { timeout: 30000 }).should('exist')
         clickGoBack()
 
-        cy.contains('a, button, [role="button"]', /^\s*DASHBOARD\s*$/i, { timeout: 30000 })
-            .filter(':visible')
-            .last()
-            .click({ force: true })
+        // Finish on Dashboard
+        cy.get('body', { timeout: 30000 }).then(($body) => {
+            const dashboard = $body
+                .find('a, button, [role="button"], div')
+                .filter(':visible')
+                .filter((_, element) => /^\s*DASHBOARD\s*$/i.test(element.innerText || element.textContent || ''))
+
+            if (!dashboard.length) {
+                throw new Error(`Dashboard control not found. Current URL: ${window.location.href}`)
+            }
+
+            cy.wrap(dashboard.last()).click({ force: true })
+        })
 
         cy.contains(/PRACTICE\s*TESTS/i, { timeout: 30000 }).should('exist')
         cy.contains(/POST\s*ASSESSMENT/i).should('exist')
