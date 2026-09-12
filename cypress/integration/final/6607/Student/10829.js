@@ -18,28 +18,38 @@ import {
 describe('Student Practice Tests - Learn and Test Modes', () => {
     const openPracticeTests = () => {
         cy.get('body', { timeout: 30000 }).then(($body) => {
+            const practiceTileText = $body
+                .find('div, a, button, [role="button"]')
+                .filter(':visible')
+                .filter((_, element) => /^\s*PRACTICE\s*TESTS\s*$/i.test(element.innerText || element.textContent || ''))
+
+            if (practiceTileText.length) {
+                cy.wrap(practiceTileText.last()).click({ force: true })
+                return
+            }
+
             const selectors = [
                 '[intro-id="practice_tests"]',
                 '[data-cy="practice_tests"]',
                 '[data-cy="practice_test"]',
             ]
-            const matchedSelector = selectors.find((selector) => $body.find(selector).length)
+            const matchedSelector = selectors.find((selector) => $body.find(`${selector}:visible`).length)
 
             if (matchedSelector) {
-                cy.get(matchedSelector).first().click({ force: true })
+                cy.get(matchedSelector).filter(':visible').last().click({ force: true })
                 return
             }
 
-            cy.contains(/PRACTICE\s*TESTS/i, { timeout: 30000 })
-                .last()
-                .click({ force: true })
+            throw new Error(`Practice Tests tile not found. Current URL: ${window.location.href}`)
         })
+
+        cy.url({ timeout: 30000 }).should('match', /action=practice/i)
     }
 
     const openPracticeTestA = () => {
         cy.get('[data-cy="test_tests"]', { timeout: 30000 })
-            .eq(0)
-            .should('be.visible')
+            .filter(':visible')
+            .first()
             .click({ force: true })
     }
 
@@ -108,7 +118,7 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
             StudentPage.visitLOAplusCompleteCourse(data)
         })
 
-        // LEARN MODE: Practice Tests -> A -> Learn
+        // LEARN MODE: Dashboard -> Practice Tests -> A -> Learn
         openPracticeTests()
         openPracticeTestA()
         discardIncompleteTestIfPresent()
@@ -140,8 +150,7 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
         StudentPage.endTest()
         clickGoBack()
 
-        // TEST MODE: return to Practice Tests -> A -> Test
-        cy.contains(/PRACTICE\s*TESTS/i, { timeout: 30000 }).should('exist')
+        // TEST MODE: Dashboard/cover -> Practice Tests -> A -> Test
         openPracticeTests()
         openPracticeTestA()
         discardIncompleteTestIfPresent()
