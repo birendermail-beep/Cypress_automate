@@ -36,25 +36,11 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
         })
     }
 
-    const openFirstPracticeTest = () => {
-        cy.get('body', { timeout: 30000 }).then(($body) => {
-            const legacyTest = $body.find('[data-cy="test_tests"]')
-            if (legacyTest.length) {
-                cy.get('[data-cy="test_tests"]').first().click({ force: true })
-                return
-            }
-
-            const testControls = $body
-                .find('a, button, [role="button"], .card, .menu-item')
-                .filter(':visible')
-                .filter((_, element) => /practice\s*test|test\s*\d+|start\s*test/i.test(element.innerText || element.textContent || ''))
-
-            if (!testControls.length) {
-                throw new Error(`Unable to find a Practice Test to open. Current URL: ${window.location.href}`)
-            }
-
-            cy.wrap(testControls.first()).click({ force: true })
-        })
+    const openPracticeTestA = () => {
+        cy.get('[data-cy="test_tests"]', { timeout: 30000 })
+            .eq(0)
+            .should('be.visible')
+            .click({ force: true })
     }
 
     const discardIncompleteTestIfPresent = () => {
@@ -78,79 +64,29 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
         }
         const selector = modeSelectors[mode]
 
-        cy.get('body', { timeout: 30000 }).then(($body) => {
-            if ($body.find(selector).length) {
-                cy.get(selector).first().click({ force: true })
-                return
-            }
-
-            const exactModeControl = $body
-                .find('button, a, [role="button"]')
-                .filter(':visible')
-                .filter((_, element) => new RegExp(`^\\s*${mode}\\s*$`, 'i').test(element.innerText || element.textContent || ''))
-
-            if (exactModeControl.length) {
-                cy.wrap(exactModeControl.last()).click({ force: true })
-            }
-        })
+        cy.get(selector, { timeout: 30000 })
+            .should('be.visible')
+            .click({ force: true })
     }
 
-    const launchSelectedMode = (mode) => {
+    const launchLearnModeIfNeeded = () => {
         cy.get('body', { timeout: 30000 }).then(($body) => {
             if ($body.find('div[intro-id="item_info"]').length) {
                 return
             }
 
-            // First try known controls from the legacy Practice Test player.
-            const knownSelectors = mode === 'Learn'
-                ? ['#learn', '[data-cy="learn"]']
-                : ['#test', '[data-cy="test"]']
-
-            const knownSelector = knownSelectors.find((selector) => $body.find(selector).filter(':visible').length)
-            if (knownSelector) {
-                cy.get(knownSelector).filter(':visible').last().click({ force: true })
-                cy.wait(700)
+            if ($body.find('#learn:visible').length) {
+                cy.get('#learn').filter(':visible').last().click({ force: true })
+                cy.wait(500)
+                cy.get('body').then(($afterFirstClick) => {
+                    if (
+                        !$afterFirstClick.find('div[intro-id="item_info"]').length &&
+                        $afterFirstClick.find('#learn:visible').length
+                    ) {
+                        cy.get('#learn').filter(':visible').last().click({ force: true })
+                    }
+                })
             }
-        })
-
-        // Current UI shows a large circular Play button directly below
-        // "Start Test Prep". Locate that label and click the element rendered
-        // under it instead of matching unrelated Learn/Play text elsewhere.
-        cy.get('body', { timeout: 30000 }).then(($body) => {
-            if ($body.find('div[intro-id="item_info"]').length) {
-                return
-            }
-
-            const labels = $body
-                .find('*')
-                .filter(':visible')
-                .filter((_, element) => /^\s*Start\s+Test\s+Prep\s*$/i.test(element.innerText || element.textContent || ''))
-
-            if (!labels.length) {
-                throw new Error(`Start Test Prep label not found for ${mode} Mode. Current URL: ${window.location.href}`)
-            }
-
-            const label = labels.last()[0]
-            const rect = label.getBoundingClientRect()
-            const x = rect.left + rect.width / 2
-
-            // Probe below the label where the circular Play control is shown.
-            const offsets = [55, 70, 85, 100, 115]
-            let target = null
-            for (const offset of offsets) {
-                const element = label.ownerDocument.elementFromPoint(x, rect.bottom + offset)
-                if (element && element !== label) {
-                    target = element
-                    break
-                }
-            }
-
-            if (!target) {
-                throw new Error(`Unable to locate Play control below Start Test Prep for ${mode} Mode.`)
-            }
-
-            const clickable = Cypress.$(target).closest('button, a, [role="button"], [onclick]')
-            cy.wrap(clickable.length ? clickable[0] : target).click({ force: true })
         })
 
         cy.get('div[intro-id="item_info"]', { timeout: 30000 }).should('exist')
@@ -172,12 +108,12 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
             StudentPage.visitLOAplusCompleteCourse(data)
         })
 
-        // LEARN MODE
+        // LEARN MODE: Practice Tests -> A -> Learn
         openPracticeTests()
-        openFirstPracticeTest()
+        openPracticeTestA()
         discardIncompleteTestIfPresent()
         selectMode('Learn')
-        launchSelectedMode('Learn')
+        launchLearnModeIfNeeded()
 
         cy.get('div[intro-id="timer"], [intro-id="timer"]').should('not.exist')
 
@@ -204,14 +140,14 @@ describe('Student Practice Tests - Learn and Test Modes', () => {
         StudentPage.endTest()
         clickGoBack()
 
-        // TEST MODE
+        // TEST MODE: return to Practice Tests -> A -> Test
         cy.contains(/PRACTICE\s*TESTS/i, { timeout: 30000 }).should('exist')
         openPracticeTests()
-        openFirstPracticeTest()
+        openPracticeTestA()
         discardIncompleteTestIfPresent()
         selectMode('Test')
-        launchSelectedMode('Test')
 
+        cy.get('div[intro-id="item_info"]', { timeout: 30000 }).should('exist')
         cy.get('div[intro-id="timer"], [intro-id="timer"]', { timeout: 30000 }).should('exist')
         cy.get('#previous').should('be.disabled')
         cy.questionNavigation()
