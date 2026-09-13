@@ -124,7 +124,7 @@ describe("Choice Mattrix Test Case", function () {
         })
     })
 
-    it.only('Add Row and column', function () {
+    it('Add Row and column', function () {
         // To Add Column
         cy.get(".testmode_table  thead > tr > th").its("length").should("eq", 3)
         cy.get("button").contains("Add column").click()

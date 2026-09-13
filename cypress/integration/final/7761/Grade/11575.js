@@ -147,7 +147,7 @@ describe("grade sync area", function () {
             .contains("Search")
             .click();
     });
-    it.only("Apply adavnce search filter with select student and date", function () {
+    it("Apply adavnce search filter with select student and date", function () {
         cy.get('[data-cy="course_list_cy"]').select("Automation Testing [5TXCUHIPAYJ7SYNM]", {
             force: true
         });

@@ -7,7 +7,8 @@
     "cy:open": "cypress open --e2e",
     "cy:run": "cypress run --e2e --browser chrome",
     "test": "npm run cy:run",
-    "verify": "cypress verify"
+    "verify": "cypress verify",
+    "check:suite": "node --experimental-vm-modules scripts/check-suite.cjs"
   },
   "devDependencies": {
     "cypress": "15.21.1",

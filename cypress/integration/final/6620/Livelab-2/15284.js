@@ -34,7 +34,7 @@ describe('VMA area', function() {
         cy.get('#server_logs').click({force:true});
     })
 
-    it.only('Open Server Log',function(){
+    it('Open Server Log',function(){
         cy.fixture('global').then(data => {
             cy.visit(data.url+'/custom/docker/vmadmin/index.php?func=logs&action=server_logs');
         })

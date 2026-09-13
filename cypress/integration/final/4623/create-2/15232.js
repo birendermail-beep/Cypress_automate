@@ -17,7 +17,7 @@
 @test_data: N/A.
 @result: opening the content advance search page
 */
-import { Navbar, login_username, login_password, LoginPage, CreateArea } from '..././../../page-objects/pages/index'
+import { Navbar, login_username, login_password, LoginPage, CreateArea } from '../../../../page-objects/pages/index'
 describe('advance search page', function() {
     beforeEach('this is login', function() {
         cy.fixture('global').then(data => {

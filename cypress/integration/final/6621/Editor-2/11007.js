@@ -90,7 +90,7 @@ describe("Editor Area", function() {
             EditorPage.visitEditor(data.url)
         })
     })
-    it.only('Tree view Create New', function() {
+    it('Tree view Create New', function() {
         cy.get('.icomoon-search-2').click({ force: true })
         cy.get('[style="font-size: 20px; padding-left: 16px; height: 51px; background-color: rgb(76, 76, 76); width: 285px;"] > input').type('tree view', { force: true })
         cy.get('.icomoon-arrow-left-4').click()

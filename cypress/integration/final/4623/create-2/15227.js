@@ -69,7 +69,7 @@ describe('test assignment quick', function() {
         cy.get('[for="e"] > select').select("1");
         cy.get('[value="Assign"]').click();
     })
-    it.only('test the test assignment quick page', function() {
+    it('test the test assignment quick page', function() {
         cy.fixture('global').then(data => {
             cy.visit(data.url)
             Navbar.clickOnLogin()

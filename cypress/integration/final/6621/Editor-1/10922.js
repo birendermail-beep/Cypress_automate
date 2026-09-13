@@ -79,7 +79,7 @@ describe('editor area testing', function() {
     });
 
     /** Adding text box. */
-    it.only("Adding text box", function() {
+    it("Adding text box", function() {
         cy.get('#dndmain > img').click()
         cy.wait(3000);
         cy.get('#dndmain > img').rightclick({ force: true })

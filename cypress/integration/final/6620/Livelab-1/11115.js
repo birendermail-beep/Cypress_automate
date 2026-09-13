@@ -143,7 +143,7 @@ describe('Live Area', () => {
         cy.get('#export_all_csv').click();
     })
 
-    it.only('Export as xls for content issue', () => {
+    it('Export as xls for content issue', () => {
         cy.get('#machine_issue_report_advance_search > .modal-dialog > .modal-content > .modal-footer > [type="submit"]').click();
         cy.get('[data-cy=search_txt]').type('bs16{enter}');
         cy.get('[last_updated_on="27Dec19"] > .pr-0 > .d-flex > .custom_checkbox_new > .check_mark_custom').click();

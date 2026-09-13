@@ -109,7 +109,7 @@ describe('Create Area', () => {
     it('Item Bank', () => {
         CreateArea.itemBank();
     })
-    it.only('Assessment', () => {
+    it('Assessment', () => {
         CreateArea.examObjective()
         cy.get('.assesment_accordian > .card > .card-header').click();
     })

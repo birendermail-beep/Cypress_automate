@@ -309,7 +309,7 @@ describe('Live Area', () => {
         cy.get('[data-cy="search_btn"]').click()
         cy.get('[data-cy="machine_list"]').should('be.visible')
     })
-    it.only('Searching for powered off machine', () => {
+    it('Searching for powered off machine', () => {
         LiveLabArea.advanceSearch()
         cy.get('[data-cy="ref_power_status_select"]').select("1", { force: true })
         cy.get('[data-cy="search_btn"]').click()

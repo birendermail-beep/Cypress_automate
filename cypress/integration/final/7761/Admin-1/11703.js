@@ -85,7 +85,7 @@ describe('Admin Area', () => {
             cy.get('[data-cy="roster_table"]').should('be.visible')
         });
 
-        it.only("Search by status", function() {
+        it("Search by status", function() {
             cy.fixture('global').then(data => {
                 cy.get('[data-cy="status_lst"]').select('1',{force:true})
             })

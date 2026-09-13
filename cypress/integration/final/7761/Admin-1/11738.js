@@ -37,7 +37,7 @@ describe('Roster Testing', () => {
         AdminArea.visitEducatorManage()
         AdminArea.administratorSection()
     })
-    it.only("Permission Option in Action Button.", function() {
+    it("Permission Option in Action Button.", function() {
         cy.get('[data-cy="enroll_td"]').eq(0).click();
         cy.get('[data-cy="enroll_td"]').eq(0).click();
         cy.get('[data-cy="action_sec_track"]').eq(0).click()

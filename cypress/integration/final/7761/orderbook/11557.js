@@ -268,7 +268,7 @@ describe('Admin Area', () => {
         cy.get('[data-cy="advance_sbt_btn"]').click();
     });
 
-    it.only("Advance Search reset button", function () {
+    it("Advance Search reset button", function () {
         cy.get('[data-cy="report_dropdown"]').click();
         cy.get('[data-cy="advance_search"]').click();
         cy.get('[data-cy="report_select"]').select("Daily Order Book", { force: true });

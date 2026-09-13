@@ -141,7 +141,7 @@
 @test_data: n/a
 @result: Create App will open.
 */
-import { Navbar, login_username, login_password, LoginPage, CreateArea } from '../../../page-objects/pages/index'
+import { Navbar, login_username, login_password, LoginPage, CreateArea } from '../../../../page-objects/pages/index'
 describe('Create Area', () => {
     beforeEach('This is login', function() {
         cy.fixture('global').then(data => {
@@ -217,7 +217,7 @@ describe('Create Area', () => {
         cy.wait(2000)
         cy.get('#custom_search').click({ force: true })
     })
-    it.only('Badge in comments section', () => {
+    it('Badge in comments section', () => {
         CreateArea.myProject()
         CreateArea.openTodo()
         cy.get('#todo_advance_search').click()

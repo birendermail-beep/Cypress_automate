@@ -283,7 +283,7 @@ describe('Live Area', () => {
         cy.get('[data-cy="export_btn"]').click()
         cy.get('[data-cy="xls_export"]').click()
     })
-    it.only('Exporting powered on machines', () => {
+    it('Exporting powered on machines', () => {
         cy.get('[data-cy="ref_power_status_select"]').select("1", { force: true })
         cy.get('[data-cy="search_btn"]').click()
         cy.get('[data-cy="machine_list"]').should('be.visible')
@@ -291,7 +291,7 @@ describe('Live Area', () => {
         cy.get('[data-cy="export_btn"]').click()
         cy.get('[data-cy="xls_export"]').click()
     })
-    it.only('Exporting powered off machines', () => {
+    it('Exporting powered off machines', () => {
         cy.get('[data-cy="ref_power_status_select"]').select("1", { force: true })
         cy.get('[data-cy="search_btn"]').click()
         cy.get('[data-cy="machine_list"]').should('be.visible')

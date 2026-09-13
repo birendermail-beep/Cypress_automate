@@ -11,17 +11,17 @@ Cypress.Commands.add('isPaginationRequire', () => {
 })
 
 Cypress.Commands.add('checkAscSort', (tbodySelector, colSelector) => {
-    cy.get(tbodySelector).within(() => {
-        let firstStr
-        cy.get(`tr:nth-child(1) > td:nth-child(${colSelector})`).invoke('text').then((text) => {
-            firstStr = text.trim()
-        })
-        cy.get('tr').each((arg, indexT) => {
-            cy.get(`tr:nth-child(${indexT + 1}) > td:nth-child(${colSelector})`).invoke('text').then((text) => {
-                expect(text.trim()).to.be.at.least(firstStr)
-                firstStr = text.trim()
+    return cy.get(tbodySelector).should(($tbody) => {
+        const values = Array.from($tbody.find(`tr > td:nth-child(${colSelector})`),
+            (cell) => cell.textContent.trim())
+        expect(values.length, 'sortable cells').to.be.greaterThan(0)
+        for (let index = 1; index < values.length; index += 1) {
+            const comparison = values[index - 1].localeCompare(values[index], undefined, {
+                numeric: true,
+                sensitivity: 'base',
             })
-        })
+            expect(comparison, `ascending order at row ${index + 1}`).to.be.at.most(0)
+        }
     })
 })
 

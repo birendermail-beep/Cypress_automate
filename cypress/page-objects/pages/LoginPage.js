@@ -20,7 +20,7 @@ export default class LoginPage extends BasePage {
             .filter(':visible')
             .first()
             .clear()
-            .type(resolvedUsername, { log: false })
+            .type(resolvedUsername, { log: false, parseSpecialCharSequences: false })
 
         cy.get(
             '#password, input[type="password"], input[name="password"], input[placeholder="ENTER PASSWORD"]',
@@ -29,7 +29,7 @@ export default class LoginPage extends BasePage {
             .filter(':visible')
             .first()
             .clear()
-            .type(resolvedPassword, { log: false })
+            .type(resolvedPassword, { log: false, parseSpecialCharSequences: false })
 
         cy.get('body').then(($body) => {
             const submitSelector = ['#submit', 'button[type="submit"]', 'input[type="submit"]']

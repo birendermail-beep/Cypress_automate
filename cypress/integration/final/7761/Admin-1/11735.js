@@ -124,7 +124,7 @@ describe('Roster Testing', () => {
             });
         });
     });
-    it.only("Sort based on Ends On.", function() {
+    it("Sort based on Ends On.", function() {
         cy.get('[data-cy="end_on_row"]').eq(0).invoke('text')
         .then(text => {
             const first = text;

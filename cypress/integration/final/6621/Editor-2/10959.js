@@ -54,7 +54,7 @@ describe("embed (knowledge check) testing", function() {
         cy.get('.btn-secondary').contains('Submit').click({ force: true })
     })
         //Load weblink player in new tab
-    it.only('embed and player tag for Load weblink player in new tab', function() {
+    it('embed and player tag for Load weblink player in new tab', function() {
         cy.get('#type').select('Web Link', { force: true })
         cy.get('[placeholder="Enter the title"]').type('Test', { force: true })
         cy.get('#asset').clear().type('http://site.ebrary.com/lib/westerngovernors/reader.action?ppg=242&docID=10627460&tm=1477364263136', { force: true })

@@ -110,7 +110,7 @@ describe('Live Area', () => {
         cy.get('[data-cy=export_btn]').click();
         cy.get('#download_all_xls').click();
     })
-    it.only('Export as xls', () => {
+    it('Export as xls', () => {
         cy.get('#adv_search_button').click();
         cy.get('[data-cy=export_btn]').click();
         cy.get('#export_all').click();

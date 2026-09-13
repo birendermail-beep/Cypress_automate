@@ -108,7 +108,7 @@ describe('Live Area', () => {
         cy.get('[data-cy=export_btn]').click();
         cy.get('#export_all_csv').click();
     })
-    it.only('click on Export dropdown and Export as xls', () => {
+    it('click on Export dropdown and Export as xls', () => {
         cy.get('#adv_search_button').click({ force: true });
         cy.get(':nth-child(1) > .text-center > .d-flex > .custom_checkbox_new > .check_mark_custom').click();
         cy.get('[data-cy=export_btn]').click();
