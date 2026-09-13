@@ -61,3 +61,9 @@ The next migration phase is application-level repair: update obsolete Jigyaasa s
 Run `npm run check:suite` to check JavaScript syntax, relative import paths, and accidental focused tests without application credentials. This does not validate live selectors or application behavior.
 
 The ongoing application repairs are on `modernize-cypress-2026`; `main` still contains the original Cypress 4 suite.
+
+## Read-only execution scope
+
+`npm test` and `npm run test:reports` run only `cypress/integration/read-only/**/*.js`. These reviewed checks open Sales opportunity filters and the Admin inside-sales leaderboard summary. They do not submit edits or click record actions. Login requires an account with report access; an access failure must not be bypassed.
+
+Other legacy specs remain in the repository for repair but are not included in this default run. Do not run the entire legacy suite: it contains create, edit, delete, and other data-changing flows. Interactive Cypress still displays those specs. Review each spec and its helpers before adding it to the read-only run.

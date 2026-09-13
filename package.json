@@ -5,10 +5,11 @@
   "description": "uCertify end-to-end Cypress automation suite",
   "scripts": {
     "cy:open": "cypress open --e2e",
-    "cy:run": "cypress run --e2e --browser chrome",
+    "cy:run": "cypress run --e2e --browser chrome --spec \"cypress/integration/read-only/**/*.js\"",
     "test": "npm run cy:run",
     "verify": "cypress verify",
-    "check:suite": "node --experimental-vm-modules scripts/check-suite.cjs"
+    "check:suite": "node --experimental-vm-modules scripts/check-suite.cjs",
+    "test:reports": "npm run cy:run"
   },
   "devDependencies": {
     "cypress": "15.21.1",
