@@ -48,6 +48,7 @@ describe('Certificate of completion testing', function() {
         cy.fixture('global').then(data => {
             StudentPage.visitLOAplusCompleteCourse(data)
         })
-        cy.contains('Certificate of Completion').click({ force: true })
+        cy.contains('a:visible, button:visible, [role="button"]:visible', /Certificate of Completion/i)
+            .should('be.visible').click()
     })
 })

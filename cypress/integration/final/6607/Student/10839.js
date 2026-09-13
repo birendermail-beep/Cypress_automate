@@ -1,3 +1,4 @@
+import { startPracticeLearn } from '../../../../support/student-practice'
 /*
 @author:Anirudha pratap
 @master_project_id: 6607
@@ -31,10 +32,7 @@ describe('Download testing area', function() {
         })
         Navbar.clickOnLogin()
         LoginPage.loginPage(login_username, login_password)
-        StudentPage.openurl()
-        cy.get('[intro-id="practice_tests"]').click()
-        cy.get('[data-cy=test_tests]').eq(0).click()
-        cy.get('[data-cy=learn_mode]').click({ force: true })
+        startPracticeLearn()
         cy.get('#next').click({ force: true })
         StudentPage.endTest()
         cy.get('.icomoon-24px-download-2').click({ force: true })
