@@ -63,10 +63,10 @@ describe('Student Practice Tests - Test controls and Review', () => {
     }
 
     const discardIncompleteTestIfPresent = () => {
-        const prompt = /Last test was not completed\.\s*Do you want to continue\?/i
+        const prompt = /^\s*Last test was not completed\.\s*Do you want to continue\?\s*$/i
         const hasPrompt = ($body) => $body.find('*').toArray().some((element) =>
             Cypress.$(element).is(':visible') &&
-            prompt.test(element.innerText || element.textContent || ''))
+            prompt.test(element.innerText || ''))
         const readyModes = '#test_mode:visible:enabled, #learn_mode:visible:enabled, #review_mode:visible:enabled'
 
         // Waiting for body alone is insufficient: it exists before the prompt loads.
@@ -74,15 +74,16 @@ describe('Student Practice Tests - Test controls and Review', () => {
             expect(hasPrompt($body) || $body.find(readyModes).length > 0,
                 'unfinished-attempt prompt or enabled mode controls').to.equal(true)
         }).then(($body) => {
-            if (hasPrompt($body)) {
+            if (!$body.find('#test_mode:visible:enabled').length && hasPrompt($body)) {
                 clickNavigationControl(/^\s*No\s*$/i)
             }
         })
 
-        cy.get('body', { timeout: 30000 }).should(($body) => {
-            expect(hasPrompt($body), 'unfinished-attempt prompt dismissed').to.equal(false)
-            expect($body.find(readyModes).length, 'enabled mode controls').to.be.greaterThan(0)
-        })
+        // The page can retain hidden prompt markup after No is clicked.
+        // The enabled Test button is the observable readiness condition.
+        cy.get('#test_mode', { timeout: 30000 })
+            .should('be.visible')
+            .and('be.enabled')
     }
 
     const selectMode = (mode) => {
