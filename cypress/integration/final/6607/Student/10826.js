@@ -79,14 +79,28 @@ describe('Post Assessment - all modes', () => {
         })
     }
 
-    const clickGoBack = () => {
-        cy.contains('a, button, [role="button"]', /^\s*GO BACK\s*$/i, { timeout: 30000 })
-            .filter(':visible')
+    // Query again while navigation controls render after a page transition.
+    const clickNavigationControl = (labelPattern) => {
+        return cy.get('body', { timeout: 30000 })
+            .find('*', { timeout: 30000 })
+            .filter((_, element) => {
+                const text = (element.innerText || element.textContent || '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                return Cypress.$(element).is(':visible') && labelPattern.test(text)
+            }, { timeout: 30000 })
+            .should('have.length.at.least', 1)
             .last()
-            .click({ force: true })
-
-        cy.contains(/POST\s*ASSESSMENT/i, { timeout: 30000 }).should('exist')
+            .then(($label) => {
+                const $control = $label.closest('a, button, [role="button"], [onclick]')
+                return cy.wrap($control.length ? $control : $label)
+                    .should('be.visible')
+                    .click()
+            })
     }
+
+    const clickGoBack = () => clickNavigationControl(/^GO\s*BACK(?:\s+TO\s+TEST\s+SELECTION)?$/i)
+
 
     const finishOnDashboard = () => {
         clickGoBack()
