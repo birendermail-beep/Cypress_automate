@@ -21,7 +21,9 @@ describe('Admin and Sales report access (read-only)', () => {
         cy.get('[data-cy="kpi_report"]', { timeout: 30000 })
             .filter(':visible').first().click()
         cy.get('[data-cy="leader_board"]', { timeout: 30000 })
-            .filter(':visible').first().click()
+            .filter(':visible').first().should('have.attr', 'href').then((href) => {
+                cy.visit(href)
+            })
         cy.get('[data-cy="summary_tab"]', { timeout: 30000 })
             .should('be.visible').click()
         cy.get('[data-cy="revenue_ticker"]', { timeout: 30000 }).should('exist')
