@@ -168,15 +168,29 @@ describe('Student Practice Tests - Test controls and Review', () => {
         selectMode('Test')
 
         cy.get('div[intro-id="item_info"]', { timeout: 30000 }).should('exist')
-        // Check that the timer is running, not merely present.
-        const timer = '[intro-id="timer"]'
-        cy.get(timer, { timeout: 30000 }).should('be.visible')
-            .invoke('text').then((initialTime) => {
-                expect(initialTime.trim(), 'initial timer text').not.to.equal('')
-                cy.get(timer, { timeout: 30000 }).should(($timer) => {
-                    expect($timer.text().trim(), 'timer advances').not.to.equal(initialTime.trim())
-                })
+        // The timer intro marker can be an empty icon. Read the clock display
+        // or the marker's immediate container, and retry until digits render.
+        const timer = '#clock, [intro-id="timer"]'
+        const readSeconds = ($timers) => {
+            for (const element of $timers.toArray()) {
+                if (!Cypress.$(element).is(':visible')) continue
+                const text = [element.innerText, element.parentElement?.innerText]
+                    .filter(Boolean).join(' ')
+                const match = text.match(/\b(\d+):([0-5]\d):([0-5]\d)\b/)
+                if (match) return Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3])
+            }
+            return null
+        }
+        cy.get(timer, { timeout: 30000 }).should(($timer) => {
+            expect(readSeconds($timer), 'rendered countdown in seconds').to.be.a('number')
+        }).then(($timer) => {
+            const initialSeconds = readSeconds($timer)
+            cy.get(timer, { timeout: 30000 }).should(($current) => {
+                const currentSeconds = readSeconds($current)
+                expect(currentSeconds, 'rendered countdown in seconds').to.be.a('number')
+                expect(currentSeconds, 'countdown decreases').to.be.lessThan(initialSeconds)
             })
+        })
         cy.get('#next').should('be.visible').and('be.enabled')
         cy.get('#previous').should('be.visible')
         cy.get('#show_result').should('be.visible')
