@@ -63,17 +63,25 @@ describe('Student Practice Tests - Test controls and Review', () => {
     }
 
     const discardIncompleteTestIfPresent = () => {
-        cy.get('body', { timeout: 30000 }).then(($body) => {
-            if (/Last test was not completed\. Do you want to continue\?/i.test($body.text())) {
-                const noButton = $body
-                    .find('button, a, [role="button"], div')
-                    .filter(':visible')
-                    .filter((_, element) => /^\s*No\s*$/i.test(element.innerText || element.textContent || ''))
+        const prompt = /Last test was not completed\.\s*Do you want to continue\?/i
+        const hasPrompt = ($body) => $body.find('*').toArray().some((element) =>
+            Cypress.$(element).is(':visible') &&
+            prompt.test(element.innerText || element.textContent || ''))
+        const readyModes = '#test_mode:visible:enabled, #learn_mode:visible:enabled, #review_mode:visible:enabled'
 
-                if (noButton.length) {
-                    cy.wrap(noButton.last()).click({ force: true })
-                }
+        // Waiting for body alone is insufficient: it exists before the prompt loads.
+        cy.get('body', { timeout: 30000 }).should(($body) => {
+            expect(hasPrompt($body) || $body.find(readyModes).length > 0,
+                'unfinished-attempt prompt or enabled mode controls').to.equal(true)
+        }).then(($body) => {
+            if (hasPrompt($body)) {
+                clickNavigationControl(/^\s*No\s*$/i)
             }
+        })
+
+        cy.get('body', { timeout: 30000 }).should(($body) => {
+            expect(hasPrompt($body), 'unfinished-attempt prompt dismissed').to.equal(false)
+            expect($body.find(readyModes).length, 'enabled mode controls').to.be.greaterThan(0)
         })
     }
 
