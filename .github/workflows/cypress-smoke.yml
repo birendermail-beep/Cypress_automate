@@ -43,3 +43,12 @@ jobs:
       - name: Authenticated test setup reminder
         if: ${{ env.CYPRESS_USERNAME == '' || env.CYPRESS_PASSWORD == '' }}
         run: echo "Authenticated report tests skipped because CYPRESS_USERNAME/CYPRESS_PASSWORD repository secrets are not configured."
+
+      - name: Preserve read-only report failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: report-failure-screenshots
+          path: cypress/screenshots/reports.js/*.png
+          if-no-files-found: ignore
+          retention-days: 1
