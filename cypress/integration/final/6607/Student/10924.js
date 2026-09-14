@@ -3,18 +3,41 @@
 import { Navbar, login_username, login_password, LoginPage, StudentPage } from '../../../../page-objects/pages/index'
 
 describe('Link with Instructor using Section Key', () => {
+    const clickVisibleControl = pattern => {
+        cy.get('a, button, [role="button"]', { timeout: 30000 }).then($controls => {
+            const control = $controls.filter(':visible').filter((_, el) =>
+                pattern.test(String(el.textContent || '').replace(/\s+/g, ' ').trim())).last()
+            expect(control.length, pattern + ' control').to.eq(1)
+            cy.wrap(control).click()
+        })
+    }
+
     const openSectionKeyForm = () => {
-        StudentPage.visitLOAplusCompleteCourse()
-        cy.get('[data-cy="setup_tab"]', { timeout: 30000 })
-            .filter(':visible')
-            .first()
-            .click()
-        cy.get('.radio-b', { timeout: 30000 })
-            .filter(':visible')
-            .first()
-            .click()
-        cy.get('#code', { timeout: 30000 }).should('be.visible')
-        cy.get('#add').filter(':visible').should('be.enabled')
+        // Link with Instructor belongs to the Manage Course dashboard.
+        StudentPage.openStudentDashboard()
+        cy.location('search', { timeout: 30000 }).should('include', 'func=manage_course')
+        clickVisibleControl(/^Link\s+with\s+Instructor$/i)
+
+        cy.get('.modal:visible, [role="dialog"]:visible', { timeout: 30000 })
+            .should('have.length.at.least', 1)
+            .last()
+            .then($dialog => {
+                const sectionChoice = $dialog
+                    .find('label, button, [role="radio"], .radio-b')
+                    .filter(':visible')
+                    .filter((_, el) => /section\s+key/i.test(el.textContent || ''))
+                    .first()
+                if (sectionChoice.length) {
+                    cy.wrap(sectionChoice).click()
+                } else {
+                    const legacyChoice = $dialog.find('.radio-b:visible').first()
+                    expect(legacyChoice.length, 'Section Key choice').to.eq(1)
+                    cy.wrap(legacyChoice).click()
+                }
+            })
+
+        cy.get('#code:visible', { timeout: 30000 }).should('be.visible')
+        cy.get('#add:visible').should('be.enabled')
     }
 
     beforeEach(() => {
