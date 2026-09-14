@@ -52,9 +52,32 @@ describe('Course-wide Knowledge Check count', () => {
         if (!chapter || !/^[1-9]\d*$/.test(chapter)) return null
         return url.pathname + '?func=ebook&chapter_no=' + Number(chapter)
     }
+    const nextLessonControl = doc => {
+        // Scope Open to the next-lesson row, excluding flashcard/quiz/lab actions.
+        const prompt = /^Proceed to the next lesson\.?$/i
+        const labels = Array.from(doc.body.querySelectorAll('*')).filter(el =>
+            visible(el) && prompt.test(text(el.textContent)) &&
+            !Array.from(el.children).some(child => prompt.test(text(child.textContent))))
+        if (!labels.length) return navigation(doc, 'next')
+        let row = labels[0].parentElement
+        while (row && row !== doc.body) {
+            const opens = Array.from(row.querySelectorAll('*')).filter(el =>
+                visible(el) && /^Open$/i.test(text(el.textContent)) &&
+                !Array.from(el.children).some(child => /^Open$/i.test(text(child.textContent))))
+            if (opens.length > 1) break
+            if (opens.length === 1) {
+                const control = opens[0].closest('a, button, [role="button"], [onclick]') || opens[0]
+                if (!row.contains(control) || control.disabled ||
+                    control.getAttribute('aria-disabled') === 'true') break
+                return Cypress.$(control)
+            }
+            row = row.parentElement
+        }
+        throw new Error('Cannot identify Open for Proceed to the next lesson')
+    }
     const advanceLesson = () => cy.document().then(doc => {
         const before = lessonKey(doc)
-        const control = navigation(doc, 'next')
+        const control = nextLessonControl(doc)
         expect(control.length, 'Next lesson control').to.eq(1)
         cy.wrap(control).click({ scrollBehavior: false })
         return cy.document({ timeout: 30000 }).should(updated => {
