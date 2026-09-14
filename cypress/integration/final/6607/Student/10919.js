@@ -80,13 +80,19 @@ describe('Course-wide Knowledge Check count', () => {
         const control = nextLessonControl(doc)
         expect(control.length, 'Next lesson control').to.eq(1)
         cy.wrap(control).click({ scrollBehavior: false })
-        return cy.document({ timeout: 30000 }).should(updated => {
-            expect(lessonKey(updated), 'valid chapter URL').to.be.a('string')
-            expect(lessonKey(updated), 'next lesson URL').not.to.eq(before)
-            expect(new URL(updated.location.href).searchParams.get('chapter_no'),
-                'reader remains in a lesson').not.to.eq('0')
-        })
+        return cy.location('href', { timeout: 30000 }).should(href => {
+            const url = new URL(href)
+            const chapter = url.searchParams.get('chapter_no')
+            expect(chapter, 'valid next chapter').to.match(/^[1-9]\d*$/)
+            expect(url.pathname + '?func=ebook&chapter_no=' + Number(chapter),
+                'next lesson URL').not.to.eq(before)
+        }).then(() => cy.get('body', { timeout: 30000 }).should($body => {
+            const updated = $body[0].ownerDocument
+            expect(lessonKey(updated), 'rendered next lesson').to.be.a('string')
+            expect(lessonKey(updated), 'old lesson replaced').not.to.eq(before)
+        }))
     })
+
     const scanPage = (peak = 0, steps = 0, stable = 0) => {
         if (steps > 1000) throw new Error('Page did not finish scrolling; count is incomplete')
         let measured = 0
