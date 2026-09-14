@@ -1,120 +1,114 @@
-// Submits the recorded detection-methods Knowledge Check using its verified answer set.
-import { Navbar, login_username, login_password, LoginPage, StudentPage } from '../../../../page-objects/pages/index'
+// Counts rendered Knowledge Check occurrences across the selected course.
+// No answer selection, reset, or submission commands are used.
+import { Navbar, LoginPage, login_username, login_password, StudentPage } from '../../../../page-objects/pages/index'
 
-describe('Knowledge Check correct submission', () => {
-
-    const prompt = 'Click to select the methods in which the detection process is involved.'
-    const answers = [
-        'A software client that talks to a NAC server when connected',
-        'A DHCP proxy that listens for traffic like DHCP requests',
-        'A broadcast listener that looks for broadcast traffic like ARP queries',
-    ]
-    const normalize = (text) => text.replace(/\s+/g, ' ').trim()
-    const documents = (doc) => {
-        const result = [doc]
+describe('Course-wide Knowledge Check count', () => {
+    const text = value => String(value || '').replace(/\s+/g, ' ').trim()
+    const label = value => /^knowledge\s*check\s*:?$/i.test(text(value))
+    const visible = el => Cypress.$(el).is(':visible') &&
+        !el.closest('.visually-hidden, .sr-only, [aria-hidden="true"], [hidden]')
+    const navigation = (doc, direction) => Cypress.$(doc.body)
+        .find('a, button, [role="button"], [onclick]')
+        .filter((_, el) => visible(el) &&
+            new RegExp('^' + direction + '$', 'i').test(text(el.textContent).replace(/[«»‹›]/g, '').trim()) &&
+            !el.disabled && el.getAttribute('aria-disabled') !== 'true').last()
+    const position = doc => {
+        // Read the counter beside the ebook Next/Previous controls, not question text.
+        const control = navigation(doc, 'next').length ? navigation(doc, 'next') : navigation(doc, 'previous')
+        let element = control[0]
+        while (element && element !== doc.body) {
+            const match = text(element.textContent).match(/\b(\d+)\s+of\s+(\d+)\b/i)
+            if (match) return { current: Number(match[1]), total: Number(match[2]) }
+            element = element.parentElement
+        }
+        throw new Error('Cannot read ebook page counter; refusing to report an incomplete course count')
+    }
+    const scrollContainers = doc => [...new Set([
+        doc.scrollingElement,
+        ...Array.from(doc.querySelectorAll('*')).filter(el => visible(el) &&
+            /auto|scroll/.test(doc.defaultView.getComputedStyle(el).overflowY) &&
+            el.scrollHeight > el.clientHeight + 5),
+    ].filter(Boolean))]
+    const countMarkers = doc => {
+        if (!doc.body) return 0
+        const markers = Array.from(doc.body.querySelectorAll('*')).filter(el =>
+            visible(el) && label(el.textContent) &&
+            !Array.from(el.children).some(child => visible(child) && label(child.textContent)))
+        let count = markers.length
         for (const frame of doc.querySelectorAll('iframe')) {
-            try {
-                if (frame.contentDocument) result.push(...documents(frame.contentDocument))
-            } catch (_) {
-                // Cross-origin players need a separate supported navigation flow.
+            if (!visible(frame)) continue
+            let child
+            try { child = frame.contentDocument } catch (_) { child = null }
+            if (!child || !child.body) {
+                throw new Error('An ebook iframe is not readable yet; cannot guarantee a complete Knowledge Check count')
             }
+            count += countMarkers(child)
         }
-        return result
+        return count
     }
-    const exact = (root, text) => Cypress.$(root).find('*').filter((_, element) =>
-        Cypress.$(element).is(':visible') &&
-        normalize(element.textContent).toLowerCase() === text.toLowerCase()
-    ).last()
-    const player = (doc) => {
-        for (const candidate of documents(doc)) {
-            const label = exact(candidate.body, prompt)
-            if (!label.length) continue
-            const root = label.parents().filter((_, element) =>
-                answers.every(answer => element.textContent.includes(answer)) &&
-                exact(element, 'Reset').length > 0
-            ).first()
-            if (root.length) return root
-        }
-        return Cypress.$()
-    }
-    const inPlayer = (text) => cy.document().should((doc) => {
-        expect(player(doc).length, 'recorded Knowledge Check player').to.eq(1)
-        expect(exact(player(doc), text).length, text).to.eq(1)
-    }).then(doc => cy.wrap(exact(player(doc), text)))
-    const clickPlayer = (text) => inPlayer(text).click()
-
-
-    const searchKnowledgeCheck = (page = 0, step = 0) => cy.document().then(doc => {
-        if (player(doc).length) return cy.wrap(player(doc)).scrollIntoView()
-        if (page >= 160) throw new Error('Recorded Knowledge Check not found within 160 ebook pages')
-        const containers = Array.from(doc.querySelectorAll('*')).filter(el =>
-            Cypress.$(el).is(':visible') && /auto|scroll/.test(doc.defaultView.getComputedStyle(el).overflowY))
-        if (doc.scrollingElement) containers.push(doc.scrollingElement)
-        const movable = [...new Set(containers)].filter(el => el.scrollTop + el.clientHeight < el.scrollHeight - 5)
-        if (movable.length && step < 40) {
-            movable.forEach(el => el.scrollBy(0, Math.max(250, el.clientHeight * 0.7)))
-            return cy.wait(700, { log: false }).then(() => searchKnowledgeCheck(page, step + 1))
-        }
-        return cy.wait(1500, { log: false }).then(() => cy.document()).then(current => {
-            if (player(current).length) return cy.wrap(player(current)).scrollIntoView()
-            const counter = d => normalize(d.body.innerText).match(/\b\d+\s+of\s+\d+\b/g)?.pop() || ''
-            const before = current.location.href + counter(current)
-            const next = Cypress.$(current.body).find('a, button, [role="button"], [onclick]').filter((_, el) =>
-                Cypress.$(el).is(':visible') && /^next\s*[»›]*$/i.test(normalize(el.textContent)) &&
-                !el.disabled && el.getAttribute('aria-disabled') !== 'true').last()
-            if (!next.length) throw new Error('End of ebook: recorded Knowledge Check not found')
-            cy.wrap(next).click()
-            return cy.document({ timeout: 30000 }).should(d => {
-                expect(d.location.href + counter(d), 'ebook advances').not.to.eq(before)
-            }).then(() => cy.wait(700, { log: false })).then(() => searchKnowledgeCheck(page + 1))
+    const advance = direction => cy.document().then(doc => {
+        const before = position(doc)
+        const control = navigation(doc, direction)
+        expect(control.length, direction + ' control').to.eq(1)
+        cy.wrap(control).click()
+        return cy.document({ timeout: 30000 }).should(updated => {
+            const after = position(updated)
+            expect(after.current).to.eq(before.current + (direction === 'next' ? 1 : -1))
+            expect(after.total).to.eq(before.total)
         })
     })
-    const resetConfirmation = doc => {
-        for (const d of documents(doc)) {
-            const title = exact(d.body, 'Reset Item')
-            if (!title.length) continue
-            const modal = title.closest('[role="dialog"], .modal, .bootbox')
-            const scope = modal.length ? modal : title.parents().filter((_, el) =>
-                Cypress.$(el).find('button, input[type="button"]').length >= 2).first()
-            const buttons = Cypress.$(scope).find('button, a, [role="button"], input[type="button"]')
-                .filter((_, el) => Cypress.$(el).is(':visible') && !el.disabled &&
-                    /^(ok|yes|reset)$/i.test(normalize(el.textContent || el.value || '')))
-            if (buttons.length === 1) return buttons
-        }
-        return Cypress.$()
+    const rewind = (remaining = 2000) => cy.document().then(doc => {
+        if (position(doc).current === 1) return
+        if (!remaining) throw new Error('Could not reach the first ebook page')
+        return advance('previous').then(() => rewind(remaining - 1))
+    })
+    const scanPage = (peak = 0, steps = 0, stable = 0) => {
+        if (steps > 200) throw new Error('Page did not finish scrolling; count is incomplete')
+        return cy.document({ timeout: 30000 }).should(doc => {
+            countMarkers(doc) // Retry while iframe documents initialize.
+        }).then(doc => {
+            const found = Math.max(peak, countMarkers(doc))
+            const movable = scrollContainers(doc).filter(el =>
+                el.scrollTop + el.clientHeight < el.scrollHeight - 5)
+            if (!movable.length && stable >= 3) return found
+            movable.forEach(el => el.scrollBy(0, Math.max(250, el.clientHeight * 0.65)))
+            // Scroll-driven ebook content/iframes load asynchronously.
+            return cy.wait(750, { log: false }).then(() =>
+                scanPage(found, steps + 1, movable.length || found !== peak ? 0 : stable + 1))
+        })
     }
 
-    beforeEach(() => {
+    it('scrolls every ebook page and reports Knowledge Check totals', { retries: 0 }, () => {
+        const rows = []
         cy.visit('/')
         Navbar.clickOnLogin()
         LoginPage.loginPage(login_username, login_password)
+        // Uses STUDENT_COURSE_CRN / STUDENT_COURSE_SEARCH; defaults to Platform Demo.
         StudentPage.visitLOAplusCompleteCourse()
-        cy.get('[intro-id="chapters"]', { timeout: 30000 })
-            .filter(':visible').first().click()
-    })
-
-    // The second chapter was verified in Platform Demo; override by name for other courses.
-    it('submits the recorded Knowledge Check and receives Correct', () => {
-        const chapter = Cypress.env('KNOWLEDGE_CHECK_CHAPTER')
-        if (chapter) {
-            cy.contains('[data-cy="toc_chapters"]:visible', chapter, { timeout: 30000 }).click()
-        } else {
-            cy.get('[data-cy="toc_chapters"]', { timeout: 30000 })
-                .filter(':visible').should('have.length.at.least', 2).eq(1).click()
-        }
+        cy.get('[intro-id="chapters"]', { timeout: 30000 }).filter(':visible').first().click()
         cy.location('search', { timeout: 30000 }).should('include', 'func=ebook')
-        searchKnowledgeCheck()
+        rewind()
 
-        // Reset this item through its UI so prior manual attempts cannot affect selection.
-        clickPlayer('Reset')
-        cy.document({ timeout: 30000 }).should(doc => {
-            expect(resetConfirmation(doc).length, 'visible Reset Item confirmation button').to.eq(1)
-        }).then(doc => cy.wrap(resetConfirmation(doc)).click())
-        inPlayer('Submit').should('be.visible')
-        answers.forEach(answer => clickPlayer(answer))
-        clickPlayer('Submit')
-        // Exact text excludes both "Incorrect" and the "Correct Answer" tab.
-        inPlayer('Correct').should('be.visible')
-        inPlayer('Explanation').should('be.visible')
+        const scanCourse = () => cy.document().then(doc => {
+            const page = position(doc)
+            expect(page.current, 'consecutive ebook page').to.eq(rows.length + 1)
+            scrollContainers(doc).forEach(el => el.scrollTo(0, 0))
+            const chapter = new URL(doc.location.href).searchParams.get('chapter_no')
+            return cy.wait(750, { log: false }).then(() => scanPage()).then(count => {
+                rows.push({ page: page.current, chapter, knowledgeChecks: count })
+                cy.log('Page ' + page.current + '/' + page.total + ': ' + count + ' Knowledge Checks')
+                if (page.current < page.total) return advance('next').then(scanCourse)
+                expect(rows.length, 'all ebook pages scanned').to.eq(page.total)
+                const total = rows.reduce((sum, row) => sum + row.knowledgeChecks, 0)
+                Cypress.log({
+                    name: 'COURSE TOTAL',
+                    message: total + ' Knowledge Checks across ' + rows.length + ' pages',
+                    consoleProps: () => ({ total, pagesScanned: rows.length, breakdown: rows }),
+                })
+                console.table(rows)
+                console.info('COURSE KNOWLEDGE CHECK TOTAL:', total)
+            })
+        })
+        cy.then(scanCourse)
     })
 })
