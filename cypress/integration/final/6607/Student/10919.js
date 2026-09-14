@@ -75,24 +75,37 @@ describe('Course-wide Knowledge Check count', () => {
         }
         throw new Error('Cannot identify Open for Proceed to the next lesson')
     }
+    const liveLessonKey = () => {
+        const win = Cypress.state('window')
+        if (!win || !win.location) return null
+        const url = new URL(win.location.href)
+        const chapter = url.searchParams.get('chapter_no')
+        if (!chapter || !/^[1-9]\d*$/.test(chapter)) return null
+        return url.pathname + '?func=ebook&chapter_no=' + Number(chapter)
+    }
+    const waitForLessonChange = (before, started = Date.now()) =>
+        new Cypress.Promise((resolve, reject) => {
+            const poll = () => {
+                const current = liveLessonKey()
+                if (current && current !== before) return resolve(current)
+                if (Date.now() - started >= 30000) {
+                    return reject(new Error('Next lesson did not open within 30 seconds'))
+                }
+                setTimeout(poll, 100)
+            }
+            poll()
+        })
     const advanceLesson = () => cy.document().then(doc => {
         const before = lessonKey(doc)
         const control = nextLessonControl(doc)
         expect(control.length, 'Next lesson control').to.eq(1)
         cy.wrap(control).click({ scrollBehavior: false })
-        return cy.location('href', { timeout: 30000 }).should(href => {
-            const url = new URL(href)
-            const chapter = url.searchParams.get('chapter_no')
-            expect(chapter, 'valid next chapter').to.match(/^[1-9]\d*$/)
-            expect(url.pathname + '?func=ebook&chapter_no=' + Number(chapter),
-                'next lesson URL').not.to.eq(before)
-        }).then(() => cy.get('body', { timeout: 30000 }).should($body => {
-            const updated = $body[0].ownerDocument
-            expect(lessonKey(updated), 'rendered next lesson').to.be.a('string')
-            expect(lessonKey(updated), 'old lesson replaced').not.to.eq(before)
-        }))
+        return cy.then({ timeout: 35000 }, () => waitForLessonChange(before))
+            .then(() => cy.document({ timeout: 30000 }).should(updated => {
+                expect(lessonKey(updated), 'rendered next lesson').to.eq(liveLessonKey())
+                expect(position(updated).total, 'next lesson reader ready').to.be.greaterThan(0)
+            }))
     })
-
     const scanPage = (peak = 0, steps = 0, stable = 0) => {
         if (steps > 1000) throw new Error('Page did not finish scrolling; count is incomplete')
         let measured = 0
