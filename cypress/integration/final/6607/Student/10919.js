@@ -25,15 +25,15 @@ describe('Course-wide Knowledge Check count', () => {
     }
     const scrollContainers = doc => [...new Set([
         doc.scrollingElement,
-        ...Array.from(doc.querySelectorAll('*')).filter(el => visible(el) &&
-            /auto|scroll/.test(doc.defaultView.getComputedStyle(el).overflowY) &&
-            el.scrollHeight > el.clientHeight + 5),
+        ...Array.from(doc.querySelectorAll('*')).filter(el =>
+            el.scrollHeight > el.clientHeight + 5 && visible(el) &&
+            /auto|scroll/.test(doc.defaultView.getComputedStyle(el).overflowY)),
     ].filter(Boolean))]
     const countMarkers = doc => {
         if (!doc.body) return 0
         const markers = Array.from(doc.body.querySelectorAll('*')).filter(el =>
-            visible(el) && label(el.textContent) &&
-            !Array.from(el.children).some(child => visible(child) && label(child.textContent)))
+            label(el.textContent) && visible(el) &&
+            !Array.from(el.children).some(child => label(child.textContent) && visible(child)))
         let count = markers.length
         for (const frame of doc.querySelectorAll('iframe')) {
             if (!visible(frame)) continue
@@ -65,23 +65,25 @@ describe('Course-wide Knowledge Check count', () => {
         })
     })
     const scanPage = (peak = 0, steps = 0, stable = 0) => {
-        if (steps > 200) throw new Error('Page did not finish scrolling; count is incomplete')
-        return cy.document({ timeout: 30000 }).should(doc => {
-            countMarkers(doc) // Retry while iframe documents initialize.
+        if (steps > 1000) throw new Error('Page did not finish scrolling; count is incomplete')
+        let measured = 0
+        return cy.document({ timeout: 30000, log: false }).should(doc => {
+            measured = countMarkers(doc) // Retry while iframe documents initialize.
         }).then(doc => {
-            const found = Math.max(peak, countMarkers(doc))
+            const found = Math.max(peak, measured)
             const movable = scrollContainers(doc).filter(el =>
                 el.scrollTop + el.clientHeight < el.scrollHeight - 5)
-            if (!movable.length && stable >= 3) return found
-            movable.forEach(el => el.scrollBy(0, Math.max(400, el.clientHeight * 0.9)))
+            if (!movable.length && stable >= 2) return found
+            movable.forEach(el => el.scrollBy({ top: Math.max(1, el.clientHeight * 0.95), behavior: 'instant' }))
             // Scroll-driven ebook content/iframes load asynchronously.
-            return cy.wait(movable.length ? 250 : 600, { log: false }).then(() =>
+            return cy.wait(movable.length ? 80 : 500, { log: false }).then(() =>
                 scanPage(found, steps + 1, movable.length || found !== peak ? 0 : stable + 1))
         })
     }
 
     it('scrolls every ebook page and reports Knowledge Check totals', { retries: 0 }, () => {
         const rows = []
+        const startedAt = Date.now()
         cy.visit('/')
         Navbar.clickOnLogin()
         LoginPage.loginPage(login_username, login_password)
@@ -118,7 +120,7 @@ describe('Course-wide Knowledge Check count', () => {
             visited.add(key)
             scrollContainers(doc).forEach(el => el.scrollTo(0, 0))
             const chapter = new URL(doc.location.href).searchParams.get('chapter_no')
-            return cy.wait(500, { log: false }).then(() => scanPage()).then(count => {
+            return scanPage().then(count => {
                 rows.push({ lesson: rows.length + 1, chapter, knowledgeChecks: count })
                 cy.log('Lesson ' + chapter + ': ' + count + ' Knowledge Checks')
                 return cy.document().then(bottomDoc => {
@@ -129,8 +131,8 @@ describe('Course-wide Knowledge Check count', () => {
                     const total = rows.reduce((sum, row) => sum + row.knowledgeChecks, 0)
                     Cypress.log({
                         name: 'COURSE TOTAL',
-                        message: total + ' Knowledge Checks across ' + rows.length + ' lessons',
-                        consoleProps: () => ({ total, lessonsScanned: rows.length, breakdown: rows }),
+                        message: total + ' Knowledge Checks across ' + rows.length + ' lessons in ' + Math.round((Date.now() - startedAt) / 1000) + 's',
+                        consoleProps: () => ({ total, elapsedSeconds: Math.round((Date.now() - startedAt) / 1000), lessonsScanned: rows.length, breakdown: rows }),
                     })
                     console.table(rows)
                     console.info('COURSE KNOWLEDGE CHECK TOTAL:', total)
