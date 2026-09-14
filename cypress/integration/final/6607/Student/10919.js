@@ -43,12 +43,21 @@ describe('Course-wide Knowledge Check count', () => {
         if (!match) throw new Error('Cannot read ebook page counter')
         return { current: Number(match[1]), total: Number(match[2]) }
     }
-    const scrollContainers = doc => [...new Set([
-        doc.scrollingElement,
-        ...Array.from(doc.querySelectorAll('*')).filter(el =>
-            el.scrollHeight > el.clientHeight + 5 && visible(el) &&
-            /auto|scroll/.test(doc.defaultView.getComputedStyle(el).overflowY)),
-    ].filter(Boolean))]
+    const scrollContainers = doc => {
+        const viewportHeight = doc.defaultView.innerHeight
+        const viewportWidth = doc.defaultView.innerWidth
+        const candidates = [doc.scrollingElement,
+            ...Array.from(doc.querySelectorAll('*')).filter(el =>
+                visible(el) && el.clientHeight >= viewportHeight * 0.55 &&
+                el.clientWidth >= viewportWidth * 0.55 &&
+                el.scrollHeight > el.clientHeight + 5 &&
+                /auto|scroll/.test(doc.defaultView.getComputedStyle(el).overflowY))]
+            .filter(Boolean)
+        if (!candidates.length) return []
+        // Ignore nested code samples/widgets; scroll only the main reader surface.
+        return [candidates.sort((a, b) =>
+            (b.scrollHeight - b.clientHeight) - (a.scrollHeight - a.clientHeight))[0]]
+    }
     const countMarkers = doc => {
         if (!doc.body) return 0
         const markers = Array.from(doc.body.querySelectorAll('*')).filter(el =>
@@ -76,20 +85,16 @@ describe('Course-wide Knowledge Check count', () => {
             .map(el => Number(text(el.textContent).match(/\d+$/)[0])))
         return chapters.size === 1 ? 'lesson:' + [...chapters][0] : null
     }
-    const waitForReader = (previous = null, started = Date.now(), candidate = null, stable = 0) =>
+    const waitForReader = (previous = null, started = Date.now()) =>
         cy.get('body', { log: false }).then($body => {
-            const doc = $body[0].ownerDocument
-            const key = lessonKey(doc)
-            const valid = key && key !== previous
-            if (valid && candidate === key && stable >= 2) return key
-            if (Date.now() - started > 45000) {
-                throw new Error('Reader did not settle. Previous: ' + previous +
-                    '; rendered lesson: ' + key + '. Course count is incomplete.')
+            const key = lessonKey($body[0].ownerDocument)
+            if (key && key !== previous) return key
+            if (Date.now() - started > 20000) {
+                throw new Error('Next rendered lesson did not appear. Previous: ' +
+                    previous + '; current: ' + key + '. Course count is incomplete.')
             }
-            // Reissue the DOM query on each poll; never retain an old Document.
-            return cy.wait(200, { log: false }).then(() =>
-                waitForReader(previous, started, valid ? key : null,
-                    valid && candidate === key ? stable + 1 : 0))
+            return cy.wait(100, { log: false }).then(() =>
+                waitForReader(previous, started))
         })
     const nextLessonControl = doc => {
         // Scope Open to the next-lesson row, excluding flashcard/quiz/lab actions.
@@ -123,22 +128,25 @@ describe('Course-wide Knowledge Check count', () => {
         return cy.wrap(control).click({ scrollBehavior: false })
             .then(() => waitForReader(before))
     })
-    const scanPage = (peak = 0, steps = 0, stable = 0) => {
-        if (steps > 1000) throw new Error('Page did not finish scrolling; count is incomplete')
+    const scanPage = (peak = 0, attempts = 0, previousHeight = -1) => {
+        if (attempts > 8) return peak
         let measured = 0
         return cy.document({ timeout: 30000, log: false }).should(doc => {
-            measured = countMarkers(doc) // Retry while iframe documents initialize.
+            measured = countMarkers(doc)
         }).then(doc => {
             const found = Math.max(peak, measured)
-            const movable = scrollContainers(doc).filter(el =>
-                el.scrollTop + el.clientHeight < el.scrollHeight - 5)
-            if (!movable.length && stable >= 2) return found
-            movable.forEach(el => el.scrollBy({ top: Math.max(1, el.clientHeight * 0.95), behavior: 'instant' }))
-            // Scroll-driven ebook content/iframes load asynchronously.
-            return cy.wait(movable.length ? 80 : 500, { log: false }).then(() =>
-                scanPage(found, steps + 1, movable.length || found !== peak ? 0 : stable + 1))
+            const containers = scrollContainers(doc)
+            const height = containers.reduce((max, el) => Math.max(max, el.scrollHeight), 0)
+            const atBottom = containers.every(el =>
+                el.scrollTop + el.clientHeight >= el.scrollHeight - 5)
+            if (atBottom && height === previousHeight) return found
+            containers.forEach(el =>
+                el.scrollTo({ top: el.scrollHeight, behavior: 'instant' }))
+            return cy.wait(200, { log: false }).then(() =>
+                scanPage(found, attempts + 1, height))
         })
     }
+
 
     let rows = []
     let completed = false
