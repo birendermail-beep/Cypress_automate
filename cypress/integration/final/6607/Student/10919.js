@@ -47,11 +47,32 @@ describe('Course-wide Knowledge Check count', () => {
         return count
     }
     const lessonKey = doc => {
-        const url = new URL(doc.location.href)
-        const chapter = url.searchParams.get('chapter_no')
-        if (!chapter || !/^[1-9]\d*$/.test(chapter)) return null
-        return url.pathname + '?func=ebook&chapter_no=' + Number(chapter)
+        // The reader changes content before its URL/counter necessarily settles.
+        // Use the rendered lesson label consistently for navigation and deduplication.
+        const chapters = new Set(Array.from(doc.body.querySelectorAll('*'))
+            .filter(el => visible(el) && /^Lesson\s+\d+$/i.test(text(el.textContent)) &&
+                !Array.from(el.children).some(child =>
+                    /^Lesson\s+\d+$/i.test(text(child.textContent))))
+            .map(el => Number(text(el.textContent).match(/\d+$/)[0])))
+        return chapters.size === 1 ? 'lesson:' + [...chapters][0] : null
     }
+    const waitForReader = (previous = null, started = Date.now(), candidate = null, stable = 0) =>
+        cy.get('body', { log: false }).then($body => {
+            const doc = $body[0].ownerDocument
+            const key = lessonKey(doc)
+            let ready = false
+            try { ready = position(doc).total > 0 } catch (_) {}
+            const valid = key && key !== previous && ready
+            if (valid && candidate === key && stable >= 2) return key
+            if (Date.now() - started > 45000) {
+                throw new Error('Reader did not settle. Previous: ' + previous +
+                    '; rendered lesson: ' + key + '. Course count is incomplete.')
+            }
+            // Reissue the DOM query on each poll; never retain an old Document.
+            return cy.wait(200, { log: false }).then(() =>
+                waitForReader(previous, started, valid ? key : null,
+                    valid && candidate === key ? stable + 1 : 0))
+        })
     const nextLessonControl = doc => {
         // Scope Open to the next-lesson row, excluding flashcard/quiz/lab actions.
         const prompt = /^Proceed to the next lesson\.?$/i
@@ -75,42 +96,14 @@ describe('Course-wide Knowledge Check count', () => {
         }
         throw new Error('Cannot identify Open for Proceed to the next lesson')
     }
-    const liveProgress = () => {
-        const win = Cypress.state('window')
-        if (!win || !win.document || !win.document.body) return null
-        let page = null
-        try { page = position(win.document) } catch (_) {}
-        return { lesson: lessonKey(win.document), page }
-    }
-    const waitForNavigation = (before, started = Date.now()) =>
-        new Cypress.Promise((resolve, reject) => {
-            const poll = () => {
-                const current = liveProgress()
-                const lessonChanged = current && current.lesson && current.lesson !== before.lesson
-                const pageChanged = current && current.page && before.page &&
-                    current.page.total === before.page.total &&
-                    current.page.current !== before.page.current
-                if (lessonChanged || pageChanged) return resolve(current)
-                if (Date.now() - started >= 45000) {
-                    return reject(new Error('Next lesson did not open after chapter ' +
-                        before.lesson + ', page ' + before.page.current))
-                }
-                setTimeout(poll, 100)
-            }
-            poll()
-        })
-    const advanceLesson = () => cy.document().then(doc => {
-        const before = { lesson: lessonKey(doc), page: position(doc) }
+    const advanceLesson = () => cy.get('body').then($body => {
+        const doc = $body[0].ownerDocument
+        const before = lessonKey(doc)
+        expect(before, 'current rendered lesson').to.be.a('string')
         const control = nextLessonControl(doc)
         expect(control.length, 'Next lesson control').to.eq(1)
-        cy.wrap(control).click({ scrollBehavior: false })
-        return cy.then({ timeout: 50000 }, () => waitForNavigation(before))
-            .then(() => cy.document({ timeout: 30000 }).should(updated => {
-                const afterLesson = lessonKey(updated)
-                const afterPage = position(updated)
-                expect(afterLesson !== before.lesson || afterPage.current !== before.page.current,
-                    'new lesson content loaded').to.eq(true)
-            }))
+        return cy.wrap(control).click({ scrollBehavior: false })
+            .then(() => waitForReader(before))
     })
     const scanPage = (peak = 0, steps = 0, stable = 0) => {
         if (steps > 1000) throw new Error('Page did not finish scrolling; count is incomplete')
@@ -129,8 +122,20 @@ describe('Course-wide Knowledge Check count', () => {
         })
     }
 
+    let rows = []
+    let completed = false
+    afterEach(() => {
+        cy.writeFile('cypress/results/knowledge-check-count.json', {
+            complete: completed,
+            lessonsScanned: rows.length,
+            knowledgeChecks: rows.reduce((sum, row) => sum + row.knowledgeChecks, 0),
+            lessons: rows,
+        }, { log: false })
+    })
+
     it('scrolls every ebook page and reports Knowledge Check totals', { retries: 0 }, () => {
-        const rows = []
+        rows = []
+        completed = false
         const startedAt = Date.now()
         cy.visit('/')
         Navbar.clickOnLogin()
@@ -159,15 +164,14 @@ describe('Course-wide Knowledge Check count', () => {
         // The first Read control opens the first available lesson.
 
         const visited = new Set()
-        const scanCourse = () => cy.document({ timeout: 30000 }).should(doc => {
-            expect(lessonKey(doc), 'valid chapter before counting').to.be.a('string')
-        }).then(doc => {
+        const scanCourse = () => waitForReader().then(() => cy.get('body')).then($body => {
+            const doc = $body[0].ownerDocument
             const key = lessonKey(doc)
             if (visited.has(key)) throw new Error('Repeated lesson URL; refusing to double-count: ' + key)
             if (visited.size >= 2000) throw new Error('Course scan limit reached; count incomplete')
             visited.add(key)
             scrollContainers(doc).forEach(el => el.scrollTo(0, 0))
-            const chapter = new URL(doc.location.href).searchParams.get('chapter_no')
+            const chapter = key.replace('lesson:', '')
             return scanPage().then(count => {
                 rows.push({ lesson: rows.length + 1, chapter, knowledgeChecks: count })
                 cy.log('Lesson ' + chapter + ': ' + count + ' Knowledge Checks')
@@ -176,6 +180,7 @@ describe('Course-wide Knowledge Check count', () => {
                     if (bottom.current < bottom.total) {
                         return advanceLesson().then(scanCourse)
                     }
+                    completed = true
                     const total = rows.reduce((sum, row) => sum + row.knowledgeChecks, 0)
                     Cypress.log({
                         name: 'COURSE TOTAL',
