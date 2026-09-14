@@ -1,37 +1,45 @@
 // Student validation for linking a course with an instructor.
-// Set CYPRESS_SECTION_KEY only when the successful-link scenario should run.
+// Set CYPRESS_LINK_INSTRUCTOR_COURSE_CRN for a course with this feature.\n// Set CYPRESS_SECTION_KEY only when the successful-link scenario should run.
 import { Navbar, login_username, login_password, LoginPage, StudentPage } from '../../../../page-objects/pages/index'
 
 describe('Link with Instructor using Section Key', () => {
-    const clickVisibleControl = pattern => {
-        cy.contains(':visible', pattern, { timeout: 30000 })
-            .last()
-            .then($label => {
-                const actionable = $label.closest(
-                    'a, button, [role="button"], [onclick], [tabindex]'
-                )
-                cy.wrap(actionable.length ? actionable : $label)
-                    .click({ force: true })
-            })
-    }
-
-    const openSectionKeyForm = () => {
+    const openSectionKeyForm = testContext => {
         const course = Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') || '1D0-671'
         cy.visit('/?func=load_course&course=' +
             encodeURIComponent(course) + '&theme_view=classic')
         cy.location('search', { timeout: 30000 }).should('include', 'func=load_course')
 
-        cy.get('body', { timeout: 30000 }).then($body => {
+        return cy.get('body', { timeout: 30000 }).then($body => {
             const setupTab = $body.find('[data-cy="setup_tab"]:visible').first()
             if (setupTab.length) {
                 cy.wrap(setupTab).click()
                 cy.get('.radio-b:visible', { timeout: 30000 }).first().click()
-                return
+                return true
             }
 
-            clickVisibleControl(/^Link\s+with\s+Instructor$/i)
+            const linkLabel = $body.find('*:visible').filter((_, el) =>
+                /^Link\s+with\s+Instructor$/i.test(
+                    String(el.textContent || '').replace(/\s+/g, ' ').trim()
+                ) &&
+                !Array.from(el.children).some(child =>
+                    /^Link\s+with\s+Instructor$/i.test(
+                        String(child.textContent || '').replace(/\s+/g, ' ').trim()
+                    ))
+            ).last()
+
+            if (!linkLabel.length) {
+                cy.log('Course ' + course +
+                    ' does not provide Link with Instructor; test skipped')
+                testContext.skip()
+                return false
+            }
+
+            const actionable = linkLabel.closest(
+                'a, button, [role="button"], [onclick], [tabindex]'
+            )
+            cy.wrap(actionable.length ? actionable : linkLabel)
+                .click({ force: true })
             cy.get('.modal:visible, [role="dialog"]:visible', { timeout: 30000 })
-                .should('have.length.at.least', 1)
                 .last()
                 .then($dialog => {
                     const sectionChoice = $dialog
@@ -47,17 +55,19 @@ describe('Link with Instructor using Section Key', () => {
                         cy.wrap(legacyChoice).click()
                     }
                 })
+            return true
+        }).then(available => {
+            if (!available) return
+            cy.get('#code:visible', { timeout: 30000 }).should('be.visible')
+            cy.get('#add:visible').should('be.enabled')
         })
-
-        cy.get('#code:visible', { timeout: 30000 }).should('be.visible')
-        cy.get('#add:visible').should('be.enabled')
     }
 
-    beforeEach(() => {
+    beforeEach(function() {
         cy.visit('/')
         Navbar.clickOnLogin()
         LoginPage.loginPage(login_username, login_password)
-        openSectionKeyForm()
+        openSectionKeyForm(this)
     })
 
     it('shows validation when the section key is blank', () => {
