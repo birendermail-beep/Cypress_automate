@@ -16,28 +16,38 @@ describe('Link with Instructor using Section Key', () => {
     }
 
     const openSectionKeyForm = () => {
-        // Link with Instructor belongs to the Manage Course dashboard.
-        StudentPage.openStudentDashboard()
-        cy.location('search', { timeout: 30000 }).should('include', 'func=manage_course')
-        clickVisibleControl(/^Link\s+with\s+Instructor$/i)
+        const course = Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') || '1D0-671'
+        cy.visit('/?func=load_course&course=' +
+            encodeURIComponent(course) + '&theme_view=classic')
+        cy.location('search', { timeout: 30000 }).should('include', 'func=load_course')
 
-        cy.get('.modal:visible, [role="dialog"]:visible', { timeout: 30000 })
-            .should('have.length.at.least', 1)
-            .last()
-            .then($dialog => {
-                const sectionChoice = $dialog
-                    .find('label, button, [role="radio"], .radio-b')
-                    .filter(':visible')
-                    .filter((_, el) => /section\s+key/i.test(el.textContent || ''))
-                    .first()
-                if (sectionChoice.length) {
-                    cy.wrap(sectionChoice).click()
-                } else {
-                    const legacyChoice = $dialog.find('.radio-b:visible').first()
-                    expect(legacyChoice.length, 'Section Key choice').to.eq(1)
-                    cy.wrap(legacyChoice).click()
-                }
-            })
+        cy.get('body', { timeout: 30000 }).then($body => {
+            const setupTab = $body.find('[data-cy="setup_tab"]:visible').first()
+            if (setupTab.length) {
+                cy.wrap(setupTab).click()
+                cy.get('.radio-b:visible', { timeout: 30000 }).first().click()
+                return
+            }
+
+            clickVisibleControl(/^Link\s+with\s+Instructor$/i)
+            cy.get('.modal:visible, [role="dialog"]:visible', { timeout: 30000 })
+                .should('have.length.at.least', 1)
+                .last()
+                .then($dialog => {
+                    const sectionChoice = $dialog
+                        .find('label, button, [role="radio"], .radio-b')
+                        .filter(':visible')
+                        .filter((_, el) => /section\s+key/i.test(el.textContent || ''))
+                        .first()
+                    if (sectionChoice.length) {
+                        cy.wrap(sectionChoice).click()
+                    } else {
+                        const legacyChoice = $dialog.find('.radio-b:visible').first()
+                        expect(legacyChoice.length, 'Section Key choice').to.eq(1)
+                        cy.wrap(legacyChoice).click()
+                    }
+                })
+        })
 
         cy.get('#code:visible', { timeout: 30000 }).should('be.visible')
         cy.get('#add:visible').should('be.enabled')
