@@ -87,6 +87,20 @@ describe('Course-wide Knowledge Check count', () => {
         StudentPage.visitLOAplusCompleteCourse()
         cy.get('[intro-id="chapters"]', { timeout: 30000 }).filter(':visible').first().click()
         cy.location('search', { timeout: 30000 }).should('include', 'func=ebook')
+        // chapter_no=0 is the Lessons list, not the reader.
+        cy.location('search').then(search => {
+            if (new URLSearchParams(search).get('chapter_no') === '0') {
+                cy.get('a, button, [role="button"], [onclick]', { timeout: 30000 })
+                    .filter((_, el) => visible(el) && /^read$/i.test(text(el.textContent)))
+                    .should('have.length.at.least', 1)
+                    .first().click()
+            }
+        })
+        cy.document({ timeout: 30000 }).should(doc => {
+            const page = position(doc)
+            expect(page.current, 'reader page number').to.be.greaterThan(0)
+            expect(page.total, 'ebook page count').to.be.at.least(page.current)
+        })
         rewind()
 
         const scanCourse = () => cy.document().then(doc => {
