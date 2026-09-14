@@ -46,21 +46,20 @@ describe('Course-wide Knowledge Check count', () => {
         }
         return count
     }
-    const advance = direction => cy.document().then(doc => {
-        const before = position(doc)
-        const control = navigation(doc, direction)
-        expect(control.length, direction + ' control').to.eq(1)
-        cy.wrap(control).click()
+    const lessonKey = doc => {
+        const url = new URL(doc.location.href)
+        return url.pathname + '?' + url.searchParams.toString()
+    }
+    const advanceLesson = () => cy.document().then(doc => {
+        const before = lessonKey(doc)
+        const control = navigation(doc, 'next')
+        expect(control.length, 'Next lesson control').to.eq(1)
+        cy.wrap(control).click({ scrollBehavior: false })
         return cy.document({ timeout: 30000 }).should(updated => {
-            const after = position(updated)
-            expect(after.current).to.eq(before.current + (direction === 'next' ? 1 : -1))
-            expect(after.total).to.eq(before.total)
+            expect(lessonKey(updated), 'next lesson URL').not.to.eq(before)
+            expect(new URL(updated.location.href).searchParams.get('chapter_no'),
+                'reader remains in a lesson').not.to.eq('0')
         })
-    })
-    const rewind = (remaining = 2000) => cy.document().then(doc => {
-        if (position(doc).current === 1) return
-        if (!remaining) throw new Error('Could not reach the first ebook page')
-        return advance('previous').then(() => rewind(remaining - 1))
     })
     const scanPage = (peak = 0, steps = 0, stable = 0) => {
         if (steps > 200) throw new Error('Page did not finish scrolling; count is incomplete')
@@ -71,9 +70,9 @@ describe('Course-wide Knowledge Check count', () => {
             const movable = scrollContainers(doc).filter(el =>
                 el.scrollTop + el.clientHeight < el.scrollHeight - 5)
             if (!movable.length && stable >= 3) return found
-            movable.forEach(el => el.scrollBy(0, Math.max(250, el.clientHeight * 0.65)))
+            movable.forEach(el => el.scrollBy(0, Math.max(400, el.clientHeight * 0.9)))
             // Scroll-driven ebook content/iframes load asynchronously.
-            return cy.wait(750, { log: false }).then(() =>
+            return cy.wait(movable.length ? 250 : 600, { log: false }).then(() =>
                 scanPage(found, steps + 1, movable.length || found !== peak ? 0 : stable + 1))
         })
     }
@@ -104,26 +103,33 @@ describe('Course-wide Knowledge Check count', () => {
             expect(page.current, 'reader page number').to.be.greaterThan(0)
             expect(page.total, 'ebook page count').to.be.at.least(page.current)
         })
-        rewind()
+        // The first Read control opens the first available lesson.
 
+        const visited = new Set()
         const scanCourse = () => cy.document().then(doc => {
-            const page = position(doc)
-            expect(page.current, 'consecutive ebook page').to.eq(rows.length + 1)
+            const key = lessonKey(doc)
+            if (visited.has(key)) throw new Error('Repeated lesson URL; refusing to double-count: ' + key)
+            if (visited.size >= 2000) throw new Error('Course scan limit reached; count incomplete')
+            visited.add(key)
             scrollContainers(doc).forEach(el => el.scrollTo(0, 0))
             const chapter = new URL(doc.location.href).searchParams.get('chapter_no')
-            return cy.wait(750, { log: false }).then(() => scanPage()).then(count => {
-                rows.push({ page: page.current, chapter, knowledgeChecks: count })
-                cy.log('Page ' + page.current + '/' + page.total + ': ' + count + ' Knowledge Checks')
-                if (page.current < page.total) return advance('next').then(scanCourse)
-                expect(rows.length, 'all ebook pages scanned').to.eq(page.total)
-                const total = rows.reduce((sum, row) => sum + row.knowledgeChecks, 0)
-                Cypress.log({
-                    name: 'COURSE TOTAL',
-                    message: total + ' Knowledge Checks across ' + rows.length + ' pages',
-                    consoleProps: () => ({ total, pagesScanned: rows.length, breakdown: rows }),
+            return cy.wait(500, { log: false }).then(() => scanPage()).then(count => {
+                rows.push({ lesson: rows.length + 1, chapter, knowledgeChecks: count })
+                cy.log('Lesson ' + chapter + ': ' + count + ' Knowledge Checks')
+                return cy.document().then(bottomDoc => {
+                    const bottom = position(bottomDoc)
+                    if (bottom.current < bottom.total) {
+                        return advanceLesson().then(scanCourse)
+                    }
+                    const total = rows.reduce((sum, row) => sum + row.knowledgeChecks, 0)
+                    Cypress.log({
+                        name: 'COURSE TOTAL',
+                        message: total + ' Knowledge Checks across ' + rows.length + ' lessons',
+                        consoleProps: () => ({ total, lessonsScanned: rows.length, breakdown: rows }),
+                    })
+                    console.table(rows)
+                    console.info('COURSE KNOWLEDGE CHECK TOTAL:', total)
                 })
-                console.table(rows)
-                console.info('COURSE KNOWLEDGE CHECK TOTAL:', total)
             })
         })
         cy.then(scanCourse)
