@@ -43,6 +43,47 @@ describe('Knowledge Check correct submission', () => {
     }).then(doc => cy.wrap(exact(player(doc), text)))
     const clickPlayer = (text) => inPlayer(text).click()
 
+
+    const searchKnowledgeCheck = (page = 0, step = 0) => cy.document().then(doc => {
+        if (player(doc).length) return cy.wrap(player(doc)).scrollIntoView()
+        if (page >= 160) throw new Error('Recorded Knowledge Check not found within 160 ebook pages')
+        const containers = Array.from(doc.querySelectorAll('*')).filter(el =>
+            Cypress.$(el).is(':visible') && /auto|scroll/.test(doc.defaultView.getComputedStyle(el).overflowY))
+        if (doc.scrollingElement) containers.push(doc.scrollingElement)
+        const movable = [...new Set(containers)].filter(el => el.scrollTop + el.clientHeight < el.scrollHeight - 5)
+        if (movable.length && step < 40) {
+            movable.forEach(el => el.scrollBy(0, Math.max(250, el.clientHeight * 0.7)))
+            return cy.wait(700, { log: false }).then(() => searchKnowledgeCheck(page, step + 1))
+        }
+        return cy.wait(1500, { log: false }).then(() => cy.document()).then(current => {
+            if (player(current).length) return cy.wrap(player(current)).scrollIntoView()
+            const counter = d => normalize(d.body.innerText).match(/\b\d+\s+of\s+\d+\b/g)?.pop() || ''
+            const before = current.location.href + counter(current)
+            const next = Cypress.$(current.body).find('a, button, [role="button"], [onclick]').filter((_, el) =>
+                Cypress.$(el).is(':visible') && /^next\s*[»›]*$/i.test(normalize(el.textContent)) &&
+                !el.disabled && el.getAttribute('aria-disabled') !== 'true').last()
+            if (!next.length) throw new Error('End of ebook: recorded Knowledge Check not found')
+            cy.wrap(next).click()
+            return cy.document({ timeout: 30000 }).should(d => {
+                expect(d.location.href + counter(d), 'ebook advances').not.to.eq(before)
+            }).then(() => cy.wait(700, { log: false })).then(() => searchKnowledgeCheck(page + 1))
+        })
+    })
+    const resetConfirmation = doc => {
+        for (const d of documents(doc)) {
+            const title = exact(d.body, 'Reset Item')
+            if (!title.length) continue
+            const modal = title.closest('[role="dialog"], .modal, .bootbox')
+            const scope = modal.length ? modal : title.parents().filter((_, el) =>
+                Cypress.$(el).find('button, input[type="button"]').length >= 2).first()
+            const buttons = Cypress.$(scope).find('button, a, [role="button"], input[type="button"]')
+                .filter((_, el) => Cypress.$(el).is(':visible') && !el.disabled &&
+                    /^(ok|yes|reset)$/i.test(normalize(el.textContent || el.value || '')))
+            if (buttons.length === 1) return buttons
+        }
+        return Cypress.$()
+    }
+
     beforeEach(() => {
         cy.visit('/')
         Navbar.clickOnLogin()
@@ -61,21 +102,14 @@ describe('Knowledge Check correct submission', () => {
             cy.get('[data-cy="toc_chapters"]', { timeout: 30000 })
                 .filter(':visible').should('have.length.at.least', 2).eq(1).click()
         }
-        cy.contains('Knowledge Check', { timeout: 30000 })
-            .scrollIntoView().should('be.visible')
+        cy.location('search', { timeout: 30000 }).should('include', 'func=ebook')
+        searchKnowledgeCheck()
 
         // Reset this item through its UI so prior manual attempts cannot affect selection.
         clickPlayer('Reset')
-        cy.document().should((doc) => {
-            expect(documents(doc).some(d => exact(d.body, 'Reset Item').length), 'reset dialog').to.eq(true)
-        }).then((doc) => {
-            const dialogDoc = documents(doc).find(d => exact(d.body, 'Reset Item').length)
-            const dialog = exact(dialogDoc.body, 'Reset Item').parents().filter((_, el) =>
-                exact(el, 'OK').length > 0
-            ).first()
-            expect(dialog.length, 'Reset Item confirmation').to.eq(1)
-            cy.wrap(exact(dialog, 'OK')).click()
-        })
+        cy.document({ timeout: 30000 }).should(doc => {
+            expect(resetConfirmation(doc).length, 'visible Reset Item confirmation button').to.eq(1)
+        }).then(doc => cy.wrap(resetConfirmation(doc)).click())
         inPlayer('Submit').should('be.visible')
         answers.forEach(answer => clickPlayer(answer))
         clickPlayer('Submit')
