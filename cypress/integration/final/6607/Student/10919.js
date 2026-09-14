@@ -75,35 +75,41 @@ describe('Course-wide Knowledge Check count', () => {
         }
         throw new Error('Cannot identify Open for Proceed to the next lesson')
     }
-    const livePosition = () => {
+    const liveProgress = () => {
         const win = Cypress.state('window')
         if (!win || !win.document || !win.document.body) return null
-        try { return position(win.document) } catch (_) { return null }
+        let page = null
+        try { page = position(win.document) } catch (_) {}
+        return { lesson: lessonKey(win.document), page }
     }
-    const waitForPageAdvance = (before, started = Date.now()) =>
+    const waitForNavigation = (before, started = Date.now()) =>
         new Cypress.Promise((resolve, reject) => {
             const poll = () => {
-                const current = livePosition()
-                if (current && current.total === before.total && current.current > before.current) {
-                    return resolve(current)
-                }
+                const current = liveProgress()
+                const lessonChanged = current && current.lesson && current.lesson !== before.lesson
+                const pageChanged = current && current.page && before.page &&
+                    current.page.total === before.page.total &&
+                    current.page.current !== before.page.current
+                if (lessonChanged || pageChanged) return resolve(current)
                 if (Date.now() - started >= 45000) {
-                    return reject(new Error('Course page did not advance after page ' + before.current))
+                    return reject(new Error('Next lesson did not open after chapter ' +
+                        before.lesson + ', page ' + before.page.current))
                 }
                 setTimeout(poll, 100)
             }
             poll()
         })
     const advanceLesson = () => cy.document().then(doc => {
-        const before = position(doc)
+        const before = { lesson: lessonKey(doc), page: position(doc) }
         const control = nextLessonControl(doc)
         expect(control.length, 'Next lesson control').to.eq(1)
         cy.wrap(control).click({ scrollBehavior: false })
-        return cy.then({ timeout: 50000 }, () => waitForPageAdvance(before))
+        return cy.then({ timeout: 50000 }, () => waitForNavigation(before))
             .then(() => cy.document({ timeout: 30000 }).should(updated => {
-                const after = position(updated)
-                expect(after.total, 'same course page total').to.eq(before.total)
-                expect(after.current, 'course page advanced').to.be.greaterThan(before.current)
+                const afterLesson = lessonKey(updated)
+                const afterPage = position(updated)
+                expect(afterLesson !== before.lesson || afterPage.current !== before.page.current,
+                    'new lesson content loaded').to.eq(true)
             }))
     })
     const scanPage = (peak = 0, steps = 0, stable = 0) => {
