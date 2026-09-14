@@ -80,9 +80,7 @@ describe('Course-wide Knowledge Check count', () => {
         cy.get('body', { log: false }).then($body => {
             const doc = $body[0].ownerDocument
             const key = lessonKey(doc)
-            let ready = false
-            try { ready = position(doc).total > 0 } catch (_) {}
-            const valid = key && key !== previous && ready
+            const valid = key && key !== previous
             if (valid && candidate === key && stable >= 2) return key
             if (Date.now() - started > 45000) {
                 throw new Error('Reader did not settle. Previous: ' + previous +
