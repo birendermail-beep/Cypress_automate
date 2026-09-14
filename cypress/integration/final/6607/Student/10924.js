@@ -4,7 +4,7 @@ import { Navbar, login_username, login_password, LoginPage, StudentPage } from '
 
 describe('Link with Instructor using Section Key', () => {
     const openSectionKeyForm = testContext => {
-        const course = Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') || '1D0-671'
+        const course = Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') || 'ADA-AUDIT.AA1'
         cy.visit('/?func=load_course&course=' +
             encodeURIComponent(course) + '&theme_view=classic')
         cy.location('search', { timeout: 30000 }).should('include', 'func=load_course')
