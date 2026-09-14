@@ -48,7 +48,9 @@ describe('Course-wide Knowledge Check count', () => {
     }
     const lessonKey = doc => {
         const url = new URL(doc.location.href)
-        return url.pathname + '?' + url.searchParams.toString()
+        const chapter = url.searchParams.get('chapter_no')
+        if (!chapter || !/^[1-9]\d*$/.test(chapter)) return null
+        return url.pathname + '?func=ebook&chapter_no=' + Number(chapter)
     }
     const advanceLesson = () => cy.document().then(doc => {
         const before = lessonKey(doc)
@@ -56,6 +58,7 @@ describe('Course-wide Knowledge Check count', () => {
         expect(control.length, 'Next lesson control').to.eq(1)
         cy.wrap(control).click({ scrollBehavior: false })
         return cy.document({ timeout: 30000 }).should(updated => {
+            expect(lessonKey(updated), 'valid chapter URL').to.be.a('string')
             expect(lessonKey(updated), 'next lesson URL').not.to.eq(before)
             expect(new URL(updated.location.href).searchParams.get('chapter_no'),
                 'reader remains in a lesson').not.to.eq('0')
@@ -106,7 +109,9 @@ describe('Course-wide Knowledge Check count', () => {
         // The first Read control opens the first available lesson.
 
         const visited = new Set()
-        const scanCourse = () => cy.document().then(doc => {
+        const scanCourse = () => cy.document({ timeout: 30000 }).should(doc => {
+            expect(lessonKey(doc), 'valid chapter before counting').to.be.a('string')
+        }).then(doc => {
             const key = lessonKey(doc)
             if (visited.has(key)) throw new Error('Repeated lesson URL; refusing to double-count: ' + key)
             if (visited.size >= 2000) throw new Error('Course scan limit reached; count incomplete')
