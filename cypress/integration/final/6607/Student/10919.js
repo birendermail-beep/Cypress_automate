@@ -7,21 +7,41 @@ describe('Course-wide Knowledge Check count', () => {
     const label = value => /^knowledge\s*check\s*:?$/i.test(text(value))
     const visible = el => Cypress.$(el).is(':visible') &&
         !el.closest('.visually-hidden, .sr-only, [aria-hidden="true"], [hidden]')
-    const navigation = (doc, direction) => Cypress.$(doc.body)
-        .find('a, button, [role="button"], [onclick]')
-        .filter((_, el) => visible(el) &&
-            new RegExp('^' + direction + '$', 'i').test(text(el.textContent).replace(/[«»‹›]/g, '').trim()) &&
-            !el.disabled && el.getAttribute('aria-disabled') !== 'true').last()
+    const readerFooter = doc => {
+        const candidates = Array.from(doc.body.querySelectorAll('*')).filter(el => {
+            const value = text(el.textContent).replace(/[«»‹›]/g, '')
+            return visible(el) && /\b\d+\s+of\s+\d+\b/i.test(value) &&
+                /\bprevious\b/i.test(value) && /\bnext\b/i.test(value) &&
+                /\bgo back\b/i.test(value)
+        })
+        // Use the smallest matching container around the fixed ebook toolbar.
+        return candidates.find(el => !Array.from(el.children).some(child => {
+            const value = text(child.textContent).replace(/[«»‹›]/g, '')
+            return visible(child) && /\b\d+\s+of\s+\d+\b/i.test(value) &&
+                /\bprevious\b/i.test(value) && /\bnext\b/i.test(value) &&
+                /\bgo back\b/i.test(value)
+        })) || null
+    }
+    const readerNavigation = (doc, direction) => {
+        const footer = readerFooter(doc)
+        if (!footer) return Cypress.$()
+        const exact = new RegExp('^' + direction + '$', 'i')
+        const labels = Array.from(footer.querySelectorAll('*')).filter(el =>
+            visible(el) && exact.test(text(el.textContent).replace(/[«»‹›]/g, '').trim()) &&
+            !Array.from(el.children).some(child =>
+                exact.test(text(child.textContent).replace(/[«»‹›]/g, '').trim())))
+        const controls = labels.map(el =>
+            el.closest('a, button, [role="button"], [onclick]') || el)
+            .filter(el => footer.contains(el) && !el.disabled &&
+                el.getAttribute('aria-disabled') !== 'true')
+        return Cypress.$([...new Set(controls)])
+    }
     const position = doc => {
-        // Read the counter beside the ebook Next/Previous controls, not question text.
-        const control = navigation(doc, 'next').length ? navigation(doc, 'next') : navigation(doc, 'previous')
-        let element = control[0]
-        while (element && element !== doc.body) {
-            const match = text(element.textContent).match(/\b(\d+)\s+of\s+(\d+)\b/i)
-            if (match) return { current: Number(match[1]), total: Number(match[2]) }
-            element = element.parentElement
-        }
-        throw new Error('Cannot read ebook page counter; refusing to report an incomplete course count')
+        const footer = readerFooter(doc)
+        if (!footer) throw new Error('Cannot locate the ebook footer')
+        const match = text(footer.textContent).match(/\b(\d+)\s+of\s+(\d+)\b/i)
+        if (!match) throw new Error('Cannot read ebook page counter')
+        return { current: Number(match[1]), total: Number(match[2]) }
     }
     const scrollContainers = doc => [...new Set([
         doc.scrollingElement,
@@ -79,7 +99,7 @@ describe('Course-wide Knowledge Check count', () => {
         const labels = Array.from(doc.body.querySelectorAll('*')).filter(el =>
             visible(el) && prompt.test(text(el.textContent)) &&
             !Array.from(el.children).some(child => prompt.test(text(child.textContent))))
-        if (!labels.length) return navigation(doc, 'next')
+        if (!labels.length) return readerNavigation(doc, 'next')
         let row = labels[0].parentElement
         while (row && row !== doc.body) {
             const opens = Array.from(row.querySelectorAll('*')).filter(el =>
