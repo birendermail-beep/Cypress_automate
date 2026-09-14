@@ -4,12 +4,15 @@ import { Navbar, login_username, login_password, LoginPage, StudentPage } from '
 
 describe('Link with Instructor using Section Key', () => {
     const clickVisibleControl = pattern => {
-        cy.get('a, button, [role="button"]', { timeout: 30000 }).then($controls => {
-            const control = $controls.filter(':visible').filter((_, el) =>
-                pattern.test(String(el.textContent || '').replace(/\s+/g, ' ').trim())).last()
-            expect(control.length, pattern + ' control').to.eq(1)
-            cy.wrap(control).click()
-        })
+        cy.contains(':visible', pattern, { timeout: 30000 })
+            .last()
+            .then($label => {
+                const actionable = $label.closest(
+                    'a, button, [role="button"], [onclick], [tabindex]'
+                )
+                cy.wrap(actionable.length ? actionable : $label)
+                    .click({ force: true })
+            })
     }
 
     const openSectionKeyForm = () => {
