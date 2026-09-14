@@ -90,10 +90,15 @@ describe('Course-wide Knowledge Check count', () => {
         // chapter_no=0 is the Lessons list, not the reader.
         cy.location('search').then(search => {
             if (new URLSearchParams(search).get('chapter_no') === '0') {
-                cy.get('a, button, [role="button"], [onclick]', { timeout: 30000 })
-                    .filter((_, el) => visible(el) && /^read$/i.test(text(el.textContent)))
+                cy.get('body', { timeout: 30000 }).find('*', { timeout: 30000 })
+                    .filter((_, el) => visible(el) && /^read$/i.test(text(el.textContent)) &&
+                        !Array.from(el.children).some(child =>
+                            visible(child) && /^read$/i.test(text(child.textContent))))
                     .should('have.length.at.least', 1)
-                    .first().click()
+                    .first().scrollIntoView().click()
+                cy.location('search', { timeout: 30000 }).should(search => {
+                    expect(new URLSearchParams(search).get('chapter_no'), 'lesson opened').not.to.eq('0')
+                })
             }
         })
         cy.document({ timeout: 30000 }).should(doc => {
