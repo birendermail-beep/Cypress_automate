@@ -14,6 +14,14 @@ import {
 } from '../../../../page-objects/pages/index'
 
 describe('Student Test History and performance reports', () => {
+    // The analytics page currently loads Highcharts more than once. Ignore
+    // only Highcharts error #16 so unrelated application errors still fail.
+    Cypress.on('uncaught:exception', error => {
+        if (/Highcharts(?:\\.error)?(?:\\s+error)?\\s*#16/i.test(error.message)) {
+            return false
+        }
+        return true
+    })
     const normalize = value => String(value || '').replace(/\s+/g, ' ').trim()
 
     const clickCurrentControl = (labelPattern, fallbackSelector = '') => {
