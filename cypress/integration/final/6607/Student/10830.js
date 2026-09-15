@@ -132,6 +132,21 @@ describe('Student Practice Tests - Test controls and Review', () => {
             .click({ force: true })
     }
 
+    const clickDashboard = () => {
+        cy.contains(':visible', /^\\s*DASHBOARD\\s*$/i, {
+            timeout: 30000,
+        })
+            .last()
+            .then(($label) => {
+                const $control = $label.closest(
+                    'button, a, [role="button"], [onclick]'
+                )
+                expect($control.length, 'clickable DASHBOARD control')
+                    .to.be.greaterThan(0)
+                cy.wrap($control).click({ force: true })
+            })
+    }
+
     const leaveNavigateItems = () => {
         // GO BACK is rendered by a legacy parent-frame control that cannot be
         // operated reliably inside the Cypress AUT iframe. The result/review
@@ -219,7 +234,7 @@ describe('Student Practice Tests - Test controls and Review', () => {
         })
 
         // Finish on Dashboard
-        clickNavigationControl(/^DASHBOARD$/i)
+        clickDashboard()
 
         cy.contains(/PRACTICE\s*TESTS/i, { timeout: 30000 }).should('exist')
         cy.contains(/POST\s*ASSESSMENT/i).should('exist')
