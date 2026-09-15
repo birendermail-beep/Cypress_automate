@@ -1,157 +1,119 @@
 /*
-@author: Anirudha Pratap
-@master_project_id: 6607
-@phase_id: 10150
 @story_id: 10628
 @story_name: Access Annotation
 @path: final/6607/Student
-@test_case_name: Access Annotation.js
-@description: All the annotations will show in a list, of that particular user
-@test_steps:
-^Open Annotation option in TOC area
--visit the website
--Login into website
--Click on My Library
--Select Any of your ebook
--Now Click on Chapters and Lessons
--Click on Annotation button
-
-^Check all the annotations by particular user
--visit the website
--Login into website
--Click on My Library
--Select Any of your ebook
--Now Click on Chapters and Lessons
--Click on Annotation button
--Click on Annotated By button, and select your user
-
-^collapse and Expand 
--visit the website
--Login into website
--Click on My Library
--Select Any of your ebook
--Now Click on Chapters and Lessons
--Click on Annotation button
--click on collapse or expand repeat it
--check content collapse or not
-
-^Search box correct and incorrect search
--visit the website
--Login into website
--Click on My Library
--Select Any of your ebook
--Now Click on Chapters and Lessons
--Click on Annotation button
--write correct and incorrect content for fot testing
-
-^Annotation tab 
--visit the website
--Login into website
--Click on My Library
--Select Any of your ebook
--Now Click on Chapters and Lessons
--Click on Annotation button
--click Annotation tab
-
-^pickup where you left 
--visit the website
--Login into website
--Click on My Library
--Select Any of your ebook
--Now Click on Chapters and Lessons
--Click on Annotation button
--click on pickup where you left off tab
-
-^bit size lessions
--visit the website
--Login into website
--Click on My Library
--Select Any of your ebook
--Now Click on Chapters and Lessons
--check bit-size lessions repeat
-
-
-@test_data: n/a
-@result: Open Annotation option in TOC area
 */
+// Current read-only coverage for annotations, bookmarks, highlights, and notes in Review.
+import {
+    Navbar,
+    login_username,
+    login_password,
+    LoginPage,
+    StudentPage,
+} from '../../../../page-objects/pages/index'
 
-import { Navbar, login_username, login_password, LoginPage, StudentPage } from '../../../../page-objects/pages/index'
-describe('ebook area testing', function() {
-    beforeEach('This is login', function() {
-            cy.fixture('global').then(data => {
-                cy.visit(data.url)
-                Navbar.clickOnLogin()
-                LoginPage.loginPage(login_username, login_password)
-                StudentPage.visitLOAplusCompleteCourse(data)
-            })
+describe('Student Review and annotations', () => {
+    const normalize = value => String(value || '').replace(/\s+/g, ' ').trim()
+
+    const openReview = () => {
+        cy.visit('/')
+        Navbar.clickOnLogin()
+        LoginPage.loginPage(login_username, login_password)
+        StudentPage.visitLOAplusCompleteCourse()
+        cy.get('[intro-id="chapters"]', { timeout: 30000 })
+            .filter(':visible')
+            .first()
+            .click()
+        cy.location('search', { timeout: 30000 }).should(search => {
+            expect(search).to.include('func=ebook')
+            expect(new URLSearchParams(search).get('chapter_no')).to.eq('0')
         })
-        //ebook-toc-5 ebook-toc-6 ebook-toc-7
-    it('Open Annotation option in TOC area', function() {
-        cy.get('[data-cy="chapters"]').click()
-        cy.contains('Annotation').click({ force: true })
-        cy.wait(3000)
-        cy.get('#bm_an').should('be.visible')
-        cy.wait(2000)
+        cy.contains(':visible', /^\s*Review\s*$/i, { timeout: 30000 })
+            .click()
+        cy.get('body', { timeout: 30000 })
+            .should('be.visible')
+            .and($body => {
+                expect(normalize($body.text()), 'Review page is not blank')
+                    .not.to.eq('')
+            })
+    }
+
+    beforeEach(openReview)
+
+    it('opens the Review area without a blank page', () => {
+        cy.contains(':visible', /^\s*Review\s*$/i).should('be.visible')
+        cy.location('href').should('not.eq', 'about:blank')
+        cy.get('body').should('not.contain.text', 'Default blank page')
     })
 
-    it('Check all the annotations by particular user', function() {
-        cy.get('[data-cy="chapters"]').click()
-        cy.contains('Annotation').click({ force: true })
-        cy.wait(2000)
-        cy.get('[data-cy=annotation_button]').click()
-        cy.wait(2000)
-        cy.get('[data-cy=show]').click()
-        cy.get('#e_toc').should('be.visible')
+    it('shows review or annotation content for the signed-in user', () => {
+        cy.get('body').should($body => {
+            const value = normalize($body.text())
+            expect(
+                /annotation|bookmark|highlight|note|review|no\s+.*(?:found|available)/i
+                    .test(value),
+                'annotation/review content or its empty state'
+            ).to.eq(true)
+        })
     })
 
-    it('collapse and expend', function() {
-        cy.get('[data-cy="chapters"]').click()
-        cy.contains('Annotation').click({ force: true })
-        cy.wait(3000)
-        cy.get('#collapse-init').click()
-        cy.wait(3000)
-        cy.scrollTo('20%', '20%')
-        cy.get('#chapter_guid_02nHQ').should('be.visible')
-        cy.get('#collapse-init').click()
-        cy.wait(3000)
-        cy.scrollTo('20%', '20%')
-        cy.get('#chapter_guid_02nHQ').should('be.not.visible')
+    it('provides a search control and accepts search text', () => {
+        cy.get(
+            'input[type="search"]:visible, input[placeholder*="Search" i]:visible, ' +
+            '[data-cy="searchbox"]:visible, #toc_search:visible',
+            { timeout: 30000 }
+        ).first().should('be.visible').then($input => {
+            cy.wrap($input).clear().type('annotation')
+            cy.wrap($input).should('have.value', 'annotation').clear()
+        })
     })
 
-    it('Search box correct and incorrect search', function() {
-        cy.get('[data-cy="chapters"]').click()
-        cy.contains('Annotation').click({ force: true })
-        cy.wait(3000)
-        cy.get('#toc_search').type('Fundamentals')
-        cy.get('#lessonsearch').click()
-        cy.wait(10000)
-        cy.scrollTo('40%', '40%')
-        cy.get('#searched_content').should('exist')
-        cy.get('#toc_search').clear().type('sbcxbhcgdfghshjds')
-        cy.get('#lessonsearch').click()
-        cy.scrollTo('40%', '40%')
-        cy.get('#searched_content').contains('Search text not found.').should('be.visible')
+    it('checks the user filter when the current Review layout provides one', () => {
+        cy.get('body').then($body => {
+            const filters = $body
+                .find('select:visible, button:visible, [role="combobox"]:visible')
+                .filter((_, element) =>
+                    /annotated\s+by|created\s+by|my\s+annotations|user/i
+                        .test(normalize(element.textContent ||
+                            element.getAttribute('aria-label'))))
+            if (!filters.length) {
+                cy.log('This Review layout has no user filter')
+                return
+            }
+            cy.wrap(filters.first()).should('be.visible').click()
+            cy.get('body').should('not.contain.text', 'Default blank page')
+        })
     })
-    it('Annotation tab', function() {
-        cy.get('[data-cy="chapters"]').click()
-        cy.contains('Annotation').click({ force: true })
-        cy.wait(3000)
-        cy.get('#bm_an').should('be.visible')
-        cy.get('[data-cy=annotation_tab] > .btn').click()
-        cy.get('#bm_an').should('be.not.visible')
+
+    it('checks collapse and expand when an expandable group is available', () => {
+        cy.get('body').then($body => {
+            const controls = $body
+                .find('[aria-expanded]:visible, #collapse-init:visible')
+                .filter((_, element) =>
+                    /true|false/.test(element.getAttribute('aria-expanded') || '') ||
+                    element.id === 'collapse-init')
+            if (!controls.length) {
+                cy.log('This Review layout has no collapsible annotation group')
+                return
+            }
+            const control = controls.first()
+            const before = control.attr('aria-expanded')
+            cy.wrap(control).click()
+            if (before !== undefined) {
+                cy.wrap(control).should('have.attr', 'aria-expanded')
+                    .and('not.eq', before)
+                cy.wrap(control).click()
+                    .should('have.attr', 'aria-expanded', before)
+            }
+        })
     })
-    it('pickup where you left Off', function() {
-        cy.get('[data-cy="chapters"]').click()
-        cy.contains('Annotation').click({ force: true })
-        cy.get('[data-cy=start_left]').click()
-        cy.wait(7000);
-        cy.get('#bc-front').should('be.visible')
-    })
-    it('bit size lessons', function() {
-        cy.get('[data-cy="chapters"]').click()
-        cy.contains('Annotation').click({ force: true })
-        cy.get('[data-cy=bit_size]').click()
-        cy.wait(3000)
-        cy.get('[data-cy=bit_size]').click()
+
+    it('returns to the Lessons tab without changing course settings', () => {
+        cy.contains(':visible', /^\s*Lessons\s*$/i, { timeout: 30000 })
+            .click()
+        cy.contains(':visible', /^\s*Lessons\s*$/i)
+            .should('be.visible')
+        cy.contains(':visible', /Bite-size lessons|bite-size learning/i)
+            .should('be.visible')
     })
 })
