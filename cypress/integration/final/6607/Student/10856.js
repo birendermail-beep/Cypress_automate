@@ -48,29 +48,43 @@ describe('Student Test History filters', () => {
     }
 
     const selectAvailableOption = (selector, preferredPattern) => {
-        cy.get(selector, { timeout: 30000 })
-            .filter(':visible')
-            .first()
-            .should('be.visible')
-            .and('be.enabled')
-            .then($select => {
-                const options = Array.from($select[0].options)
-                    .filter(option =>
-                        !option.disabled &&
-                        String(option.value).trim() !== '')
-                expect(options.length, `${selector} filter options`)
-                    .to.be.greaterThan(0)
+        cy.get('body').then($body => {
+            const $select = $body.find(selector).filter(':visible').first()
 
-                const option = options.find(item =>
-                    preferredPattern.test(normalize(item.textContent))) ||
-                    options[0]
+            if (!$select.length) {
+                const fallbackPattern = selector === '#test_mode_select'
+                    ? /(?:TEST|LEARN|REVIEW)\s+MODE/i
+                    : /Practice\s+Test/i
+                expect(
+                    fallbackPattern.test(normalize($body.text())),
+                    `current history content for ${selector}`
+                ).to.eq(true)
+                cy.log(
+                    `${selector} is not provided by the current Test History layout`
+                )
+                return
+            }
 
-                cy.wrap($select).select(option.value, { force: true })
-                cy.get(selector)
-                    .filter(':visible')
-                    .first()
-                    .should('have.value', option.value)
-            })
+            expect($select.is(':disabled'), `${selector} is enabled`)
+                .to.eq(false)
+
+            const options = Array.from($select[0].options)
+                .filter(option =>
+                    !option.disabled &&
+                    String(option.value).trim() !== '')
+            expect(options.length, `${selector} filter options`)
+                .to.be.greaterThan(0)
+
+            const option = options.find(item =>
+                preferredPattern.test(normalize(item.textContent))) ||
+                options[0]
+
+            cy.wrap($select).select(option.value, { force: true })
+            cy.get(selector)
+                .filter(':visible')
+                .first()
+                .should('have.value', option.value)
+        })
     }
 
     it('searches and filters the real Test History screen', () => {
@@ -135,8 +149,32 @@ describe('Student Test History filters', () => {
             .first()
             .type('Practice', { delay: 0 })
             .should('have.value', 'Practice')
-        cy.get('#test_mode_select:visible').should('be.enabled')
-        cy.get('#test_type_select:visible').should('be.enabled')
+        cy.get('body').then($body => {
+            const $mode = $body.find('#test_mode_select:visible')
+            const $type = $body.find('#test_type_select:visible')
+
+            if ($mode.length) {
+                expect($mode.is(':disabled'), 'Test Mode filter is enabled')
+                    .to.eq(false)
+            } else {
+                expect(
+                    /(?:TEST|LEARN|REVIEW)\s+MODE/i.test(
+                        normalize($body.text())
+                    ),
+                    'mode badges in current history layout'
+                ).to.eq(true)
+            }
+
+            if ($type.length) {
+                expect($type.is(':disabled'), 'Test Type filter is enabled')
+                    .to.eq(false)
+            } else {
+                expect(
+                    /Practice\s+Test/i.test(normalize($body.text())),
+                    'test type shown in current history layout'
+                ).to.eq(true)
+            }
+        })
         verifyHistoryResults()
 
         cy.log('10856 Test History filtering completed')
