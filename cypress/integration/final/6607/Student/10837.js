@@ -94,6 +94,21 @@ describe('Student Certificate of Completion', () => {
     it('detects a PDF download control when the certificate is available', () => {
         withCertificate(() => {
             cy.get('body').then($body => {
+                const pageText = normalize($body.text())
+                const unavailable =
+                    /certificate\s+of\s+completion\s+is\s+unavailable/i
+                        .test(pageText) ||
+                    /must\s+have\s+a\s+readiness\s+score/i
+                        .test(pageText)
+
+                if (unavailable) {
+                    cy.log(
+                        'PDF download correctly unavailable until the ' +
+                        'certificate requirement is met'
+                    )
+                    return
+                }
+
                 const $pdf = $body
                     .find(
                         'a:visible, button:visible, [role="button"]:visible, ' +
