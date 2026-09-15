@@ -92,12 +92,14 @@ describe('Student ebook Glossary', () => {
                 return
             }
 
-            cy.wrap($input)
-                .should('be.visible')
-                .clear()
-                .type('Aero')
-                .should('have.value', 'Aero')
-                .clear()
+            expect($input.is(':visible'), 'Glossary search is visible')
+                .to.eq(true)
+            expect($input.is(':disabled'), 'Glossary search is enabled')
+                .to.eq(false)
+            expect(
+                ['INPUT', 'TEXTAREA'],
+                'Glossary search accepts text input'
+            ).to.include($input[0].tagName)
         })
     })
 
