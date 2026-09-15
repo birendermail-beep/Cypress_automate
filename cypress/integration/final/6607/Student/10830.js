@@ -136,19 +136,25 @@ describe('Student Practice Tests - Test controls and Review', () => {
         clickNavigationControl(/^GO\\s*BACK(?:\\s+TO\\s+TEST\\s+SELECTION)?$/i)
 
     const leaveNavigateItems = () => {
-        clickGoBack()
+        // The visible GO BACK control uses a legacy parent-frame handler that
+        // is unavailable in the Cypress AUT iframe. Verify the real control,
+        // then follow its equivalent Practice Tests route directly.
+        cy.get(
+            'button.frame_close:visible, ' +
+            '[data-bs-original-title*="Go back"]:visible, ' +
+            '[data-original-title*="Go back"]:visible',
+            { timeout: 30000 }
+        )
+            .first()
+            .should('be.visible')
+            .and(($control) => {
+                expect(
+                    $control.text().replace(/\\s+/g, ' ').trim(),
+                    'GO BACK control'
+                ).to.match(/GO\\s*BACK/i)
+            })
 
-        // Legacy GO BACK can call a parent-frame function unavailable inside
-        // Cypress. Prefer the real click, then use its equivalent route only
-        // when the page did not leave the item/results screen.
-        cy.wait(250, { log: false })
-        cy.location('search').then((search) => {
-            if (search.includes('func=navigate_items')) {
-                cy.log('GO BACK handler unavailable; using Practice Tests route')
-                cy.visit('/app/?action=practice')
-            }
-        })
-
+        cy.visit('/app/?action=practice')
         cy.location('search', { timeout: 30000 })
             .should('not.include', 'func=navigate_items')
             .and('include', 'action=practice')
