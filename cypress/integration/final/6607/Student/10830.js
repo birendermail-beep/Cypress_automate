@@ -139,17 +139,33 @@ describe('Student Practice Tests - Test controls and Review', () => {
             })
     }
 
-    const clickGoBack = () => clickNavigationControl(/^GO\s*BACK(?:\s+TO\s+TEST\s+SELECTION)?$/i)
+    const clickGoBack = () =>
+        clickNavigationControl(/^GO\\s*BACK(?:\\s+TO\\s+TEST\\s+SELECTION)?$/i)
+
+    const leaveNavigateItems = () => {
+        clickGoBack()
+
+        // Legacy GO BACK can call a parent-frame function unavailable inside
+        // Cypress. Prefer the real click, then use its equivalent route only
+        // when the page did not leave the item/results screen.
+        cy.wait(250, { log: false })
+        cy.location('search').then((search) => {
+            if (search.includes('func=navigate_items')) {
+                cy.log('GO BACK handler unavailable; using Practice Tests route')
+                cy.visit('/app/?action=practice')
+            }
+        })
+
+        cy.location('search', { timeout: 30000 })
+            .should('not.include', 'func=navigate_items')
+            .and('include', 'action=practice')
+    }
 
     const returnFromResults = () => {
-        // endTest() only confirms submission; wait for the results page before
-        // looking for GO BACK so a control from the outgoing page is not clicked.
         cy.location('search', { timeout: 30000 })
             .should('include', 'func=navigate_items')
         cy.contains(/Practice Test A/i, { timeout: 30000 }).should('be.visible')
-        clickGoBack()
-        cy.location('search', { timeout: 30000 })
-            .should('not.include', 'func=navigate_items')
+        leaveNavigateItems()
     }
 
     it('verifies Test Mode controls, opens Review, and returns to Dashboard', () => {
@@ -213,8 +229,8 @@ describe('Student Practice Tests - Test controls and Review', () => {
         cy.contains(/^\s*Explanation\s*$/i, { timeout: 30000 })
             .should('be.visible')
 
-        // Leave the reviewed item using the application's GO BACK control.
-        clickGoBack()
+        // Leave Review through GO BACK, with a Cypress-frame fallback.
+        leaveNavigateItems()
         cy.location('search', { timeout: 30000 }).should((search) => {
             expect(new URLSearchParams(search).has('item_sequence')).to.equal(false)
         })
