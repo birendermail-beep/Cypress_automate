@@ -133,7 +133,7 @@ describe('Student Practice Tests - Test controls and Review', () => {
     }
 
     const clickDashboard = () => {
-        cy.contains(':visible', /^\\s*DASHBOARD\\s*$/i, {
+        cy.contains(':visible', /^\s*DASHBOARD\s*$/i, {
             timeout: 30000,
         })
             .last()
