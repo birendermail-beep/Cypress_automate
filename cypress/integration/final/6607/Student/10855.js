@@ -52,6 +52,43 @@ describe('Student Test History and performance reports', () => {
         })
     }
 
+    const openTestHistoryFromPopup = () => {
+        cy.contains(
+            ':visible',
+            /^\s*Improve Your Performance\s*$/i,
+            { timeout: 30000 }
+        ).should('be.visible')
+
+        cy.contains(
+            ':visible',
+            /^\s*Go to test history\s*$/i,
+            { timeout: 30000 }
+        )
+            .last()
+            .then($label => {
+                const $control = $label.closest(
+                    'a, button, [role="button"], [onclick]'
+                )
+                expect($control.length, 'clickable Go to test history control')
+                    .to.be.greaterThan(0)
+                cy.wrap($control)
+                    .invoke('removeAttr', 'target')
+                    .click({ force: true })
+            })
+
+        // Do not allow the result-page popup to count as Test History.
+        cy.contains(
+            ':visible',
+            /^\s*Improve Your Performance\s*$/i,
+            { timeout: 30000 }
+        ).should('not.exist')
+        cy.contains(
+            ':visible',
+            /^\s*Test History\s*$/i,
+            { timeout: 30000 }
+        ).should('be.visible')
+    }
+
     const verifyUsablePage = label => {
         cy.location('href', { timeout: 30000 }).should('not.eq', 'about:blank')
         cy.get('body', { timeout: 30000 }).should($body => {
@@ -114,16 +151,11 @@ describe('Student Test History and performance reports', () => {
             /^\s*IMPROVE(?:\s+YOUR\s+PERFORMANCE)?\s*$/i,
             '.icomoon-256px-practice-performance'
         )
-        clickCurrentControl(/Go\s+to\s+test\s+history/i)
+        openTestHistoryFromPopup()
 
         verifyUsablePage('Test History')
-        cy.get('body').should($body => {
-            expect(
-                /test\s+history|performance|activity\s+time|class\s+ranking/i
-                    .test(normalize($body.text())),
-                'Test History or report navigation'
-            ).to.eq(true)
-        })
+        cy.contains(':visible', /^\s*Test History\s*$/i)
+            .should('be.visible')
 
         // Validate history filters without repeatedly mutating the page.
         cy.get('body').then($body => {
