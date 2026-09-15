@@ -119,24 +119,17 @@ describe('Student Practice Tests - Test controls and Review', () => {
             })
     }
 
-    // Query again while navigation controls render after a page transition.
+    // cy.contains() re-queries while the result/review toolbar renders,
+    // avoiding a stale filtered collection from the outgoing page.
     const clickNavigationControl = (labelPattern) => {
-        return cy.get('body', { timeout: 30000 })
-            .find('*', { timeout: 30000 })
-            .filter((_, element) => {
-                const text = (element.innerText || element.textContent || '')
-                    .replace(/\s+/g, ' ')
-                    .trim()
-                return Cypress.$(element).is(':visible') && labelPattern.test(text)
-            }, { timeout: 30000 })
-            .should('have.length.at.least', 1)
+        return cy.contains(
+            'button:visible, a:visible, [role="button"]:visible, [onclick]:visible',
+            labelPattern,
+            { timeout: 30000 }
+        )
             .last()
-            .then(($label) => {
-                const $control = $label.closest('a, button, [role="button"], [onclick]')
-                return cy.wrap($control.length ? $control : $label)
-                    .should('be.visible')
-                    .click()
-            })
+            .should('be.visible')
+            .click({ force: true })
     }
 
     const clickGoBack = () =>
