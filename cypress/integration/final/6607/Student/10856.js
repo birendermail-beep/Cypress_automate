@@ -3,7 +3,8 @@
 @story_name: Filter Test History
 @path: final/6607/Student
 */
-// Focused coverage for Test History search and filters.
+// Test History search and filter coverage through the real UI navigation.
+import { startPracticeLearn } from '../../../../support/student-practice'
 import {
     Navbar,
     login_username,
@@ -14,7 +15,6 @@ import {
 
 describe('Student Test History filters', () => {
     const normalize = value => String(value || '').replace(/\s+/g, ' ').trim()
-    const historyUrl = '/app/reports.php?func=report_test_history'
 
     const verifyHistoryResults = () => {
         cy.get('body', { timeout: 30000 }).should($body => {
@@ -30,6 +30,21 @@ describe('Student Test History filters', () => {
                 'history table or valid empty state'
             ).to.eq(true)
         })
+    }
+
+    const clickTextControl = pattern => {
+        cy.contains(':visible', pattern, { timeout: 30000 })
+            .last()
+            .then($label => {
+                const $control = $label.closest(
+                    'a, button, [role="button"], [onclick]'
+                )
+                expect($control.length, `clickable control matching ${pattern}`)
+                    .to.be.greaterThan(0)
+                cy.wrap($control)
+                    .invoke('removeAttr', 'target')
+                    .click({ force: true })
+            })
     }
 
     const selectAvailableOption = (selector, preferredPattern) => {
@@ -58,25 +73,39 @@ describe('Student Test History filters', () => {
             })
     }
 
-    beforeEach(() => {
+    it('searches and filters the real Test History screen', () => {
         cy.visit('/')
         Navbar.clickOnLogin()
         LoginPage.loginPage(login_username, login_password)
-        StudentPage.visitLOAplusCompleteCourse()
 
-        // Course context is established above; open its Test History report.
-        cy.visit(historyUrl)
-        cy.location('pathname', { timeout: 30000 })
-            .should('include', '/app/reports.php')
-        cy.location('search')
-            .should('include', 'func=report_test_history')
+        // Create one history record and reuse the same Test History session.
+        startPracticeLearn()
+        StudentPage.endTest()
+
+        cy.location('search', { timeout: 30000 })
+            .should('include', 'func=navigate_items')
+        cy.contains(/Practice Test A/i, { timeout: 30000 })
+            .should('be.visible')
+
+        clickTextControl(
+            /^\s*IMPROVE(?:\s+YOUR\s+PERFORMANCE)?\s*$/i
+        )
+        cy.contains(':visible', /^\s*Improve Your Performance\s*$/i, {
+            timeout: 30000,
+        }).should('be.visible')
+
+        clickTextControl(/^\s*Go to test history\s*$/i)
+
+        // The popup must close and the actual second screen must appear.
+        cy.contains(':visible', /^\s*Improve Your Performance\s*$/i, {
+            timeout: 30000,
+        }).should('not.exist')
         cy.contains(':visible', /^\s*Test History\s*$/i, {
             timeout: 30000,
         }).should('be.visible')
+        cy.location('href').should('not.eq', 'about:blank')
         cy.get('body').should('not.contain.text', 'Default blank page')
-    })
 
-    it('searches Test History', () => {
         const searchSelector =
             '#search:visible, input[type="search"]:visible, ' +
             'input[placeholder*="Search"]:visible'
@@ -86,51 +115,30 @@ describe('Student Test History filters', () => {
             .should('be.visible')
             .and('be.enabled')
             .type('{selectall}Practice', { delay: 0 })
-
-        cy.get(searchSelector)
-            .first()
-            .should('have.value', 'Practice')
+        cy.get(searchSelector).first().should('have.value', 'Practice')
         verifyHistoryResults()
-    })
 
-    it('filters history by Test Mode', () => {
+        // Re-query because filtering can re-render the search control.
+        cy.get(searchSelector).first().clear()
+
         selectAvailableOption(
             '#test_mode_select',
             /^\s*(?:Test|Learn|Review)(?:\s+Mode)?\s*$/i
         )
         verifyHistoryResults()
-    })
 
-    it('filters history by Test Type', () => {
-        selectAvailableOption(
-            '#test_type_select',
-            /Practice Test/i
-        )
+        selectAvailableOption('#test_type_select', /Practice Test/i)
         verifyHistoryResults()
-    })
 
-    it('combines search, Test Mode, and Test Type filters', () => {
-        const searchSelector =
-            '#search:visible, input[type="search"]:visible, ' +
-            'input[placeholder*="Search"]:visible'
-
-        cy.get(searchSelector, { timeout: 30000 })
-            .first()
-            .type('{selectall}Practice', { delay: 0 })
-
-        selectAvailableOption(
-            '#test_mode_select',
-            /^\s*(?:Test|Learn|Review)(?:\s+Mode)?\s*$/i
-        )
-        selectAvailableOption(
-            '#test_type_select',
-            /Practice Test/i
-        )
-
+        // Confirm all three controls remain usable together.
         cy.get(searchSelector)
             .first()
+            .type('Practice', { delay: 0 })
             .should('have.value', 'Practice')
+        cy.get('#test_mode_select:visible').should('be.enabled')
+        cy.get('#test_type_select:visible').should('be.enabled')
         verifyHistoryResults()
+
         cy.log('10856 Test History filtering completed')
     })
 })
