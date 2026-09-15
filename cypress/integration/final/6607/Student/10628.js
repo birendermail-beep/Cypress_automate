@@ -67,11 +67,20 @@ describe('Student Review and annotations', () => {
 
     it('checks search when the current Review layout provides it', () => {
         cy.get('body').then($body => {
-            const selector =
-                'input[type="search"]:visible, ' +
-                'input[placeholder*="Search" i]:visible, ' +
-                '[data-cy="searchbox"]:visible, #toc_search:visible'
-            const $input = $body.find(selector).first()
+            const $input = $body
+                .find(
+                    'input[type="search"]:visible, ' +
+                    'input[placeholder]:visible, ' +
+                    '[data-cy="searchbox"]:visible, #toc_search:visible'
+                )
+                .filter((_, element) => {
+                    const placeholder = element.getAttribute('placeholder') || ''
+                    return element.type === 'search' ||
+                        /search/i.test(placeholder) ||
+                        element.getAttribute('data-cy') === 'searchbox' ||
+                        element.id === 'toc_search'
+                })
+                .first()
 
             if (!$input.length) {
                 cy.log('This Review layout has no search control')
