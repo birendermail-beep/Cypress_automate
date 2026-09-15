@@ -17,7 +17,8 @@ describe('Student Test History and performance reports', () => {
     // The analytics page currently loads Highcharts more than once. Ignore
     // only Highcharts error #16 so unrelated application errors still fail.
     Cypress.on('uncaught:exception', error => {
-        if (/Highcharts(?:\\.error)?(?:\\s+error)?\\s*#16/i.test(error.message)) {
+        const message = String(error && error.message || error)
+        if (message.includes('Highcharts error #16')) {
             return false
         }
         return true
