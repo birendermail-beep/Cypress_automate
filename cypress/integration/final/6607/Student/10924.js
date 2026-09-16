@@ -207,7 +207,7 @@ describe('Link with Instructor using Section Key', () => {
 
         cy.contains(
             '.msg:visible, [role="alert"]:visible, .alert:visible',
-            /added\s+successfully|linked\s+successfully|already\s+linked/i,
+            /added\s+successfully|linked\s+successfully|already\s+linked|already\s+in\s+a\s+section/i,
             { timeout: 30000 }
         ).should('be.visible')
     })
