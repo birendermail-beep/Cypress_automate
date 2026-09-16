@@ -43,6 +43,10 @@ describe('Link with Instructor using Section Key', () => {
         cy.location('search').then(search => {
             if (!search.includes('func=manage_course')) return
 
+            cy.window().then(win => {
+                cy.stub(win, 'open').as('learnerWindowOpen')
+            })
+
             cy.contains(':visible', /^\s*Learner\s+View\s*$/i, {
                 timeout: 30000,
             })
@@ -53,23 +57,23 @@ describe('Link with Instructor using Section Key', () => {
                     )
                     expect($control.length, 'clickable Learner View control')
                         .to.be.greaterThan(0)
-                    const href = $control.attr('href')
+                    cy.wrap($control).click({ force: true })
+                })
 
-                    if (href && !/^javascript:/i.test(href)) {
-                        const learnerUrl = new URL(
-                            href,
-                            $control[0].ownerDocument.location.href
-                        ).href
-                        cy.visit(learnerUrl)
-                    } else {
-                        cy.wrap($control)
-                            .invoke('removeAttr', 'target')
-                            .click({ force: true })
-                    }
+            cy.get('@learnerWindowOpen', { timeout: 30000 })
+                .should('have.been.called')
+                .then(openStub => {
+                    const learnerUrl = openStub.firstCall.args[0]
+                    expect(learnerUrl, 'Learner View URL').to.be.a('string')
+                    expect(learnerUrl, 'Learner View URL').not.to.eq('')
+
+                    cy.location('origin').then(origin => {
+                        cy.visit(new URL(learnerUrl, origin).href)
+                    })
                 })
 
             cy.location('search', { timeout: 30000 })
-                .should('not.include', 'func=manage_course')
+                .should('include', 'func=load_course')
             cy.get('body', { timeout: 30000 })
                 .should('not.contain.text', 'Default blank page')
         })
