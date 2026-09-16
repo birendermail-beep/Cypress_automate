@@ -155,11 +155,31 @@ describe('Link with Instructor using Section Key', () => {
 
         // My Library and Learner View both open a new browser tab and clear
         // Cypress's controlled frame. Visit the same learner course directly.
-        cy.visit(
+        const learnerPath =
             '/app/?func=load_course&course=' +
             encodeURIComponent(course) +
             '&class_code=' + encodeURIComponent(classCode)
-        )
+
+        cy.visit(learnerPath, {
+            onBeforeLoad(win) {
+                // This course launches a learner window and then closes or
+                // clears the source window. Keep that navigation inside the
+                // Cypress-controlled AUT instead.
+                Object.defineProperty(win, 'open', {
+                    configurable: true,
+                    value(url) {
+                        if (url && url !== win.location.href) {
+                            win.location.assign(url)
+                        }
+                        return win
+                    },
+                })
+                Object.defineProperty(win, 'close', {
+                    configurable: true,
+                    value() {},
+                })
+            },
+        })
         cy.location('search', { timeout: 30000 })
             .should('include', 'func=load_course')
             .and('include', 'class_code=')
