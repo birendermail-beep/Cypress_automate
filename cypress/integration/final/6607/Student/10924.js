@@ -21,28 +21,38 @@ describe('Link with Instructor using Section Key', () => {
         'input[name*="section"]:visible'
 
 
-    const chooseSectionKey = $scope => {
-        const $choice = $scope
-            .find('label, button, [role="radio"], .radio-b')
-            .filter(':visible')
-            .filter((_, element) =>
-                /section\s+key/i.test(normalize(element.textContent)))
-            .first()
+    const clickDialogOption = pattern => {
+        cy.get('.modal:visible, [role="dialog"]:visible', {
+            timeout: 30000,
+        })
+            .last()
+            .then($dialog => {
+                const $label = $dialog
+                    .find('*')
+                    .filter(':visible')
+                    .filter((_, element) =>
+                        pattern.test(normalize(element.textContent))
+                    )
+                    .filter((_, element) =>
+                        !Array.from(element.children).some(child =>
+                            pattern.test(normalize(child.textContent))
+                        )
+                    )
+                    .last()
 
-        if ($choice.length) {
-            cy.wrap($choice).click({ force: true })
-            return
-        }
+                expect($label.length, String(pattern) + ' option')
+                    .to.be.greaterThan(0)
 
-        const $legacyChoice = $scope.find('.radio-b:visible').first()
-        expect($legacyChoice.length, 'Section Key choice').to.eq(1)
-        cy.wrap($legacyChoice).click({ force: true })
+                const $control = $label.closest(
+                    'a, button, label, [role="button"], [role="tab"], ' +
+                    '[onclick], [tabindex]'
+                )
+                cy.wrap($control.length ? $control : $label)
+                    .click({ force: true })
+            })
     }
 
     const openSectionKeyForm = () => {
-        const course =
-            Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') || '200-301.AB1.00T'
-
         cy.location('href', { timeout: 30000 }).should('not.eq', 'about:blank')
         cy.get('body', { timeout: 30000 }).should($body => {
             expect(normalize($body.text()), 'course page is not blank')
@@ -51,44 +61,36 @@ describe('Link with Instructor using Section Key', () => {
         })
 
         cy.get('body').then($body => {
-            const $linkLabel = $body
-                .find('*')
-                .filter(':visible')
-                .filter((_, element) => {
-                    const ownText = normalize(element.textContent)
-                    const childHasSameText = Array.from(element.children)
-                        .some(child =>
-                            /^Link\s+with\s+Instructor$/i.test(
-                                normalize(child.textContent)
-                            ))
-                    return /^Link\s+with\s+Instructor$/i.test(ownText) &&
-                        !childHasSameText
-                })
-                .last()
+            let $setup = $body.find('[data-cy="setup_tab"]:visible').first()
 
-            expect(
-                $linkLabel.length,
-                'Link with Instructor control'
-            ).to.be.greaterThan(0)
+            if (!$setup.length) {
+                $setup = $body
+                    .find('a, button, [role="button"], [onclick], [tabindex]')
+                    .filter(':visible')
+                    .filter((_, element) =>
+                        /^SETUP(?:\s+\d+)?$/i.test(
+                            normalize(element.textContent)
+                        )
+                    )
+                    .first()
+            }
 
-            const $control = $linkLabel.closest(
-                'a, button, [role="button"], [onclick], [tabindex]'
-            )
-            cy.wrap($control.length ? $control : $linkLabel)
-                .click({ force: true })
-
-            cy.get(
-                '.modal:visible, [role="dialog"]:visible',
-                { timeout: 30000 }
-            )
-                .last()
-                .then($dialog => chooseSectionKey($dialog))
+            expect($setup.length, 'SETUP control').to.be.greaterThan(0)
+            cy.wrap($setup).click({ force: true })
         })
 
+        cy.get('.modal:visible, [role="dialog"]:visible', {
+            timeout: 30000,
+        }).should('be.visible')
+
+        clickDialogOption(/^Instruction\s+Type$/i)
+        clickDialogOption(/^Instructor-Led$/i)
+        clickDialogOption(/^By\s+section\s+key$/i)
+
         cy.get(codeSelector, { timeout: 30000 })
-                .first()
-                .should('be.visible')
-                .and('be.enabled')
+            .first()
+            .should('be.visible')
+            .and('be.enabled')
         cy.get('#add:visible, button[type="submit"]:visible')
             .first()
             .should('be.visible')
