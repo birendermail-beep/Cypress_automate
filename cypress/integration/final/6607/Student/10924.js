@@ -50,7 +50,7 @@ describe('Link with Instructor using Section Key', () => {
             expect($body.text()).not.to.include('Default blank page')
         })
 
-        return cy.get('body').then($body => {
+        cy.get('body').then($body => {
             let $setup = $body.find('[data-cy="setup_tab"]:visible').first()
 
             // The current learner dashboard renders SETUP as a text-labelled
@@ -78,7 +78,7 @@ describe('Link with Instructor using Section Key', () => {
                         'Section Key option appears after opening SETUP'
                     ).to.eq(true)
                 }).then($setupBody => chooseSectionKey($setupBody))
-                return true
+                return
             }
 
             const $linkLabel = $body
@@ -115,20 +115,16 @@ describe('Link with Instructor using Section Key', () => {
             )
                 .last()
                 .then($dialog => chooseSectionKey($dialog))
-
-            return true
-        }).then(available => {
-            if (!available) return
-
-            cy.get(codeSelector, { timeout: 30000 })
-                .first()
-                .should('be.visible')
-                .and('be.enabled')
-            cy.get('#add:visible, button[type="submit"]:visible')
-                .first()
-                .should('be.visible')
-                .and('be.enabled')
         })
+
+        cy.get(codeSelector, { timeout: 30000 })
+                .first()
+                .should('be.visible')
+                .and('be.enabled')
+        cy.get('#add:visible, button[type="submit"]:visible')
+            .first()
+            .should('be.visible')
+            .and('be.enabled')
     }
 
     const submitSectionKey = value => {
