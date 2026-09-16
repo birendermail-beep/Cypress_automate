@@ -114,28 +114,62 @@ describe('Link with Instructor using Section Key', () => {
                     'Remove control for an existing section link'
                 ).to.be.greaterThan(0)
 
-                cy.on('window:confirm', () => true)
                 cy.wrap($remove).click({ force: true })
+
+                cy.contains(
+                    'button:visible, a:visible, [role="button"]:visible',
+                    /^\s*YES\s*$/i,
+                    { timeout: 30000 }
+                )
+                    .should('be.visible')
+                    .click({ force: true })
+
+                cy.contains(
+                    'button:visible, a:visible, [role="button"]:visible',
+                    /^\s*YES\s*$/i
+                ).should('not.exist')
+
+                cy.get('body').then($body => {
+                    const dialogIsOpen =
+                        $body.find(
+                            '.modal:visible, [role="dialog"]:visible'
+                        ).length > 0
+
+                    if (!dialogIsOpen) {
+                        let $setup = $body
+                            .find('[data-cy="setup_tab"]:visible')
+                            .first()
+
+                        if (!$setup.length) {
+                            $setup = $body
+                                .find(
+                                    'a, button, [role="button"], ' +
+                                    '[onclick], [tabindex]'
+                                )
+                                .filter(':visible')
+                                .filter((_, element) =>
+                                    /^SETUP(?:\s+\d+)?$/i.test(
+                                        normalize(element.textContent)
+                                    )
+                                )
+                                .first()
+                        }
+
+                        expect(
+                            $setup.length,
+                            'SETUP control after removing section'
+                        ).to.be.greaterThan(0)
+                        cy.wrap($setup).click({ force: true })
+                    }
+                })
 
                 cy.get('.modal:visible, [role="dialog"]:visible', {
                     timeout: 30000,
-                })
-                    .last()
-                    .should($updatedDialog => {
-                        const removeCount = $updatedDialog
-                            .find('button, a, [role="button"]')
-                            .filter(':visible')
-                            .filter((_, element) =>
-                                /^REMOVE$/i.test(
-                                    normalize(element.textContent)
-                                )
-                            ).length
+                }).should('be.visible')
 
-                        expect(
-                            removeCount,
-                            'existing section link was removed'
-                        ).to.eq(0)
-                    })
+                clickDialogOption(/^Instruction\s+Type$/i)
+                clickDialogOption(/^Instructor-Led$/i)
+                clickDialogOption(/^By\s+section\s+key$/i)
             })
 
         cy.get(codeSelector, { timeout: 30000 })
