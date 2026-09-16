@@ -89,6 +89,55 @@ describe('Link with Instructor using Section Key', () => {
         clickDialogOption(/^Instructor-Led$/i)
         clickDialogOption(/^By\s+section\s+key$/i)
 
+        cy.get('.modal:visible, [role="dialog"]:visible')
+            .last()
+            .then($dialog => {
+                const hasSectionKeyInput =
+                    $dialog.find('#code:visible').length > 0 ||
+                    $dialog.find('input[name="code"]:visible').length > 0 ||
+                    $dialog.find('input[name*="section"]:visible').length > 0
+
+                if (hasSectionKeyInput) {
+                    return
+                }
+
+                const $remove = $dialog
+                    .find('button, a, [role="button"]')
+                    .filter(':visible')
+                    .filter((_, element) =>
+                        /^REMOVE$/i.test(normalize(element.textContent))
+                    )
+                    .first()
+
+                expect(
+                    $remove.length,
+                    'Remove control for an existing section link'
+                ).to.be.greaterThan(0)
+
+                cy.on('window:confirm', () => true)
+                cy.wrap($remove).click({ force: true })
+
+                cy.get('.modal:visible, [role="dialog"]:visible', {
+                    timeout: 30000,
+                })
+                    .last()
+                    .should($updatedDialog => {
+                        const removeCount = $updatedDialog
+                            .find('button, a, [role="button"]')
+                            .filter(':visible')
+                            .filter((_, element) =>
+                                /^REMOVE$/i.test(
+                                    normalize(element.textContent)
+                                )
+                            ).length
+
+                        expect(
+                            removeCount,
+                            'existing section link was removed'
+                        ).to.eq(0)
+                    })
+            })
+
         cy.get(codeSelector, { timeout: 30000 })
             .first()
             .should('be.visible')
