@@ -4,7 +4,7 @@
 @path: final/6607/Student
 
 Set CYPRESS_LINK_INSTRUCTOR_COURSE_CRN for a course that provides this feature.
-The default course is ADA-AUDIT.AA1.
+The default course is 200-301.AB1.00T.
 Set CYPRESS_SECTION_KEY only when the successful-link scenario should run.
 */
 import {
@@ -41,7 +41,7 @@ describe('Link with Instructor using Section Key', () => {
 
     const openSectionKeyForm = () => {
         const course =
-            Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') || 'ADA-AUDIT.AA1'
+            Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') || '200-301.AB1.00T'
 
         cy.location('href', { timeout: 30000 }).should('not.eq', 'about:blank')
         cy.get('body', { timeout: 30000 }).should($body => {
@@ -110,7 +110,7 @@ describe('Link with Instructor using Section Key', () => {
     beforeEach(function() {
         const course =
             Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') ||
-            'ADA-AUDIT.AA1'
+            '200-301.AB1.00T'
 
         cy.visit('/')
         Navbar.clickOnLogin()
@@ -139,7 +139,7 @@ describe('Link with Instructor using Section Key', () => {
         })
         cy.location('search', { timeout: 30000 })
             .should('include', 'func=load_course')
-            .and('include', 'course=ADA-AUDIT.AA1')
+            .and('include', 'course=' + encodeURIComponent(course))
             .and('not.include', 'class_code=')
         openSectionKeyForm()
     })
