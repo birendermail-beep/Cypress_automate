@@ -4,7 +4,7 @@
 @path: final/6607/Student
 
 Set CYPRESS_LINK_INSTRUCTOR_COURSE_CRN for a course that provides this feature.
-The default course is DEMO.AA1.
+The default course is Demo.AA1.
 Set CYPRESS_SECTION_KEY only when the successful-link scenario should run.
 */
 import {
@@ -12,6 +12,7 @@ import {
     login_username,
     login_password,
     LoginPage,
+    StudentPage,
 } from '../../../../page-objects/pages/index'
 
 describe('Link with Instructor using Section Key', () => {
@@ -40,15 +41,9 @@ describe('Link with Instructor using Section Key', () => {
 
     const openSectionKeyForm = testContext => {
         const course =
-            Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') || 'DEMO.AA1'
+            Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') || 'Demo.AA1'
 
-        cy.visit(
-            '/?func=load_course&course=' +
-            encodeURIComponent(course) +
-            '&theme_view=classic'
-        )
         cy.location('href', { timeout: 30000 }).should('not.eq', 'about:blank')
-        cy.location('search').should('include', 'func=load_course')
         cy.get('body', { timeout: 30000 }).should($body => {
             expect(normalize($body.text()), 'course page is not blank')
                 .not.to.eq('')
@@ -130,9 +125,15 @@ describe('Link with Instructor using Section Key', () => {
     }
 
     beforeEach(function() {
+        const course =
+            Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') || 'Demo.AA1'
+        const searchText =
+            Cypress.env('LINK_INSTRUCTOR_COURSE_SEARCH') || 'Platform Demo'
+
         cy.visit('/')
         Navbar.clickOnLogin()
         LoginPage.loginPage(login_username, login_password)
+        StudentPage.searchAndManageCourse(searchText, course)
         openSectionKeyForm(this)
     })
 
