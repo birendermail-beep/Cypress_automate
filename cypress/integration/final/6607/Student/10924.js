@@ -65,7 +65,7 @@ describe('Link with Instructor using Section Key', () => {
         })
     }
 
-    const openSectionKeyForm = testContext => {
+    const openSectionKeyForm = () => {
         const course =
             Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') || 'Demo.AA1'
 
@@ -77,12 +77,33 @@ describe('Link with Instructor using Section Key', () => {
         })
 
         return cy.get('body').then($body => {
-            const $setup = $body.find('[data-cy="setup_tab"]:visible').first()
+            let $setup = $body.find('[data-cy="setup_tab"]:visible').first()
+
+            // The current learner dashboard renders SETUP as a text-labelled
+            // navigation control without the legacy data-cy attribute.
+            if (!$setup.length) {
+                const $setupLabel = $body
+                    .find('a, button, [role="button"], [onclick], [tabindex]')
+                    .filter(':visible')
+                    .filter((_, element) =>
+                        /^\s*SETUP(?:\s+\d+)?\s*$/i.test(
+                            normalize(element.textContent)
+                        ))
+                    .first()
+
+                if ($setupLabel.length) $setup = $setupLabel
+            }
 
             if ($setup.length) {
                 cy.wrap($setup).click({ force: true })
-                cy.get('body', { timeout: 30000 })
-                    .then($setupBody => chooseSectionKey($setupBody))
+                cy.get('body', { timeout: 30000 }).should($setupBody => {
+                    expect(
+                        /section\s+key/i.test(normalize($setupBody.text())) ||
+                        $setupBody.find('.radio-b:visible, #radio-b:visible')
+                            .length > 0,
+                        'Section Key option appears after opening SETUP'
+                    ).to.eq(true)
+                }).then($setupBody => chooseSectionKey($setupBody))
                 return true
             }
 
@@ -102,12 +123,10 @@ describe('Link with Instructor using Section Key', () => {
                 .last()
 
             if (!$linkLabel.length) {
-                cy.log(
+                throw new Error(
                     'Course ' + course +
-                    ' does not provide Link with Instructor; test skipped'
+                    ' did not expose SETUP or Link with Instructor'
                 )
-                testContext.skip()
-                return false
             }
 
             const $control = $linkLabel.closest(
@@ -161,7 +180,7 @@ describe('Link with Instructor using Section Key', () => {
         LoginPage.loginPage(login_username, login_password)
         StudentPage.searchAndManageCourse(searchText, course)
         enterLearnerViewIfNeeded()
-        openSectionKeyForm(this)
+        openSectionKeyForm()
     })
 
     it('shows validation when the section key is blank', () => {
