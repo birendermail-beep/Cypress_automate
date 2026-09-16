@@ -4,7 +4,7 @@
 @path: final/6607/Student
 
 Set CYPRESS_LINK_INSTRUCTOR_COURSE_CRN for a course that provides this feature.
-The default course is Demo.AA1.
+The default course is ADA-AUDIT.AA1.
 Set CYPRESS_SECTION_KEY only when the successful-link scenario should run.
 */
 import {
@@ -41,7 +41,7 @@ describe('Link with Instructor using Section Key', () => {
 
     const openSectionKeyForm = () => {
         const course =
-            Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') || 'Demo.AA1'
+            Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') || 'ADA-AUDIT.AA1'
 
         cy.location('href', { timeout: 30000 }).should('not.eq', 'about:blank')
         cy.get('body', { timeout: 30000 }).should($body => {
@@ -51,39 +51,6 @@ describe('Link with Instructor using Section Key', () => {
         })
 
         cy.get('body').then($body => {
-            const $incompleteSetup = $body
-                .find('*')
-                .filter(':visible')
-                .filter((_, element) =>
-                    /your\s+setup\s+is\s+incomplete/i.test(
-                        normalize(element.textContent)
-                    ))
-                .filter((_, element) =>
-                    !Array.from(element.children).some(child =>
-                        /your\s+setup\s+is\s+incomplete/i.test(
-                            normalize(child.textContent)
-                        ))
-                )
-                .first()
-
-            if ($incompleteSetup.length) {
-                const $control = $incompleteSetup.closest(
-                    'a, button, [role="button"], [onclick], [tabindex]'
-                )
-                cy.wrap($control.length ? $control : $incompleteSetup)
-                    .click({ force: true })
-
-                cy.get('body', { timeout: 30000 }).should($setupBody => {
-                    expect(
-                        /section\s+key/i.test(normalize($setupBody.text())) ||
-                        $setupBody.find('.radio-b:visible, #radio-b:visible')
-                            .length > 0,
-                        'Section Key option appears from incomplete setup'
-                    ).to.eq(true)
-                }).then($setupBody => chooseSectionKey($setupBody))
-                return
-            }
-
             const $linkLabel = $body
                 .find('*')
                 .filter(':visible')
@@ -101,7 +68,7 @@ describe('Link with Instructor using Section Key', () => {
 
             expect(
                 $linkLabel.length,
-                'Link with Instructor or incomplete setup control'
+                'Link with Instructor control'
             ).to.be.greaterThan(0)
 
             const $control = $linkLabel.closest(
@@ -142,26 +109,19 @@ describe('Link with Instructor using Section Key', () => {
 
     beforeEach(function() {
         const course =
-            Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') || 'Demo.AA1'
-        const classCode =
-            Cypress.env('LINK_INSTRUCTOR_CLASS_CODE') || '0AQE6'
+            Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') ||
+            'ADA-AUDIT.AA1'
 
         cy.visit('/')
         Navbar.clickOnLogin()
         LoginPage.loginPage(login_username, login_password)
 
-        // My Library and Learner View both open a new browser tab and clear
-        // Cypress's controlled frame. Visit the same learner course directly.
         const learnerPath =
             '/app/?func=load_course&course=' +
-            encodeURIComponent(course) +
-            '&class_code=' + encodeURIComponent(classCode)
+            encodeURIComponent(course)
 
         cy.visit(learnerPath, {
             onBeforeLoad(win) {
-                // This course launches a learner window and then closes or
-                // clears the source window. Keep that navigation inside the
-                // Cypress-controlled AUT instead.
                 Object.defineProperty(win, 'open', {
                     configurable: true,
                     value(url) {
@@ -179,7 +139,8 @@ describe('Link with Instructor using Section Key', () => {
         })
         cy.location('search', { timeout: 30000 })
             .should('include', 'func=load_course')
-            .and('include', 'class_code=')
+            .and('include', 'course=ADA-AUDIT.AA1')
+            .and('not.include', 'class_code=')
         openSectionKeyForm()
     })
 
