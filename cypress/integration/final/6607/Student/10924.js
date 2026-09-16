@@ -18,7 +18,9 @@ describe('Link with Instructor using Section Key', () => {
     const normalize = value => String(value || '').replace(/\s+/g, ' ').trim()
     const codeSelector =
         '#code:visible, input[name="code"]:visible, ' +
-        'input[name*="section"]:visible'
+        'input[name*="section"]:visible, ' +
+        '.modal:visible input[type="text"]:visible, ' +
+        '[role="dialog"]:visible input[type="text"]:visible'
 
 
     const clickDialogOption = pattern => {
@@ -91,7 +93,15 @@ describe('Link with Instructor using Section Key', () => {
             .first()
             .should('be.visible')
             .and('be.enabled')
-        cy.get('#add:visible, button[type="submit"]:visible')
+        cy.get(
+            '#add:visible, button[type="submit"]:visible, ' +
+            '.modal:visible button:visible, ' +
+            '[role="dialog"]:visible button:visible'
+        ).filter((_, element) =>
+            /^(?:ADD|SUBMIT)$/i.test(normalize(element.textContent)) ||
+            element.id === 'add' ||
+            element.type === 'submit'
+        )
             .first()
             .should('be.visible')
             .and('be.enabled')
@@ -104,7 +114,15 @@ describe('Link with Instructor using Section Key', () => {
             cy.get(codeSelector).first().type(value, { log: false })
         }
 
-        cy.get('#add:visible, button[type="submit"]:visible')
+        cy.get(
+            '#add:visible, button[type="submit"]:visible, ' +
+            '.modal:visible button:visible, ' +
+            '[role="dialog"]:visible button:visible'
+        ).filter((_, element) =>
+            /^(?:ADD|SUBMIT)$/i.test(normalize(element.textContent)) ||
+            element.id === 'add' ||
+            element.type === 'submit'
+        )
             .first()
             .click({ force: true })
     }
