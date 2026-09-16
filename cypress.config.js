@@ -7,6 +7,10 @@ module.exports = defineConfig({
   viewportWidth: 1280,
   viewportHeight: 800,
   chromeWebSecurity: false,
+  // Rewrite frame-busting and top-window navigation used by legacy course
+  // pages so they remain inside Cypress's controlled AUT iframe.
+  modifyObstructiveCode: true,
+  experimentalModifyObstructiveThirdPartyCode: true,
   video: false,
   numTestsKeptInMemory: 20,
   retries: {
