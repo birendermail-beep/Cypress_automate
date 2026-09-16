@@ -94,13 +94,11 @@ describe('Link with Instructor using Section Key', () => {
             .should('be.visible')
             .and('be.enabled')
         cy.get(
-            '#add:visible, button[type="submit"]:visible, ' +
-            '.modal:visible button:visible, ' +
+            '#add:visible, .modal:visible button:visible, ' +
             '[role="dialog"]:visible button:visible'
         ).filter((_, element) =>
-            /^(?:ADD|SUBMIT)$/i.test(normalize(element.textContent)) ||
-            element.id === 'add' ||
-            element.type === 'submit'
+            /^ADD$/i.test(normalize(element.textContent)) ||
+            element.id === 'add'
         )
             .first()
             .should('be.visible')
@@ -115,13 +113,11 @@ describe('Link with Instructor using Section Key', () => {
         }
 
         cy.get(
-            '#add:visible, button[type="submit"]:visible, ' +
-            '.modal:visible button:visible, ' +
+            '#add:visible, .modal:visible button:visible, ' +
             '[role="dialog"]:visible button:visible'
         ).filter((_, element) =>
-            /^(?:ADD|SUBMIT)$/i.test(normalize(element.textContent)) ||
-            element.id === 'add' ||
-            element.type === 'submit'
+            /^ADD$/i.test(normalize(element.textContent)) ||
+            element.id === 'add'
         )
             .first()
             .click({ force: true })
