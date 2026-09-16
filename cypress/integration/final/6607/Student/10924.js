@@ -53,9 +53,19 @@ describe('Link with Instructor using Section Key', () => {
                     )
                     expect($control.length, 'clickable Learner View control')
                         .to.be.greaterThan(0)
-                    cy.wrap($control)
-                        .invoke('removeAttr', 'target')
-                        .click({ force: true })
+                    const href = $control.attr('href')
+
+                    if (href && !/^javascript:/i.test(href)) {
+                        const learnerUrl = new URL(
+                            href,
+                            $control[0].ownerDocument.location.href
+                        ).href
+                        cy.visit(learnerUrl)
+                    } else {
+                        cy.wrap($control)
+                            .invoke('removeAttr', 'target')
+                            .click({ force: true })
+                    }
                 })
 
             cy.location('search', { timeout: 30000 })
