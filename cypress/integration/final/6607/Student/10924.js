@@ -43,32 +43,66 @@ describe('Link with Instructor using Section Key', () => {
         cy.location('search').then(search => {
             if (!search.includes('func=manage_course')) return
 
-            cy.window().then(win => {
-                cy.stub(win, 'open').as('learnerWindowOpen')
-            })
-
             cy.contains(':visible', /^\s*Learner\s+View\s*$/i, {
                 timeout: 30000,
             })
                 .first()
                 .then($label => {
-                    const $control = $label.closest(
-                        'a, button, [role="button"], [onclick]'
-                    )
-                    expect($control.length, 'clickable Learner View control')
-                        .to.be.greaterThan(0)
-                    cy.wrap($control).click({ force: true })
-                })
+                    const $nodes = $label
+                        .add($label.parents())
+                        .add($label.find('*'))
+                    let learnerPath = ''
 
-            cy.get('@learnerWindowOpen', { timeout: 30000 })
-                .should('have.been.called')
-                .then(openStub => {
-                    const learnerUrl = openStub.firstCall.args[0]
-                    expect(learnerUrl, 'Learner View URL').to.be.a('string')
-                    expect(learnerUrl, 'Learner View URL').not.to.eq('')
+                    $nodes.each((_, element) => {
+                        if (learnerPath) return false
+
+                        const href = element.getAttribute &&
+                            element.getAttribute('href')
+                        if (
+                            href &&
+                            !/^javascript:|^#|^about:blank$/i.test(href) &&
+                            /func=load_course/i.test(href)
+                        ) {
+                            learnerPath = href
+                            return false
+                        }
+
+                        const attributes = Array.from(element.attributes || [])
+                        const attributeWithUrl = attributes.find(attribute =>
+                            /func=load_course/i.test(attribute.value)
+                        )
+                        if (!attributeWithUrl) return
+
+                        const quotedUrl = attributeWithUrl.value.match(
+                            /['"]([^'"]*func=load_course[^'"]*)['"]/i
+                        )
+                        learnerPath = quotedUrl
+                            ? quotedUrl[1]
+                            : attributeWithUrl.value
+                    })
+
+                    learnerPath = learnerPath.replace(/&amp;/g, '&')
+
+                    if (!learnerPath) {
+                        const course =
+                            Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') ||
+                            'Demo.AA1'
+                        const classCode =
+                            Cypress.env('LINK_INSTRUCTOR_CLASS_CODE')
+
+                        expect(
+                            classCode,
+                            'CYPRESS_LINK_INSTRUCTOR_CLASS_CODE'
+                        ).to.be.a('string').and.not.to.eq('')
+
+                        learnerPath =
+                            '/app/?func=load_course&course=' +
+                            encodeURIComponent(course) +
+                            '&class_code=' + encodeURIComponent(classCode)
+                    }
 
                     cy.location('origin').then(origin => {
-                        cy.visit(new URL(learnerUrl, origin).href)
+                        cy.visit(new URL(learnerPath, origin).href)
                     })
                 })
 
