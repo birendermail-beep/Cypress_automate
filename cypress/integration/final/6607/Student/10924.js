@@ -21,6 +21,71 @@ describe('Link with Instructor using Section Key', () => {
         '#code:visible, input[name="code"]:visible, ' +
         'input[name*="section"]:visible'
 
+
+    const getNavigationUrl = ($label, urlPattern) => {
+        const $nodes = $label
+            .add($label.parents())
+            .add($label.find('*'))
+        let path = ''
+
+        $nodes.each((_, element) => {
+            if (path) return false
+
+            const href = element.getAttribute &&
+                element.getAttribute('href')
+            if (
+                href &&
+                !/^javascript:|^#|^about:blank$/i.test(href) &&
+                urlPattern.test(href)
+            ) {
+                path = href
+                return false
+            }
+
+            const attributes = Array.from(element.attributes || [])
+            const attributeWithUrl = attributes.find(attribute =>
+                urlPattern.test(attribute.value)
+            )
+            if (!attributeWithUrl) return
+
+            const quotedUrl = attributeWithUrl.value.match(
+                /['"]([^'"]*(?:func|action)=[^'"]*)['"]/i
+            )
+            path = quotedUrl ? quotedUrl[1] : attributeWithUrl.value
+        })
+
+        return path.replace(/&amp;/g, '&')
+    }
+
+    const visitInCurrentTab = path => {
+        expect(path, 'navigation URL').to.be.a('string').and.not.to.eq('')
+        cy.location('origin').then(origin => {
+            cy.visit(new URL(path, origin).href)
+        })
+    }
+
+    const openCourseFromLibrary = (searchText, course) => {
+        StudentPage.openMyLibrary()
+        cy.get('[data-cy="searchbox"]', { timeout: 30000 })
+            .should('be.visible')
+            .clear()
+            .type(searchText, { force: true })
+
+        cy.get(`[crn="${course}"]`, { timeout: 30000 })
+            .should('exist')
+            .contains(/manage|open|launch/i)
+            .then($control => {
+                const courseUrl = getNavigationUrl(
+                    $control,
+                    /func=(?:manage|load)_course/i
+                )
+                visitInCurrentTab(courseUrl)
+            })
+
+        cy.location('search', { timeout: 30000 })
+            .should('match', /func=(?:manage|load)_course/i)
+    }
+
     const chooseSectionKey = $scope => {
         const $choice = $scope
             .find('label, button, [role="radio"], .radio-b')
@@ -48,62 +113,32 @@ describe('Link with Instructor using Section Key', () => {
             })
                 .first()
                 .then($label => {
-                    const $nodes = $label
-                        .add($label.parents())
-                        .add($label.find('*'))
-                    let learnerPath = ''
+                    const learnerUrl = getNavigationUrl(
+                        $label,
+                        /func=load_course/i
+                    )
 
-                    $nodes.each((_, element) => {
-                        if (learnerPath) return false
-
-                        const href = element.getAttribute &&
-                            element.getAttribute('href')
-                        if (
-                            href &&
-                            !/^javascript:|^#|^about:blank$/i.test(href) &&
-                            /func=load_course/i.test(href)
-                        ) {
-                            learnerPath = href
-                            return false
-                        }
-
-                        const attributes = Array.from(element.attributes || [])
-                        const attributeWithUrl = attributes.find(attribute =>
-                            /func=load_course/i.test(attribute.value)
-                        )
-                        if (!attributeWithUrl) return
-
-                        const quotedUrl = attributeWithUrl.value.match(
-                            /['"]([^'"]*func=load_course[^'"]*)['"]/i
-                        )
-                        learnerPath = quotedUrl
-                            ? quotedUrl[1]
-                            : attributeWithUrl.value
-                    })
-
-                    learnerPath = learnerPath.replace(/&amp;/g, '&')
-
-                    if (!learnerPath) {
-                        const course =
-                            Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') ||
-                            'Demo.AA1'
-                        const classCode =
-                            Cypress.env('LINK_INSTRUCTOR_CLASS_CODE')
-
-                        expect(
-                            classCode,
-                            'CYPRESS_LINK_INSTRUCTOR_CLASS_CODE'
-                        ).to.be.a('string').and.not.to.eq('')
-
-                        learnerPath =
-                            '/app/?func=load_course&course=' +
-                            encodeURIComponent(course) +
-                            '&class_code=' + encodeURIComponent(classCode)
+                    if (learnerUrl) {
+                        visitInCurrentTab(learnerUrl)
+                        return
                     }
 
-                    cy.location('origin').then(origin => {
-                        cy.visit(new URL(learnerPath, origin).href)
-                    })
+                    const course =
+                        Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') ||
+                        'Demo.AA1'
+                    const classCode =
+                        Cypress.env('LINK_INSTRUCTOR_CLASS_CODE')
+
+                    expect(
+                        classCode,
+                        'CYPRESS_LINK_INSTRUCTOR_CLASS_CODE'
+                    ).to.be.a('string').and.not.to.eq('')
+
+                    visitInCurrentTab(
+                        '/app/?func=load_course&course=' +
+                        encodeURIComponent(course) +
+                        '&class_code=' + encodeURIComponent(classCode)
+                    )
                 })
 
             cy.location('search', { timeout: 30000 })
@@ -226,7 +261,7 @@ describe('Link with Instructor using Section Key', () => {
         cy.visit('/')
         Navbar.clickOnLogin()
         LoginPage.loginPage(login_username, login_password)
-        StudentPage.searchAndManageCourse(searchText, course)
+        openCourseFromLibrary(searchText, course)
         enterLearnerViewIfNeeded()
         openSectionKeyForm()
     })
