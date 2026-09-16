@@ -4,7 +4,7 @@
 @path: final/6607/Student
 
 Set CYPRESS_LINK_INSTRUCTOR_COURSE_CRN for a course that provides this feature.
-The default course is 200-301.AB1.00T.
+The default course is Demo.AA1.
 Set CYPRESS_SECTION_KEY only when the successful-link scenario should run.
 */
 import {
@@ -112,7 +112,7 @@ describe('Link with Instructor using Section Key', () => {
     beforeEach(function() {
         const course =
             Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') ||
-            '200-301.AB1.00T'
+            'Demo.AA1'
 
         cy.visit('/')
         Navbar.clickOnLogin()
