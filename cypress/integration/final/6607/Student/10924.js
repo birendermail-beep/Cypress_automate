@@ -52,18 +52,18 @@ describe('Link with Instructor using Section Key', () => {
 
         cy.get('body').then($body => {
             const $incompleteSetup = $body
-                .find('a, button, [role="button"], [onclick], [tabindex], div')
+                .find('*')
                 .filter(':visible')
                 .filter((_, element) =>
                     /your\s+setup\s+is\s+incomplete/i.test(
                         normalize(element.textContent)
                     ))
-                .filter((_, element) => {
-                    return !Array.from(element.children).some(child =>
+                .filter((_, element) =>
+                    !Array.from(element.children).some(child =>
                         /your\s+setup\s+is\s+incomplete/i.test(
                             normalize(child.textContent)
                         ))
-                })
+                )
                 .first()
 
             if ($incompleteSetup.length) {
