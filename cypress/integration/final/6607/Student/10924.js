@@ -39,6 +39,32 @@ describe('Link with Instructor using Section Key', () => {
         cy.wrap($legacyChoice).click({ force: true })
     }
 
+    const enterLearnerViewIfNeeded = () => {
+        cy.location('search').then(search => {
+            if (!search.includes('func=manage_course')) return
+
+            cy.contains(':visible', /^\s*Learner\s+View\s*$/i, {
+                timeout: 30000,
+            })
+                .first()
+                .then($label => {
+                    const $control = $label.closest(
+                        'a, button, [role="button"], [onclick]'
+                    )
+                    expect($control.length, 'clickable Learner View control')
+                        .to.be.greaterThan(0)
+                    cy.wrap($control)
+                        .invoke('removeAttr', 'target')
+                        .click({ force: true })
+                })
+
+            cy.location('search', { timeout: 30000 })
+                .should('not.include', 'func=manage_course')
+            cy.get('body', { timeout: 30000 })
+                .should('not.contain.text', 'Default blank page')
+        })
+    }
+
     const openSectionKeyForm = testContext => {
         const course =
             Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') || 'Demo.AA1'
@@ -134,6 +160,7 @@ describe('Link with Instructor using Section Key', () => {
         Navbar.clickOnLogin()
         LoginPage.loginPage(login_username, login_password)
         StudentPage.searchAndManageCourse(searchText, course)
+        enterLearnerViewIfNeeded()
         openSectionKeyForm(this)
     })
 
