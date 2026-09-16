@@ -51,31 +51,34 @@ describe('Link with Instructor using Section Key', () => {
         })
 
         cy.get('body').then($body => {
-            let $setup = $body.find('[data-cy="setup_tab"]:visible').first()
-
-            // The current learner dashboard renders SETUP as a text-labelled
-            // navigation control without the legacy data-cy attribute.
-            if (!$setup.length) {
-                const $setupLabel = $body
-                    .find('a, button, [role="button"], [onclick], [tabindex]')
-                    .filter(':visible')
-                    .filter((_, element) =>
-                        /^\s*SETUP(?:\s+\d+)?\s*$/i.test(
-                            normalize(element.textContent)
+            const $incompleteSetup = $body
+                .find('a, button, [role="button"], [onclick], [tabindex], div')
+                .filter(':visible')
+                .filter((_, element) =>
+                    /your\s+setup\s+is\s+incomplete/i.test(
+                        normalize(element.textContent)
+                    ))
+                .filter((_, element) => {
+                    return !Array.from(element.children).some(child =>
+                        /your\s+setup\s+is\s+incomplete/i.test(
+                            normalize(child.textContent)
                         ))
-                    .first()
+                })
+                .first()
 
-                if ($setupLabel.length) $setup = $setupLabel
-            }
+            if ($incompleteSetup.length) {
+                const $control = $incompleteSetup.closest(
+                    'a, button, [role="button"], [onclick], [tabindex]'
+                )
+                cy.wrap($control.length ? $control : $incompleteSetup)
+                    .click({ force: true })
 
-            if ($setup.length) {
-                cy.wrap($setup).click({ force: true })
                 cy.get('body', { timeout: 30000 }).should($setupBody => {
                     expect(
                         /section\s+key/i.test(normalize($setupBody.text())) ||
                         $setupBody.find('.radio-b:visible, #radio-b:visible')
                             .length > 0,
-                        'Section Key option appears after opening SETUP'
+                        'Section Key option appears from incomplete setup'
                     ).to.eq(true)
                 }).then($setupBody => chooseSectionKey($setupBody))
                 return
@@ -96,12 +99,10 @@ describe('Link with Instructor using Section Key', () => {
                 })
                 .last()
 
-            if (!$linkLabel.length) {
-                throw new Error(
-                    'Course ' + course +
-                    ' did not expose SETUP or Link with Instructor'
-                )
-            }
+            expect(
+                $linkLabel.length,
+                'Link with Instructor or incomplete setup control'
+            ).to.be.greaterThan(0)
 
             const $control = $linkLabel.closest(
                 'a, button, [role="button"], [onclick], [tabindex]'
