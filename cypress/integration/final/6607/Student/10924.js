@@ -205,10 +205,28 @@ describe('Link with Instructor using Section Key', () => {
 
         submitSectionKey(sectionKey)
 
-        cy.contains(
-            '.msg:visible, [role="alert"]:visible, .alert:visible',
-            /added\s+successfully|linked\s+successfully|already\s+linked|already\s+in\s+a\s+section/i,
-            { timeout: 30000 }
-        ).should('be.visible')
+        cy.get('.modal:visible, [role="dialog"]:visible', {
+            timeout: 30000,
+        })
+            .last()
+            .should($dialog => {
+                const text = normalize($dialog.text())
+                const successMessage =
+                    /added\s+successfully|linked\s+successfully|already\s+linked|already\s+in\s+a\s+section/i
+                        .test(text)
+                const linkedDetails =
+                    /class\s+name/i.test(text) &&
+                    /section\s+key/i.test(text) &&
+                    $dialog
+                        .find('button, a, [role="button"]')
+                        .filter((_, element) =>
+                            /^REMOVE$/i.test(normalize(element.textContent))
+                        ).length > 0
+
+                expect(
+                    successMessage || linkedDetails,
+                    'success message or linked-section details'
+                ).to.eq(true)
+            })
     })
 })
