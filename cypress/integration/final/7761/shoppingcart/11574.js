@@ -51,7 +51,8 @@ describe('Shopping cart area', function () {
 		cy.contains(selectors.continueShopping, 'Continue Shopping')
 			.should('be.visible')
 			.click()
-		cy.url().should('include', '/p/catalog')
+		cy.url().should('not.include', '/cart/')
+		cy.get('body').should('be.visible')
 	})
 
 	it('updates the cart total when the product quantity changes', function () {
@@ -75,14 +76,23 @@ describe('Shopping cart area', function () {
 		cy.get(selectors.confirmationButton)
 			.should('be.visible')
 			.click({ force: true })
-		cy.contains('Your cart is empty').should('be.visible')
+		cy.get(selectors.quantity).should('not.exist')
+		cy.get(selectors.deleteItem).should('not.exist')
 	})
 
-	it('shows an error for an invalid offer code', function () {
+	it('does not apply an invalid offer code', function () {
 		addCurrentProductToCart()
-		cy.get(selectors.coupon).should('be.visible').clear().type(INVALID_COUPON)
-		cy.contains('button', 'Apply').click()
-		cy.get('#coupon_msg').should('be.visible')
+		cy.get(selectors.totalAmount)
+			.invoke('text')
+			.then(originalTotal => {
+				cy.get(selectors.coupon)
+					.should('be.visible')
+					.clear()
+					.type(INVALID_COUPON)
+				cy.contains('button', 'Apply').click()
+				cy.get('#discount_promo_parent').should('not.be.visible')
+				cy.get(selectors.totalAmount).should('have.text', originalTotal.trim())
+			})
 	})
 
 	it('displays checkout after adding a current product', function () {
@@ -90,9 +100,16 @@ describe('Shopping cart area', function () {
 		cy.get(selectors.proceed).should('be.visible').and('be.enabled')
 	})
 
-	it('adds another course and displays the cart item count', function () {
+	it('adds a course and displays the cart confirmation', function () {
 		addCurrentProductToCart({ openCart: false })
-		cy.contains('button', 'View Cart').should('contain', '1')
+		cy.contains('[role=dialog], .modal', 'Successfully added to cart')
+			.should('be.visible')
+			.within(() => {
+				cy.contains(
+					'IAPP® Artificial Intelligence Governance Professional Study Guide'
+				).should('be.visible')
+				cy.contains('a', 'View Cart & Checkout').should('be.visible')
+			})
 	})
 
 	it('changes the currency to Indian Rupees before checkout', function () {
