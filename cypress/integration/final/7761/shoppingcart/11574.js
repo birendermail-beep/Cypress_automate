@@ -7,13 +7,7 @@
 @test_case_name: shoppingcart.js
 */
 
-import {
-	Navbar,
-	login_username,
-	login_password,
-	LoginPage,
-	InstructorPage,
-} from '../../../../page-objects/pages/index'
+import { InstructorPage } from '../../../../page-objects/pages/index'
 
 const COURSE_CODE = '1Z0-063'
 const DIRECT_CART_COURSE = '312-49-v8'
@@ -77,12 +71,6 @@ function addAdobeProductToCart() {
 }
 
 describe('Shopping cart area', function () {
-	beforeEach(function () {
-		visit()
-		Navbar.clickOnLogin()
-		LoginPage.loginPage(login_username, login_password)
-	})
-
 	it('opens the product catalog from an empty cart', function () {
 		continueShopping()
 		cy.url().should('include', '/courses')
@@ -115,8 +103,10 @@ describe('Shopping cart area', function () {
 	it('applies an offer and proceeds to checkout', function () {
 		visitCartWithCourse()
 		cy.get(selectors.coupon).should('be.visible').clear().type(VALID_COUPON)
-		cy.get(selectors.email).clear().type(login_username)
-		cy.get(selectors.confirmEmail).clear().type(login_username)
+		cy.fixture('global').then(({ auditor_email }) => {
+			cy.get(selectors.email).clear().type(auditor_email[0])
+			cy.get(selectors.confirmEmail).clear().type(auditor_email[0])
+		})
 		cy.get(selectors.currency).click({ force: true })
 		cy.contains('Indian Rupees').should('be.visible').click({ force: true })
 		cy.get(selectors.proceed).should('be.enabled').click({ force: true })
