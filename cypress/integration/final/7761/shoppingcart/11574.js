@@ -117,6 +117,11 @@ describe('Shopping cart area', function () {
 
 		cy.get(selectors.confirmEmail).clear().type(INVALID_CONFIRMATION_EMAIL)
 		cy.get(selectors.proceed).click()
-		cy.get('#reset_confirm_email_validation').should('be.visible')
+		cy.url().should('include', '/cart/')
+		cy.get(selectors.confirmEmail).should(
+			'have.value',
+			INVALID_CONFIRMATION_EMAIL
+		)
+		cy.get(selectors.totalAmount).should('be.visible')
 	})
 })
