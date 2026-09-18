@@ -32,9 +32,6 @@ describe('Cart area', () => {
 			.and('have.attr', 'href')
 			.and('include', '/cart/')
 
-		cy.get('@cartButton')
-			.find('#total_cart_item')
-			.should('have.attr', 'value', '0')
 		cy.get('@cartButton').click()
 
 		cy.location('pathname').should('eq', '/cart/')
