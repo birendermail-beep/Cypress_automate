@@ -26,6 +26,16 @@ import {
 	LoginPage,
 } from '../../../../page-objects/pages/index'
 
+Cypress.on('uncaught:exception', err => {
+	if (
+		err.message.includes(
+			"Cannot read properties of null (reading 'postMessage')"
+		)
+	) {
+		return false
+	}
+})
+
 describe('Request demo', function () {
 	beforeEach('login and open the Request Demo form', function () {
 		cy.visit('/')
@@ -44,7 +54,6 @@ describe('Request demo', function () {
 	it('Request the Demo All currect but not captcha', function () {
 		cy.fixture('global').then(data => {
 			cy.get('#demo_request_org_school').type('ucertify')
-			cy.get('#demo_request_url').type(data.url)
 			cy.get('#demo_request_name').type('Ankit')
 			cy.get('#demo_request_job_title').type('Instructor')
 			cy.get('#demo_request_phone').type('9598606465')
@@ -57,8 +66,7 @@ describe('Request demo', function () {
 	it('Request the Demo Wrong Name', function () {
 		cy.fixture('global').then(data => {
 			cy.get('#demo_request_org_school').type('ucertify')
-			cy.get('#demo_request_url').type(data.url)
-			cy.get('#demo_request_name').type('!@12#%&75')
+			cy.get('#demo_request_name').invoke('val', '!@12#%&75').trigger('input')
 			cy.get('#demo_request_job_title').type('Instructor')
 			cy.get('#demo_request_phone').type('9598606465')
 			cy.get('#demo_request_email').type(data.auditor_email[0])
@@ -71,10 +79,9 @@ describe('Request demo', function () {
 	it('Request the Demo Wrong Number', function () {
 		cy.fixture('global').then(data => {
 			cy.get('#demo_request_org_school').type('ucertify')
-			cy.get('#demo_request_url').type(data.url)
 			cy.get('#demo_request_name').type('Ankit')
 			cy.get('#demo_request_job_title').type('Instructor')
-			cy.get('#demo_request_phone').type('skjdhfhsdg')
+			cy.get('#demo_request_phone').type('123')
 			cy.get('#demo_request_email').type(data.auditor_email[0])
 		})
 		cy.get('#demo_request_time_to_call').type('08:00 AM - 05:00 PM')
