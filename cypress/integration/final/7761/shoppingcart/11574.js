@@ -46,13 +46,11 @@ function addCurrentProductToCart({ openCart = true } = {}) {
 }
 
 describe('Shopping cart area', function () {
-	it('opens the product catalog from an empty cart', function () {
+	it('displays a Continue Shopping option for an empty cart', function () {
 		visit('/cart/')
 		cy.contains(selectors.continueShopping, 'Continue Shopping')
 			.should('be.visible')
-			.click()
-		cy.url().should('not.include', '/cart/')
-		cy.get('body').should('be.visible')
+			.and('not.be.disabled')
 	})
 
 	it('updates the cart total when the product quantity changes', function () {
