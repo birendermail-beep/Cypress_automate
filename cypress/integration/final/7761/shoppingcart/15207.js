@@ -116,15 +116,37 @@ describe('Cart area', () => {
 						cy.get('.discount_panel .currency').should('contain.text', 'INR')
 						cy.get('#colTotalAmt')
 							.should($total => {
+								const displayedInrTotal = currencyToCents($total.text())
+
 								expect(
-									currencyToCents($total.text()),
-									'INR total equals the USD total multiplied by the live exchange rate'
-								).to.equal(expectedInrTotal)
+									Math.abs(displayedInrTotal - expectedInrTotal),
+									'INR conversion differs by no more than one paisa due to exchange-rate rounding'
+								).to.be.at.most(1)
 							})
 							.invoke('text')
 							.then(inrTotal => {
 								cy.wrap(inrTotal.trim()).as('cartInrTotal')
 							})
+					})
+			})
+
+		cy.get('.amount_per_qty')
+			.first()
+			.invoke('text')
+			.then(inrCoursePrice => {
+				cy.get('[id^="exam_"].addintotal')
+					.first()
+					.invoke('text')
+					.then(inrVoucherPrice => {
+						const expectedInrTotal =
+							currencyToCents(inrCoursePrice) + currencyToCents(inrVoucherPrice)
+
+						cy.get('#colTotalAmt').should($total => {
+							expect(
+								currencyToCents($total.text()),
+								'INR total equals the converted course price plus converted voucher price'
+							).to.equal(expectedInrTotal)
+						})
 					})
 			})
 
