@@ -19,35 +19,14 @@
 @result: home page open
 */
 
-import {
-	Navbar,
-	login_username,
-	login_password,
-	LoginPage,
-} from '../../../../page-objects/pages/index'
-
 describe('Request demo', function () {
-	beforeEach('this is login', function () {
+	beforeEach('open the Request Demo form', function () {
 		cy.visit('/')
-		Navbar.clickOnLogin()
-		LoginPage.loginPage(login_username, login_password)
 
-		cy.contains('button, a', /^\s*Continue\s*$/i, { timeout: 30000 })
-			.filter(':visible')
-			.first()
-			.click({ force: true })
-
-		// The legacy Continue control can navigate to about:blank when the
-		// welcome page has no referrer. Reload the authenticated homepage and
-		// follow the Request Demo link directly instead of relying on its menu.
-		cy.visit('/')
-		cy.location('protocol', { timeout: 30000 }).should('match', /^https?:$/)
-
-		cy.contains('a', /^\s*Request Demo\s*$/i, { timeout: 30000 })
-			.should('have.attr', 'href')
-			.then(href => {
-				cy.visit(href)
-			})
+		cy.get('#i_am_li > #course_categories > .text-uppercase', {
+			timeout: 30000,
+		}).trigger('mouseover')
+		cy.contains('Request Demo', { timeout: 30000 }).click({ force: true })
 
 		cy.get('#demo_request_org_school', { timeout: 30000 }).should('be.visible')
 	})
