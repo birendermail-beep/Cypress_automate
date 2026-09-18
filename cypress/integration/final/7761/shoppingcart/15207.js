@@ -96,6 +96,45 @@ describe('Cart area', () => {
 					})
 			})
 
+		cy.get('a[href*="/p/catalog.html"]:visible')
+			.should('contain.text', 'Explore More Courses')
+			.click()
+		cy.location('pathname').should('eq', '/p/catalog.html')
+		cy.contains('a', 'Add to Cart').filter(':visible').first().click()
+		cy.location('search').should('include', 'course_configuration=')
+		cy.contains('button', 'Add to Cart').filter(':visible').first().click()
+		cy.contains('[role="dialog"], .modal', 'Successfully added to cart')
+			.should('be.visible')
+			.within(() => {
+				cy.contains('a', 'View Cart & Checkout').should('be.visible').click()
+			})
+
+		cy.location('pathname').should('eq', '/cart/')
+		cy.get('.cart_product').should('have.length', 2)
+		cy.get('input[name^="quantity["]')
+			.should('have.length', 2)
+			.each($quantity => {
+				expect($quantity).to.have.value('1')
+			})
+		cy.get('[id^="exam_"].addintotal').should('have.length', 1)
+		cy.get('.amount_per_qty').then($coursePrices => {
+			const coursesTotal = [...$coursePrices].reduce(
+				(total, price) => total + currencyToCents(price.textContent),
+				0
+			)
+
+			cy.get('[id^="exam_"].addintotal')
+				.invoke('text')
+				.then(voucherPrice => {
+					cy.get('#colTotalAmt').should($total => {
+						expect(
+							currencyToCents($total.text()),
+							'cart total equals both courses plus one exam voucher'
+						).to.equal(coursesTotal + currencyToCents(voucherPrice))
+					})
+				})
+		})
+
 		cy.get('#colTotalAmt')
 			.invoke('text')
 			.then(usdTotal => {
@@ -130,25 +169,26 @@ describe('Cart area', () => {
 					})
 			})
 
-		cy.get('.amount_per_qty')
-			.first()
-			.invoke('text')
-			.then(inrCoursePrice => {
-				cy.get('[id^="exam_"].addintotal')
-					.first()
-					.invoke('text')
-					.then(inrVoucherPrice => {
-						const expectedInrTotal =
-							currencyToCents(inrCoursePrice) + currencyToCents(inrVoucherPrice)
+		cy.get('.amount_per_qty').then($inrCoursePrices => {
+			const inrCoursesTotal = [...$inrCoursePrices].reduce(
+				(total, price) => total + currencyToCents(price.textContent),
+				0
+			)
 
-						cy.get('#colTotalAmt').should($total => {
-							expect(
-								currencyToCents($total.text()),
-								'INR total equals the converted course price plus converted voucher price'
-							).to.equal(expectedInrTotal)
-						})
+			cy.get('[id^="exam_"].addintotal')
+				.invoke('text')
+				.then(inrVoucherPrice => {
+					const expectedInrTotal =
+						inrCoursesTotal + currencyToCents(inrVoucherPrice)
+
+					cy.get('#colTotalAmt').should($total => {
+						expect(
+							currencyToCents($total.text()),
+							'INR total equals both converted course prices plus the converted voucher price'
+						).to.equal(expectedInrTotal)
 					})
-			})
+				})
+		})
 
 		cy.fixture('global').then(({ auditor_email }) => {
 			cy.get('#email').clear().type(auditor_email[0])
