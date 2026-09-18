@@ -53,7 +53,7 @@ describe('Cart area', () => {
 			.and('include', '/p/catalog.html')
 	})
 
-	it('calculates the total for one course and one exam voucher', () => {
+	it('keeps the correct INR total through checkout', () => {
 		visit(SECURITY_PRODUCT_PATH)
 
 		cy.contains('button', 'Add to Cart').filter(':visible').first().click()
@@ -95,5 +95,53 @@ describe('Cart area', () => {
 						})
 					})
 			})
+
+		cy.get('#colTotalAmt')
+			.invoke('text')
+			.then(usdTotal => {
+				cy.get('.discount_panel .dropdown-toggle').click()
+				cy.contains('.dropdown-item', 'Indian Rupees')
+					.should('be.visible')
+					.invoke('attr', 'href')
+					.then(currencyAction => {
+						expect(currencyAction).to.match(/'INR','[\d.]+'/)
+						const exchangeRate = Number.parseFloat(
+							currencyAction.match(/'INR','([\d.]+)'/)[1]
+						)
+						const expectedInrTotal = Math.round(
+							currencyToCents(usdTotal) * exchangeRate
+						)
+
+						cy.contains('.dropdown-item', 'Indian Rupees').click()
+						cy.get('.discount_panel .currency').should('contain.text', 'INR')
+						cy.get('#colTotalAmt')
+							.should($total => {
+								expect(
+									currencyToCents($total.text()),
+									'INR total equals the USD total multiplied by the live exchange rate'
+								).to.equal(expectedInrTotal)
+							})
+							.invoke('text')
+							.then(inrTotal => {
+								cy.wrap(inrTotal.trim()).as('cartInrTotal')
+							})
+					})
+			})
+
+		cy.fixture('global').then(({ auditor_email }) => {
+			cy.get('#email').clear().type(auditor_email[0])
+			cy.get('#confirm_email').clear().type(auditor_email[0])
+		})
+		cy.get('#proceed').should('be.visible').and('be.enabled').click()
+		cy.get('#proceed').should('not.exist')
+
+		cy.get('@cartInrTotal').then(cartInrTotal => {
+			cy.get('body').should($body => {
+				const checkoutText = $body.text()
+
+				expect(checkoutText).to.include(cartInrTotal)
+				expect(checkoutText).to.match(/INR|₹/)
+			})
+		})
 	})
 })
