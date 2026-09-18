@@ -19,14 +19,26 @@
 @result: home page open
 */
 
+import {
+	Navbar,
+	login_username,
+	login_password,
+	LoginPage,
+} from '../../../../page-objects/pages/index'
+
 describe('Request demo', function () {
-	beforeEach('open the Request Demo form', function () {
+	beforeEach('login and open the Request Demo form', function () {
 		cy.visit('/')
+		Navbar.clickOnLogin()
+		LoginPage.loginPage(login_username, login_password)
+		Navbar.clickContinueOnWelcomePage()
 
 		cy.get('#i_am_li > #course_categories > .text-uppercase', {
 			timeout: 30000,
 		}).trigger('mouseover')
-		cy.contains('Request Demo', { timeout: 30000 }).click({ force: true })
+		cy.contains(/^\s*Request(?:\s+a)?\s+Demo\s*$/i, {
+			timeout: 30000,
+		}).click({ force: true })
 
 		cy.get('#demo_request_org_school', { timeout: 30000 }).should('be.visible')
 	})
