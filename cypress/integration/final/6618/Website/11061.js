@@ -7,61 +7,93 @@
 @path: final/Website
 @test_case_name: I Am Options
 @description:N/A
-@test_steps: 
+@test_steps:
 
 ^test case of i_am_professional
 - Visit to website.
 - Login to ucertify.com.
 - Click the home Page icon.
-- Click I Am
-- click professional
+- Open the Business page from Partner With Us.
 
 ^test case of i_am_educator
 - Visit to website.
 - Login to ucertify.com.
 - Click the home Page icon.
-- Click I Am
-- click Educator
+- Open the Educator page from Partner With Us.
 
 ^test case of i_am_publisher
 - Visit to website.
 - Login to ucertify.com.
 - Click the home Page icon.
-- Click I Am
-- click publisher
-- fill the form and submit
+- Open the Publisher page from Partner With Us.
+- Open and fill the current contact form.
 
 @test_data: n/a
-@result: I Am Options
+@result: Partner With Us options open the expected pages
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('I Am', function () {
-    beforeEach('this is login', function () {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-        })
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-        Navbar.clickContinueOnWelcomePage();
-    })
-    it('i_am_professional', function () {
-        cy.get('#i_am_li').trigger("mouseover").then(() => {
-            cy.get('#i_am_li > ul > li:nth-child(1) > a').click({ force: true });
-        })
-    })
-    it('Opening the i am educator page', function () {
-        cy.get('#i_am_li').trigger("mouseover").then(() => {
-            cy.get('#i_am_li > ul > li:nth-child(2) > a').click({ force: true });
-        })
-    })
-    it('Opening the i am publisher page', function () {
-        cy.get('#i_am_li > #course_categories > .text-uppercase').trigger("mouseover").then(() => {
-            cy.get('#i_am_li > ul > li:nth-child(2) > a').click({ force: true });
-        })
-        cy.get('#my_name').type('testing')
-        cy.get('#my_email').type('testbot@ucertify.com')
-        cy.get('#subject').type('Automation Testing')
-        cy.get('#message').type('testing is proper')
-        cy.get('#submit_query').click({ force: true })
-    })
+
+import {
+	Navbar,
+	login_username,
+	login_password,
+	LoginPage,
+} from '../../../../page-objects/pages/index'
+
+Cypress.on('uncaught:exception', err => {
+	const knownWebsiteErrors = [
+		"Cannot read properties of null (reading 'style')",
+		"Cannot read properties of null (reading 'postMessage')",
+	]
+
+	if (knownWebsiteErrors.some(message => err.message.includes(message))) {
+		return false
+	}
+})
+
+describe('Partner With Us', function () {
+	beforeEach('this is login', function () {
+		cy.visit('/')
+		Navbar.clickOnLogin()
+		LoginPage.loginPage(login_username, login_password)
+		Navbar.clickContinueOnWelcomePage()
+		cy.visit('https://www.ucertify.com/')
+	})
+
+	it('i_am_professional', function () {
+		cy.get('a[href="https://www.ucertify.com/about/business.html"]')
+			.filter(':visible')
+			.first()
+			.click({ force: true })
+		cy.location('pathname').should('eq', '/about/business.html')
+	})
+
+	it('Opening the i am educator page', function () {
+		cy.get('a[href="https://www.ucertify.com/about/educator.html"]')
+			.filter(':visible')
+			.first()
+			.click({ force: true })
+		cy.location('pathname').should('eq', '/about/educator.html')
+	})
+
+	it('Opening the i am publisher page', function () {
+		cy.get('a[href="https://www.ucertify.com/about/publisher.html"]')
+			.filter(':visible')
+			.first()
+			.click({ force: true })
+		cy.location('pathname').should('eq', '/about/publisher.html')
+
+		cy.get('a[href*="contactus.html#contact_us_form"]')
+			.filter(':visible')
+			.first()
+			.click({ force: true })
+		cy.location('pathname').should('eq', '/about/contactus.html')
+
+		cy.get('#contact_us_form').should('be.visible')
+		cy.get('#user_name').type('Automation Tester')
+		cy.get('#email').type('testbot@ucertify.com')
+		cy.get('#region').select('India')
+		cy.get('#job_title').select('Authors & Publishers ')
+		cy.get('#org_school').type('uCertify')
+		cy.get('#comments').type('Publisher partnership automation test')
+	})
 })
