@@ -36,7 +36,8 @@ describe('Cart area', () => {
 
 		cy.location('pathname').should('eq', '/cart/')
 		cy.contains('h3', 'Your cart is empty').should('be.visible')
-		cy.contains('a', 'Continue Shopping')
+		cy.get('a[href*="/p/catalog.html"]:visible')
+			.should('contain.text', 'Continue Shopping')
 			.should('be.visible')
 			.and('have.attr', 'href')
 			.and('include', '/p/catalog.html')
