@@ -24,7 +24,7 @@ describe('Cart area', () => {
 	})
 
 	it('displays the cart and opens the empty cart page', () => {
-		cy.get('a[role="button"][href*="/cart/"]')
+		cy.get('a[href*="/cart/"]')
 			.filter(':visible')
 			.first()
 			.as('cartButton')
