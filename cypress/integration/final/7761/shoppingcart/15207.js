@@ -16,16 +16,32 @@
 @result: cart icon should be show
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('Cart area', function() {
+describe('Cart area', () => {
+	beforeEach(() => {
+		cy.fixture('global').then(({ url }) => {
+			cy.visit(url)
+		})
+	})
 
-    it('Displaying the quantity of item', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-        })
-        cy.get('.icomoon-cart-new-1').trigger('focus', { force: true })
-        cy.contains('Your cart is empty').click({ force: true })
-    })
+	it('displays the cart and opens the empty cart page', () => {
+		cy.get('a[role="button"][href*="/cart/"]')
+			.filter(':visible')
+			.first()
+			.as('cartButton')
+			.should('be.visible')
+			.and('have.attr', 'href')
+			.and('include', '/cart/')
+
+		cy.get('@cartButton')
+			.find('#total_cart_item')
+			.should('have.attr', 'value', '0')
+		cy.get('@cartButton').click()
+
+		cy.location('pathname').should('eq', '/cart/')
+		cy.contains('h3', 'Your cart is empty').should('be.visible')
+		cy.contains('a', 'Continue Shopping')
+			.should('be.visible')
+			.and('have.attr', 'href')
+			.and('include', '/p/catalog.html')
+	})
 })
