@@ -40,7 +40,7 @@ import {
 } from '../../../../page-objects/pages/index'
 
 Cypress.on('uncaught:exception', err => {
-	const knownWebsiteErrors = [
+	const knownWebsiteErors = [
 		"Cannot read properties of null (reading 'style')",
 		"Cannot read properties of null (reading 'postMessage')",
 	]
@@ -77,7 +77,6 @@ describe('Partner With Us', function () {
 
 	it('Opening the i am publisher page', function () {
 		cy.get('a[href="https://www.ucertify.com/about/publisher.html"]')
-			.filter(':visible')
 			.first()
 			.click({ force: true })
 		cy.location('pathname').should('eq', '/about/publisher.html')
