@@ -15,7 +15,7 @@ const selectors = {
 	addToCart: 'button',
 	confirmEmail: '[data-cy=confirm_email_cy], #confirm_email',
 	confirmationButton: '#btn-confirmed',
-	continueShopping: 'a, button',
+	continueShopping: '[data-cy=continue_shop_cy]',
 	coupon: '#coupon_code',
 	currency: '.discount_panel .dropdown-toggle',
 	deleteItem: '[data-cy=delete_cy]',
@@ -48,8 +48,10 @@ function addCurrentProductToCart({ openCart = true } = {}) {
 describe('Shopping cart area', function () {
 	it('displays a Continue Shopping option for an empty cart', function () {
 		visit('/cart/')
-		cy.contains(selectors.continueShopping, 'Continue Shopping')
+		cy.get(selectors.continueShopping)
+			.filter(':visible')
 			.should('be.visible')
+			.and('contain.text', 'Continue Shopping')
 			.and('not.be.disabled')
 	})
 
