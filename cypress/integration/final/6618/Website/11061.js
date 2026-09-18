@@ -40,7 +40,7 @@ import {
 } from '../../../../page-objects/pages/index'
 
 Cypress.on('uncaught:exception', err => {
-	const knownWebsiteErors = [
+	const knownWebsiteErrors = [
 		"Cannot read properties of null (reading 'style')",
 		"Cannot read properties of null (reading 'postMessage')",
 	]
@@ -91,7 +91,7 @@ describe('Partner With Us', function () {
 		cy.get('#user_name').type('Automation Tester')
 		cy.get('#email').type('testbot@ucertify.com')
 		cy.get('#region').select('India')
-		cy.get('#job_title').select('Authors & Publishers ')
+		cy.get('#job_title').select(6)
 		cy.get('#org_school').type('uCertify')
 		cy.get('#comments').type('Publisher partnership automation test')
 	})
