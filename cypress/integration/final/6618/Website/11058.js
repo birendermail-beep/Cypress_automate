@@ -32,6 +32,7 @@ describe('Request demo', function () {
 		Navbar.clickOnLogin()
 		LoginPage.loginPage(login_username, login_password)
 		Navbar.clickContinueOnWelcomePage()
+		cy.visit('/')
 
 		cy.get('#i_am_li > #course_categories > .text-uppercase', {
 			timeout: 30000,
