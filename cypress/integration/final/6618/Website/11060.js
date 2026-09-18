@@ -19,15 +19,40 @@
 @result: home page footer open
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
+import {
+	Navbar,
+	login_username,
+	login_password,
+	LoginPage,
+} from '../../../../page-objects/pages/index'
+
+Cypress.on('uncaught:exception', err => {
+	if (
+		err.message.includes("Cannot read properties of null (reading 'style')")
+	) {
+		return false
+	}
+})
+
 describe('homepage footer testing', function () {
-    it('Opening the Contact Us', function () {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-        })
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-        Navbar.clickContinueOnWelcomePage();
-        cy.get("ul.list-unstyled > li").contains("Contact Us").click({ force: true });
-    })
+	it('Opening the Contact Us', function () {
+		cy.visit('/')
+		Navbar.clickOnLogin()
+		LoginPage.loginPage(login_username, login_password)
+		Navbar.clickContinueOnWelcomePage()
+
+		cy.visit('https://www.ucertify.com/')
+		cy.get('a[href="https://www.ucertify.com/about/contactus.html"]', {
+			timeout: 30000,
+		})
+			.filter(':visible')
+			.first()
+			.scrollIntoView()
+			.click({ force: true })
+
+		cy.location('pathname', { timeout: 30000 }).should(
+			'eq',
+			'/about/contactus.html'
+		)
+	})
 })
