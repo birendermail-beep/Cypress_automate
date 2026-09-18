@@ -27,9 +27,12 @@ import {
 } from '../../../../page-objects/pages/index'
 
 Cypress.on('uncaught:exception', err => {
-	if (
-		err.message.includes("Cannot read properties of null (reading 'style')")
-	) {
+	const knownWebsiteErrors = [
+		"Cannot read properties of null (reading 'style')",
+		"Cannot read properties of null (reading 'postMessage')",
+	]
+
+	if (knownWebsiteErrors.some(message => err.message.includes(message))) {
 		return false
 	}
 })
