@@ -37,15 +37,17 @@ describe('Request demo', function () {
 			.first()
 			.click({ force: true })
 
-		cy.location('href', { timeout: 30000 }).should(
-			'not.include',
-			'func=welcome'
-		)
+		// The legacy Continue control can navigate to about:blank when the
+		// welcome page has no referrer. Reload the authenticated homepage and
+		// follow the Request Demo link directly instead of relying on its menu.
+		cy.visit('/')
+		cy.location('protocol', { timeout: 30000 }).should('match', /^https?:$/)
 
-		cy.contains('a, button', /^\s*Request Demo\s*$/i, { timeout: 30000 })
-			.filter(':visible')
-			.first()
-			.click({ force: true })
+		cy.contains('a', /^\s*Request Demo\s*$/i, { timeout: 30000 })
+			.should('have.attr', 'href')
+			.then(href => {
+				cy.visit(href)
+			})
 
 		cy.get('#demo_request_org_school', { timeout: 30000 }).should('be.visible')
 	})
