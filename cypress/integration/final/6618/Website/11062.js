@@ -47,21 +47,6 @@
 - Visit to website.
 - Login to ucertify.com.
 - Click the home Page icon.
-- scroll to down and click Linux
-^homepage_footer_partners 
-- Visit to website.
-- Login to ucertify.com.
-- Click the home Page icon.
-- scroll to down and click Zend
-^homepage_footer_partners 
-- Visit to website.
-- Login to ucertify.com.
-- Click the home Page icon.
-- scroll to down and click IC3
-^homepage_footer_partners 
-- Visit to website.
-- Login to ucertify.com.
-- Click the home Page icon.
 - scroll to down and click Adobe
 ^homepage_footer_partners 
 - Visit to website.
@@ -130,15 +115,6 @@ describe('homepage footer testing', function () {
 	})
 	it('Opening the ISC2', function () {
 		LoginPage.visitOnFooter('ISC2')
-	})
-	it('Opening the Linux', function () {
-		LoginPage.visitOnFooter('Linux')
-	})
-	it('Opening the Zend', function () {
-		LoginPage.visitOnFooter('Zend')
-	})
-	it('Opening the IC3', function () {
-		LoginPage.visitOnFooter('IC3')
 	})
 	it('Opening the Adobe', function () {
 		LoginPage.visitOnFooter('Adobe')
