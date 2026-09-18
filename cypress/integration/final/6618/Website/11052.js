@@ -19,15 +19,36 @@
 @result: home page footer open
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('homepage footer testing', function () {
-    it('Opening the About us', function () {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-        })
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-        Navbar.clickContinueOnWelcomePage();
-        cy.get("ul.list-unstyled > li").contains("About Us").click({ force: true });
-    })
+import {
+	Navbar,
+	login_username,
+	login_password,
+	LoginPage,
+} from '../../../../page-objects/pages/index'
+
+describe('homepage footer testing', () => {
+	it('Opening the About us', () => {
+		cy.visit('/')
+		Navbar.clickOnLogin()
+		LoginPage.loginPage(login_username, login_password)
+
+		cy.contains('button, a', /^\s*Continue\s*$/i, { timeout: 30000 })
+			.filter(':visible')
+			.first()
+			.click({ force: true })
+
+		cy.location('href', { timeout: 30000 }).should(
+			'not.include',
+			'func=welcome'
+		)
+
+		cy.scrollTo('bottom')
+		cy.contains('a', /^\s*About Us\s*$/i, { timeout: 30000 })
+			.filter(':visible')
+			.first()
+			.click({ force: true })
+
+		cy.location('href', { timeout: 30000 }).should('match', /about/i)
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
 })
