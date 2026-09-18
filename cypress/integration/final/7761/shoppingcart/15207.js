@@ -104,6 +104,7 @@ describe('Cart area', () => {
 			.filter(':visible')
 			.first()
 			.should('be.visible')
+			.invoke('removeAttr', 'target')
 			.click()
 		cy.location('search').should('include', 'course_configuration=')
 		cy.contains('button', 'Add to Cart').filter(':visible').first().click()
