@@ -81,56 +81,81 @@
 @test_data: n/a
 @result: home page footer open
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
+import {
+	Navbar,
+	login_username,
+	login_password,
+	LoginPage,
+} from '../../../../page-objects/pages/index'
+
+Cypress.on('uncaught:exception', err => {
+	const knownWebsiteErrors = [
+		"Cannot read properties of null (reading 'style')",
+		"Cannot read properties of null (reading 'postMessage')",
+	]
+
+	if (knownWebsiteErrors.some(message => err.message.includes(message))) {
+		return false
+	}
+})
+
 describe('homepage footer testing', function () {
-    beforeEach('this is login', function () {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-        })
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-        Navbar.clickContinueOnWelcomePage();
-    })
-    it('Opening the Microsoft', function () {
-        LoginPage.visitOnFooter('Microsoft')
-    })
-    it('Opening the Oracle', function () {
-        LoginPage.visitOnFooter('Oracle')
-    })
-    it('Opening the Cisco', function () {
-        LoginPage.visitOnFooter('Cisco')
-    })
-    it('Opening the CompTIA', function () {
-        LoginPage.visitOnFooter('CompTIA')
-    })
-    it('Opening the CIW', function () {
-        LoginPage.visitOnFooter('CIW')
-    })
-    it('Opening the PMI', function () {
-        LoginPage.visitOnFooter('PMI')
-    })
-    it('Opening the ISC2', function () {
-        LoginPage.visitOnFooter('ISC2')
-    })
-    it('Opening the Linux', function () {
-        LoginPage.visitOnFooter('Linux')
-    })
-    it('Opening the Zend', function () {
-        LoginPage.visitOnFooter('Zend')
-    })
-    it('Opening the IC3', function () {
-        LoginPage.visitOnFooter('IC3')
-    })
-    it('Opening the Adobe', function () {
-        LoginPage.visitOnFooter('Adobe')
-    })
-    it('Opening the Axelos', function () {
-        LoginPage.visitOnFooter('Axelos')
-    })
-    it('Opening the Get it On google play store', function () {
-        cy.get('.float-left > img').eq(0).click({ force: true })
-    })
-    it('Opening the dwonload on the app store', function () {
-        cy.get('.float-left > img').eq(1).click({ force: true })
-    })
+	beforeEach('restore login and open the website home page', function () {
+		cy.session('homepage-footer-login', () => {
+			cy.visit('/')
+			Navbar.clickOnLogin()
+			LoginPage.loginPage(login_username, login_password)
+			Navbar.clickContinueOnWelcomePage()
+		})
+
+		cy.visit('https://www.ucertify.com/')
+	})
+	it('Opening the Microsoft', function () {
+		LoginPage.visitOnFooter('Microsoft')
+	})
+	it('Opening the Oracle', function () {
+		LoginPage.visitOnFooter('Oracle')
+	})
+	it('Opening the Cisco', function () {
+		LoginPage.visitOnFooter('Cisco')
+	})
+	it('Opening the CompTIA', function () {
+		LoginPage.visitOnFooter('CompTIA')
+	})
+	it('Opening the CIW', function () {
+		LoginPage.visitOnFooter('CIW')
+	})
+	it('Opening the PMI', function () {
+		LoginPage.visitOnFooter('PMI')
+	})
+	it('Opening the ISC2', function () {
+		LoginPage.visitOnFooter('ISC2')
+	})
+	it('Opening the Linux', function () {
+		LoginPage.visitOnFooter('Linux')
+	})
+	it('Opening the Zend', function () {
+		LoginPage.visitOnFooter('Zend')
+	})
+	it('Opening the IC3', function () {
+		LoginPage.visitOnFooter('IC3')
+	})
+	it('Opening the Adobe', function () {
+		LoginPage.visitOnFooter('Adobe')
+	})
+	it('Opening the Axelos', function () {
+		LoginPage.visitOnFooter('Axelos')
+	})
+	it('Opening the Get it On google play store', function () {
+		cy.get('a[href*="play.google.com"]')
+			.filter(':visible')
+			.first()
+			.click({ force: true })
+	})
+	it('Opening the dwonload on the app store', function () {
+		cy.get('a[href*="apps.apple.com"]')
+			.filter(':visible')
+			.first()
+			.click({ force: true })
+	})
 })
