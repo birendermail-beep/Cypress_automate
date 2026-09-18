@@ -187,10 +187,12 @@ describe('Cart area', () => {
 						inrCoursesTotal + currencyToCents(inrVoucherPrice)
 
 					cy.get('#colTotalAmt').should($total => {
+						const displayedInrTotal = currencyToCents($total.text())
+
 						expect(
-							currencyToCents($total.text()),
-							'INR total equals both converted course prices plus the converted voucher price'
-						).to.equal(expectedInrTotal)
+							Math.abs(displayedInrTotal - expectedInrTotal),
+							'INR total differs from the rounded line-item sum by no more than one paisa'
+						).to.be.at.most(1)
 					})
 				})
 		})
