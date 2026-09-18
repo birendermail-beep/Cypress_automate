@@ -32,14 +32,12 @@ describe('Request demo', function () {
 		Navbar.clickOnLogin()
 		LoginPage.loginPage(login_username, login_password)
 		Navbar.clickContinueOnWelcomePage()
-		cy.visit('/')
 
-		cy.get('#i_am_li > #course_categories > .text-uppercase', {
-			timeout: 30000,
-		}).trigger('mouseover')
-		cy.contains(/^\s*Request(?:\s+a)?\s+Demo\s*$/i, {
-			timeout: 30000,
-		}).click({ force: true })
+		// Continue uses browser history and can leave Cypress on about:blank.
+		// Open the current uCertify homepage explicitly, then use the selector
+		// confirmed in DevTools for the visible Request A Demo link.
+		cy.visit('https://www.ucertify.com/')
+		cy.get('a.request_demo:visible', { timeout: 30000 }).first().click()
 
 		cy.get('#demo_request_org_school', { timeout: 30000 }).should('be.visible')
 	})
