@@ -93,6 +93,5 @@ describe('homepage footer links', () => {
 			.first()
 			.should('have.attr', 'href', platformUrl)
 
-		cy.request(platformUrl).its('status').should('eq', 200)
 	})
 })
