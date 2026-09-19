@@ -15,16 +15,24 @@
 @result: 
 - Successfully open the chief technical officer page
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('Website', function() {
+describe('current senior developer opportunity', () => {
+	beforeEach(() => {
+		cy.websiteLogin()
+		cy.visit('/about/career.html')
+	})
 
-    it('chief technical officer page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + '/about/index.php?page=chief_technical_officer');
-        })
+	it('opens a current senior developer application form', () => {
+		cy.contains('a', /^\s*Explore Opportunities\s*$/i, {
+			timeout: 30000,
+		}).click({ force: true })
+		cy.contains('button', /^\s*Senior .* Developer\s*$/i, {
+			timeout: 30000,
+		})
+			.filter(':visible')
+			.first()
+			.click({ force: true })
 
-    })
+		cy.contains('h2', /^\s*Apply Now!\s*$/i).should('be.visible')
+		cy.contains('button', /^\s*Submit Application\s*$/i).should('be.visible')
+	})
 })

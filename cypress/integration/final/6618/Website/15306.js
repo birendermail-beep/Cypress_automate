@@ -23,16 +23,28 @@
 @result: career form for online sale will be shown
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('career form for online sale', function() {
-    it('career form for online sale', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url);
-            cy.get('[data-cy="career_link"]').click();
-            cy.get('[data-cy="sale_executive"]').click();
-        })
-    })
+import {
+	Navbar,
+	login_username,
+	login_password,
+	LoginPage,
+} from '../../../../page-objects/pages/index'
+
+describe('career form for sales associate', () => {
+	it('opens the current sales application form', () => {
+		cy.visit('/')
+		Navbar.clickOnLogin()
+		LoginPage.loginPage(login_username, login_password)
+		Navbar.clickContinueOnWelcomePage()
+		cy.visit('/about/career.html')
+
+		cy.contains('a', /^\s*Explore Opportunities\s*$/i, {
+			timeout: 30000,
+		}).click({ force: true })
+		cy.contains('button', /^\s*Sales Associate\s*$/i, { timeout: 30000 })
+			.filter(':visible')
+			.click({ force: true })
+		cy.contains('h2', /^\s*Apply Now!\s*$/i).should('be.visible')
+		cy.contains('button', /^\s*Submit Application\s*$/i).should('be.visible')
+	})
 })

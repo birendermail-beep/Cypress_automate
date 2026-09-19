@@ -41,29 +41,45 @@
 @test_data: n/a
 @result: home page footer open
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('homepage footer testing', function () {
-    beforeEach('this is login', function () {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-        })
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-        Navbar.clickContinueOnWelcomePage();
-    })
-    it('Opening the facebook', function () {
-        cy.get('.icomoon-facebook').click({ force: true });
-    })
-    it('Opening the twitter', function () {
-        cy.get('.icomoon-twitter').click({ force: true });
-    })
-    it('Opening the youtube', function () {
-        cy.get('.icomoon-youtube').click({ force: true });
-    })
-    it('Opening the instragram', function () {
-        cy.get('.icomoon-instagram').click({ force: true });
-    })
-    it('Opening the Linkedin', function () {
-        cy.get('.icomoon-linkedin').click({ force: true });
-    })
+import {
+	Navbar,
+	login_username,
+	login_password,
+	LoginPage,
+} from '../../../../page-objects/pages/index'
+
+const socialLinks = [
+	{ label: 'Facebook', destination: /facebook\.com/i },
+	{ label: /Twitter|X/i, destination: /(?:twitter|x)\.com/i },
+	{ label: /YouTube/i, destination: /youtube\.com/i },
+	{ label: /Instagram/i, destination: /instagram\.com/i },
+	{ label: /LinkedIn/i, destination: /linkedin\.com/i },
+]
+
+describe('homepage social links', () => {
+	beforeEach(() => {
+		cy.session(
+			'website-footer-login',
+			() => {
+				cy.visit('/')
+				Navbar.clickOnLogin()
+				LoginPage.loginPage(login_username, login_password)
+				Navbar.clickContinueOnWelcomePage()
+			},
+			{ cacheAcrossSpecs: true }
+		)
+
+		cy.visit('/')
+		cy.scrollTo('bottom')
+	})
+
+	socialLinks.forEach(social => {
+		it(`has the ${String(social.label)} link`, () => {
+			cy.contains('a', social.label, { timeout: 30000 })
+				.filter(':visible')
+				.first()
+				.should('have.attr', 'href')
+				.and('match', social.destination)
+		})
+	})
 })

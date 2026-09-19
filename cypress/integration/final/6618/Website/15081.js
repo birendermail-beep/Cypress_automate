@@ -15,15 +15,21 @@
 @result: - Successfully open the Hiring page
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('Website', function() {
+describe('current content career opportunity', () => {
+	beforeEach(() => {
+		cy.websiteLogin()
+		cy.visit('/about/career.html')
+	})
 
-    it('Open the hiring page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + '/about/?page=technical_writer');
-        })
-    })
+	it('opens the Content QA application form', () => {
+		cy.contains('a', /^\s*Explore Opportunities\s*$/i, {
+			timeout: 30000,
+		}).click({ force: true })
+		cy.contains('button', /^\s*Content QA\s*$/i, { timeout: 30000 })
+			.filter(':visible')
+			.click({ force: true })
+
+		cy.contains('h2', /^\s*Apply Now!\s*$/i).should('be.visible')
+		cy.contains('button', /^\s*Submit Application\s*$/i).should('be.visible')
+	})
 })

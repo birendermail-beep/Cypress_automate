@@ -1,32 +1,96 @@
 import BasePage from '../BasePage'
+
 export default class LoginPage extends BasePage {
-    static loginPage(username, password) {
-        cy.get('#email').clear().type(username)
-        cy.get('#password').clear().clear().type(password)
-        cy.get('#submit').click()
-            /** This is for handeling the uncaught:exception */
-        Cypress.on('uncaught:exception', (error, runnable) => {
-            return false;
-        })
-    }
-    static visitOnClick(datacy) {
-        cy.get(datacy).should('have.attr', 'href').then((href) => {
-            cy.visit(href)
-        })
-    }
-    static visitOnFooter(contain) {
-        cy.get('.text-dark > .outline1').contains(contain).should('have.attr', 'href').then((href) => {
-            cy.visit(href)
-        })
-    }
-    static clickOnCourseCat() {
-        cy.get('#course_categories').trigger('mouseover', { force: true })
-        cy.contains('IT / Computer Science').click({ force: true })
-        cy.get('#course_categories').trigger('mouseover', { force: true })
-        cy.contains('Project Management').click({ force: true })
-        cy.get('#course_categories').trigger('mouseover', { force: true })
-        cy.contains('Vocational Training').click({ force: true })
-        cy.get('#course_categories').trigger('mouseover', { force: true })
-        cy.contains('Coding').click({ force: true })
-    }
+	static loginPage(username, password) {
+		return cy.env(['login_username', 'login_password']).then(environment => {
+			const resolvedUsername = username || environment.login_username || ''
+			const resolvedPassword = password || environment.login_password || ''
+
+			if (!resolvedUsername || !resolvedPassword) {
+				throw new Error(
+					'Missing Cypress login credentials. Set CYPRESS_login_username and CYPRESS_login_password before starting Cypress.'
+				)
+			}
+
+			cy.location('pathname', { timeout: 30000 }).should('include', 'login.php')
+
+			cy.get(
+				'#email, input[type="email"], input[name="email"], input[placeholder="ENTER EMAIL"]',
+				{ timeout: 30000 }
+			)
+				.filter(':visible')
+				.first()
+				.clear()
+				.type(resolvedUsername, {
+					log: false,
+					parseSpecialCharSequences: false,
+				})
+
+			cy.get(
+				'#password, input[type="password"], input[name="password"], input[placeholder="ENTER PASSWORD"]',
+				{ timeout: 30000 }
+			)
+				.filter(':visible')
+				.first()
+				.clear()
+				.type(resolvedPassword, {
+					log: false,
+					parseSpecialCharSequences: false,
+				})
+
+			cy.get('body').then($body => {
+				const submitSelector = [
+					'#submit',
+					'button[type="submit"]',
+					'input[type="submit"]',
+				].find(selector => $body.find(selector).filter(':visible').length)
+
+				if (submitSelector) {
+					cy.get(submitSelector)
+						.filter(':visible')
+						.first()
+						.click({ force: true })
+					return
+				}
+
+				cy.contains('button', /^\s*SIGN IN\s*$/i, { timeout: 30000 })
+					.should('be.visible')
+					.click({ force: true })
+			})
+
+			cy.location('pathname', { timeout: 30000 }).should(
+				'not.include',
+				'login.php'
+			)
+		})
+	}
+
+	static visitOnClick(selector) {
+		cy.get(selector)
+			.should('have.attr', 'href')
+			.then(href => {
+				cy.visit(href)
+			})
+	}
+
+	static visitOnFooter(text) {
+		cy.contains('a', text)
+			.filter(':visible')
+			.first()
+			.should('have.attr', 'href')
+			.then(href => {
+				cy.visit(href)
+			})
+	}
+
+	static clickOnCourseCat() {
+		;[
+			'IT / Computer Science',
+			'Project Management',
+			'Vocational Training',
+			'Coding',
+		].forEach(category => {
+			cy.contains('a, button', category).click({ force: true })
+		})
+	}
 }

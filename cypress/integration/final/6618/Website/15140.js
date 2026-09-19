@@ -15,14 +15,23 @@
 @test_data: n/a
 @result: It will open the cybersecurity page
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index' 
-describe('cybersecurity page', function() {
-    it('test the cybersecurity page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + "/courses/cybersecurity.html");
-        })
-    })
+describe('current CyberSecurity catalog', () => {
+	beforeEach(() => {
+		cy.websiteLogin()
+		cy.visit('/')
+	})
+
+	it('shows the CyberSecurity course section', () => {
+		cy.contains('button, [role="tab"]', /^\s*CyberSecurity\s*$/i, {
+			timeout: 30000,
+		})
+			.filter(':visible')
+			.first()
+			.click({ force: true })
+
+		cy.contains('h2, [role="tab"]', /^\s*CyberSecurity\s*$/i).should(
+			'be.visible'
+		)
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
 })
