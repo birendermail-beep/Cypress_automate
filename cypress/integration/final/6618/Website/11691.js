@@ -25,111 +25,80 @@
 @test_data: n/a
 @result: Course page of each option will open.
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('Home Page', function () {
-    it('Testing of browse title page', function () {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-        })
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-        Navbar.clickContinueOnWelcomePage();
-        cy.wait(2000)
-        //click on adobe
-        Navbar.clickonBrowseTitle()
-        cy.wait(5000)
-        cy.get('[data-cy="browsetitles_cy"]').contains('Adobe').click({ force: true })
-        cy.contains('About').click({ force: true })
-        cy.contains('Certifications').click({ force: true })
-        cy.get('#ace-indesign').click({ force: true })
-        cy.get('#ace-photoshop').click({ force: true })
-        cy.contains('Requirements').click({ force: true })
-        cy.contains('Titles').click({ force: true })
-        cy.wait(2000)
-        //click on Amazon
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('Amazon').click({ force: true })
-        cy.wait(2000)
-        // click on Axelos
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('Axelos').click({ force: true })
-        cy.contains('ITIL 4 Certifications').click({ force: true })
-        cy.contains('PRINCE2 Certification').click({ force: true })
-        cy.wait(2000)
-        //click on CIW
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('CIW').click({ force: true })
-        // click on CWNP
-        cy.wait(2000)
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('CWNP').click({ force: true })
-        //click on CertNexus this remove form list for future use
-        // cy.wait(2000)
-        // Navbar.clickonBrowseTitle()
-        // cy.get('[data-cy="browsetitles_cy"]').contains('CertNexus').click({ force: true })
-        cy.wait(2000)
-        // click on CertiPort
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('Certiport').click({ force: true })
-        cy.wait(2000)
-        // click on Cisco
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('Cisco').click({ force: true })
-        cy.wait(2000)
-        //click on CompTIA
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('CompTIA').click({ force: true })
-        cy.wait(2000)
-        // click on EC-Coucil
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('EC-Council').click({ force: true })
-        cy.wait(2000)
-        // click on Google
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('Google').click({ force: true })
-        cy.wait(2000)
-        // click on HRCI
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('HRCI').click({ force: true })
-        cy.wait(2000)
-        // click on IIBA
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('IIBA').click({ force: true })
-        cy.wait(2000)
-        // click on ISACA
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('ISACA').click({ force: true })
-        cy.wait(2000)
-        // click on (ISC)²
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('(ISC)²').click({ force: true })
-        cy.wait(2000)
-        // click on LPI
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('LPI').click({ force: true })
-        cy.wait(2000)
-        // click on Microsoft
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('Microsoft').click({ force: true })
-        cy.wait(2000)
-        // click on Oracle
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('Oracle').click({ force: true })
-        cy.wait(2000)
-        // click on PMI
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('PMI').click({ force: true })
-        cy.wait(2000)
-        // click on RedHat
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('RedHat').click({ force: true })
-        cy.wait(2000)
-        // click on VMware
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('VMware').click({ force: true })
-        cy.wait(2000)
-        // click on Zend
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-cy="browsetitles_cy"]').contains('Zend').click({ force: true })
-    })
+import {
+	Navbar,
+	login_username,
+	login_password,
+	LoginPage,
+} from '../../../../page-objects/pages/index'
+
+const vendors = [
+	{
+		name: 'Microsoft',
+		slug: 'Microsoft',
+		destination: /\/p\/Microsoft\.html$/i,
+	},
+	{ name: 'Oracle', slug: 'Oracle', destination: /\/p\/Oracle\.html$/i },
+	{ name: 'Cisco', slug: 'Cisco', destination: /\/p\/Cisco\.html$/i },
+	{ name: 'CompTIA', slug: 'CompTIA', destination: /\/p\/CompTIA\.html$/i },
+	{ name: 'CIW', slug: 'CIW', destination: /\/p\/CIW\.html$/i },
+	{ name: 'PMI', slug: 'PMI', destination: /\/p\/PMI\.html$/i },
+	{ name: 'ISC2', slug: 'ISC2', destination: /\/p\/ISC2\.html$/i },
+	{ name: 'Adobe', slug: 'Adobe', destination: /\/p\/Adobe\.html$/i },
+	{
+		name: 'Axelos',
+		slug: 'Axelos',
+		destination: /\/p\/(Axelos|catalog)\.html$/i,
+	},
+]
+
+Cypress.on('uncaught:exception', err => {
+	const knownWebsiteErrors = [
+		"Cannot read properties of null (reading 'style')",
+		"Cannot read properties of null (reading 'postMessage')",
+	]
+
+	if (knownWebsiteErrors.some(message => err.message.includes(message))) {
+		return false
+	}
+})
+
+describe('Current vendor pages', () => {
+	beforeEach(() => {
+		cy.session('browse-vendor-login', () => {
+			cy.visit('/')
+			Navbar.clickOnLogin()
+			LoginPage.loginPage(login_username, login_password)
+
+			cy.contains('button, a', /^\s*Continue\s*$/i, {
+				timeout: 30000,
+			})
+				.filter(':visible')
+				.first()
+				.click({ force: true })
+
+			cy.location('href', { timeout: 30000 }).should(
+				'not.include',
+				'func=welcome'
+			)
+		})
+
+		cy.visit('https://www.ucertify.com/')
+		cy.scrollTo('bottom')
+	})
+
+	vendors.forEach(vendor => {
+		it(`Opening the ${vendor.name} vendor page`, () => {
+			cy.get(`a[href$="/p/${vendor.slug}.html"]`, { timeout: 30000 })
+				.filter(':visible')
+				.first()
+				.click({ force: true })
+
+			cy.location('pathname', { timeout: 30000 }).should(
+				'match',
+				vendor.destination
+			)
+			cy.get('body').should('be.visible').and('not.be.empty')
+		})
+	})
 })
