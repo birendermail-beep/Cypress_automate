@@ -2,6 +2,7 @@ const { defineConfig } = require('cypress')
 
 module.exports = defineConfig({
 	e2e: {
+		baseUrl: process.env.CYPRESS_BASE_URL || 'https://www.jigyaasa.info',
 		specPattern: 'cypress/integration/**/*.js',
 		supportFile: 'cypress/support/index.js',
 		setupNodeEvents(on, config) {
@@ -14,5 +15,6 @@ module.exports = defineConfig({
 	pageLoadTimeout: 300000,
 	projectId: 'gq3eir',
 	video: false,
-	viewportWidth: 1024,
+	viewportWidth: 1280,
+	viewportHeight: 800,
 })
