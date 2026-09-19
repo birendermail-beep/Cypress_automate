@@ -88,13 +88,15 @@ describe('homepage footer links', () => {
 	it('has a working Platform destination', () => {
 		cy.contains(
 			'a.nav-link.d-inline-block.px-0.pt-1.pb-2.text-light.text-light-onhover',
-			/^\\s*Platform\\s*$/i,
+			'Platform',
 			{ timeout: 30000 }
 		)
 			.filter(':visible')
 			.first()
 			.should('have.attr', 'href')
-			.and('match', /\\/about\\/platforms\\.html\\/?$/i)
-
+			.then(href => {
+				const destination = new URL(href, Cypress.config('baseUrl'))
+				expect(destination.pathname).to.eq('/about/platforms.html')
+			})
 	})
 })
