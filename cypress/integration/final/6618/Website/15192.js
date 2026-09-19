@@ -53,35 +53,62 @@
 @test_data: n/a
 @result: home page footer open
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('homepage footer testing', function () {
-    beforeEach('this is login', function () {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-        })
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-        Navbar.clickContinueOnWelcomePage();
-    })
-    it('Opening the vendors', function () {
-        cy.get("ul.list-unstyled > li").contains("Vendors").click({ force: true });
-    })
-    it('Opening the Certifications', function () {
-        cy.get("ul.list-unstyled > li").contains("Certifications").click({ force: true });
-    })
-    it('Opening the Exams', function () {
-        cy.get("ul.list-unstyled > li").contains("Exams").click({ force: true });
-    })
-    it('Opening the Sitemap', function () {
-        cy.get("ul.list-unstyled > li").contains("Sitemap").click({ force: true });
-    })
-    it('Opening the Catalog', function () {
-        cy.get("ul.list-unstyled > li").contains("Catalog").click({ force: true });
-    })
-    it('Opening the Chat', function () {
-        cy.get('#launcher').click({ force: true });
-    })
-    it('Opening the Accessibility', function () {
-        cy.get('[data-url="https://www.jigyaasa.info/about/accessibility_ada.html"]').click();
-    })
+import {
+	Navbar,
+	login_username,
+	login_password,
+	LoginPage,
+} from '../../../../page-objects/pages/index'
+
+const resourcePages = [
+	{ label: 'Vendors', path: /\/p\/vendors\.html$/i },
+	{ label: 'Certifications', path: /\/p\/certifications\.html$/i },
+	{ label: 'Exams', path: /\/p\/exams\.html$/i },
+	{ label: 'Sitemap', path: /\/about\/sitemap\.html$/i },
+	{ label: 'Accessibility', path: /\/about\/accessibility_ada\.html$/i },
+]
+
+describe('homepage resource links', () => {
+	beforeEach(() => {
+		cy.session(
+			'website-footer-login',
+			() => {
+				cy.visit('/')
+				Navbar.clickOnLogin()
+				LoginPage.loginPage(login_username, login_password)
+				Navbar.clickContinueOnWelcomePage()
+			},
+			{ cacheAcrossSpecs: true }
+		)
+
+		cy.visit('/')
+	})
+
+	resourcePages.forEach(page => {
+		it(`opens ${page.label}`, () => {
+			cy.scrollTo('bottom')
+			cy.contains('a', new RegExp(`^\\s*${page.label}\\s*$`, 'i'), {
+				timeout: 30000,
+			})
+				.filter(':visible')
+				.first()
+				.click({ force: true })
+
+			cy.location('pathname', { timeout: 30000 }).should('match', page.path)
+		})
+	})
+
+	it('opens the Catalog menu', () => {
+		cy.contains('a, button', /^\s*Catalog\s*/i, { timeout: 30000 })
+			.filter(':visible')
+			.first()
+			.click({ force: true })
+		cy.get('body').should('contain.text', 'IT')
+	})
+
+	it('shows Help and Support', () => {
+		cy.contains('button', /Help/i, { timeout: 30000 })
+			.filter(':visible')
+			.should('be.visible')
+	})
 })

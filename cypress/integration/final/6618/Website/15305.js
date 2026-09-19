@@ -22,16 +22,28 @@
 @result: career form for Technical writer will be shown
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('career form for Technical writer', function() {
-    it('career form for Technical writer', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url);
-            cy.get('[data-cy="career_link"]').click();
-            cy.get('[data-cy="technical_writer"]').click();
-        })
-    })
+import {
+	Navbar,
+	login_username,
+	login_password,
+	LoginPage,
+} from '../../../../page-objects/pages/index'
+
+describe('career form for content quality assurance', () => {
+	it('opens the current content application form', () => {
+		cy.visit('/')
+		Navbar.clickOnLogin()
+		LoginPage.loginPage(login_username, login_password)
+		Navbar.clickContinueOnWelcomePage()
+		cy.visit('/about/career.html')
+
+		cy.contains('a', /^\s*Explore Opportunities\s*$/i, {
+			timeout: 30000,
+		}).click({ force: true })
+		cy.contains('button', /^\s*Content QA\s*$/i, { timeout: 30000 })
+			.filter(':visible')
+			.click({ force: true })
+		cy.contains('h2', /^\s*Apply Now!\s*$/i).should('be.visible')
+		cy.contains('button', /^\s*Submit Application\s*$/i).should('be.visible')
+	})
 })

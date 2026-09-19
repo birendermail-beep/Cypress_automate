@@ -47,33 +47,48 @@
 @test_data: n/a
 @result: home page footer open
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('homepage footer testing', function () {
-    beforeEach('this is login', function () {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-        })
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-        Navbar.clickContinueOnWelcomePage();
-    })
-    it('Opening the About us', function () {
-        cy.get("ul.list-unstyled > li").contains("About Us").click({ force: true });
-    })
-    it('Opening the Blog', function () {
-        cy.get("ul.list-unstyled > li").contains("Blog").click({ force: true });
-    })
-    it('Opening the Contact Us', function () {
-        cy.get("ul.list-unstyled > li").contains("Contact Us").click({ force: true });
-    })
+import {
+	Navbar,
+	login_username,
+	login_password,
+	LoginPage,
+} from '../../../../page-objects/pages/index'
 
-    it('Opening the Careers', function () {
-        cy.get("ul.list-unstyled > li").contains("Careers").click({ force: true });
-    })
-    it('Opening the Partners', function () {
-        cy.get("ul.list-unstyled > li").contains("Partners").click({ force: true });
-    })
-    it('Opening the Our Products', function () {
-        cy.get("ul.list-unstyled > li").contains("Platform").click({ force: true });
-    })
+const footerPages = [
+	{ label: 'About Us', path: /\/about\/about\.html$/i },
+	{ label: 'Blog', path: /\/blog\/?$/i },
+	{ label: 'Contact Us', path: /\/about\/contactus\.html$/i },
+	{ label: 'Careers', path: /\/about\/career\.html$/i },
+	{ label: /Partners/i, path: /\/about\/partners\.html$/i },
+	{ label: 'Platform', path: /\/about\/platforms\.html$/i },
+]
+
+describe('homepage footer links', () => {
+	beforeEach(() => {
+		cy.session(
+			'website-footer-login',
+			() => {
+				cy.visit('/')
+				Navbar.clickOnLogin()
+				LoginPage.loginPage(login_username, login_password)
+				Navbar.clickContinueOnWelcomePage()
+			},
+			{ cacheAcrossSpecs: true }
+		)
+
+		cy.visit('/')
+		cy.scrollTo('bottom')
+	})
+
+	footerPages.forEach(page => {
+		it(`opens ${String(page.label)}`, () => {
+			cy.contains('a', page.label, { timeout: 30000 })
+				.filter(':visible')
+				.first()
+				.click({ force: true })
+
+			cy.location('pathname', { timeout: 30000 }).should('match', page.path)
+			cy.get('body').should('be.visible').and('not.be.empty')
+		})
+	})
 })
