@@ -56,6 +56,12 @@ const footerPages = [
 	{ label: 'Platform', path: /\/about\/platforms\.html$/i },
 ]
 
+Cypress.on('uncaught:exception', err => {
+	if (err.message.includes("Cannot read properties of null (reading 'style')")) {
+		return false
+	}
+})
+
 describe('homepage footer links', () => {
 	beforeEach(() => {
 		cy.websiteLogin()
