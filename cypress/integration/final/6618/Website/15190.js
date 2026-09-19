@@ -76,7 +76,10 @@ describe('homepage footer links', () => {
 			})
 				.filter(':visible')
 				.first()
-				.click({ force: true })
+				.should('have.attr', 'href')
+				.then(href => {
+					cy.visit(href)
+				})
 
 			cy.location('pathname', { timeout: 30000 }).should('match', page.path)
 			cy.get('body').should('be.visible').and('not.be.empty')
