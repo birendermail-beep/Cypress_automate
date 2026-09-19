@@ -53,16 +53,30 @@ describe('career form for application developer', () => {
 			.click({ force: true })
 
 		cy.location('href', { timeout: 30000 }).should('match', /career/i)
-		cy.contains('a, button', /^\s*Application Developer\s*$/i, {
+		cy.contains('a', /^\s*Explore Opportunities\s*$/i, {
 			timeout: 30000,
 		})
 			.filter(':visible')
 			.first()
 			.click({ force: true })
 
+		cy.contains('button', /Developer\s*$/i, { timeout: 30000 })
+			.filter(':visible')
+			.first()
+			.click({ force: true })
+
+		cy.contains('h2', /^\s*Apply Now!\s*$/i, { timeout: 30000 }).should(
+			'be.visible'
+		)
 		cy.get('form:visible', { timeout: 30000 })
 			.first()
 			.should('be.visible')
 			.and('not.be.empty')
+			.within(() => {
+				cy.get('input').filter(':visible').should('have.length.at.least', 2)
+				cy.contains('button', /^\s*Submit Application\s*$/i).should(
+					'be.visible'
+				)
+			})
 	})
 })
