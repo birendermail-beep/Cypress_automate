@@ -16,16 +16,32 @@
 @result: Successfully open the page
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('Website', function() {
+import {
+	Navbar,
+	login_username,
+	login_password,
+	LoginPage,
+} from '../../../../page-objects/pages/index'
 
-    it('Image url page will be open', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.wait(3000);
-            cy.visit(data.url + '/utils/btest.php?action=test')
-        });
-    })
+describe('Website', () => {
+	it('Image url page will be open', () => {
+		cy.visit('/')
+		Navbar.clickOnLogin()
+		LoginPage.loginPage(login_username, login_password)
+
+		cy.contains('button, a', /^\s*Continue\s*$/i, { timeout: 30000 })
+			.filter(':visible')
+			.first()
+			.click({ force: true })
+
+		cy.location('href', { timeout: 30000 }).should(
+			'not.include',
+			'func=welcome'
+		)
+
+		cy.visit('/utils/btest.php?action=test')
+		cy.location('pathname', { timeout: 30000 }).should('eq', '/utils/btest.php')
+		cy.location('search').should('eq', '?action=test')
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
 })
