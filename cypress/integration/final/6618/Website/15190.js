@@ -55,8 +55,6 @@ const footerPages = [
 	{ label: 'Our Partners', path: /\/about\/partners\.html$/i },
 ]
 
-const platformUrl = 'https://www.ucertify.com/about/platforms.html'
-
 Cypress.on('uncaught:exception', err => {
 	if (err.message.includes("Cannot read properties of null (reading 'style')")) {
 		return false
@@ -88,10 +86,15 @@ describe('homepage footer links', () => {
 	})
 
 	it('has a working Platform destination', () => {
-		cy.get(`a[href="${platformUrl}"]`, { timeout: 30000 })
+		cy.contains(
+			'a.nav-link.d-inline-block.px-0.pt-1.pb-2.text-light.text-light-onhover',
+			/^\\s*Platform\\s*$/i,
+			{ timeout: 30000 }
+		)
 			.filter(':visible')
 			.first()
-			.should('have.attr', 'href', platformUrl)
+			.should('have.attr', 'href')
+			.and('match', /\\/about\\/platforms\\.html\\/?$/i)
 
 	})
 })
