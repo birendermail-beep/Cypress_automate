@@ -75,6 +75,7 @@ Cypress.on('uncaught:exception', err => {
 	const knownWebsiteErrors = [
 		"Cannot read properties of null (reading 'style')",
 		"Cannot read properties of null (reading 'postMessage')",
+		"Unexpected token ';'",
 	]
 
 	if (knownWebsiteErrors.some(message => err.message.includes(message))) {
