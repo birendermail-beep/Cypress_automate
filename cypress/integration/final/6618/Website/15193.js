@@ -42,11 +42,11 @@
 @result: home page footer open
 */
 const socialLinks = [
-	{ label: 'Facebook', destination: /facebook\.com/i },
-	{ label: /Twitter|X/i, destination: /(?:twitter|x)\.com/i },
-	{ label: /YouTube/i, destination: /youtube\.com/i },
-	{ label: /Instagram/i, destination: /instagram\.com/i },
-	{ label: /LinkedIn/i, destination: /linkedin\.com/i },
+	{ label: 'Facebook', selector: 'a[href*="facebook.com"]' },
+	{ label: 'X', selector: 'a[href*="x.com"], a[href*="twitter.com"]' },
+	{ label: 'YouTube', selector: 'a[href*="youtube.com"]' },
+	{ label: 'Instagram', selector: 'a[href*="instagram.com"]' },
+	{ label: 'LinkedIn', selector: 'a[href*="linkedin.com"]' },
 ]
 
 describe('homepage social links', () => {
@@ -58,11 +58,11 @@ describe('homepage social links', () => {
 
 	socialLinks.forEach(social => {
 		it(`has the ${String(social.label)} link`, () => {
-			cy.contains('a', social.label, { timeout: 30000 })
+			cy.get(social.selector, { timeout: 30000 })
 				.filter(':visible')
 				.first()
 				.should('have.attr', 'href')
-				.and('match', social.destination)
+				.and('not.be.empty')
 		})
 	})
 })

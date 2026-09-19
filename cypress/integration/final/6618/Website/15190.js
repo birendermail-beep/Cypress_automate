@@ -52,7 +52,7 @@ const footerPages = [
 	{ label: 'Blog', path: /\/blog\/?$/i },
 	{ label: 'Contact Us', path: /\/about\/contactus\.html$/i },
 	{ label: 'Careers', path: /\/about\/career\.html$/i },
-	{ label: /Partners/i, path: /\/about\/partners\.html$/i },
+	{ label: 'Our Partners', path: /\/about\/partners\.html$/i },
 	{ label: 'Platform', path: /\/about\/platforms\.html$/i },
 ]
 
@@ -65,7 +65,9 @@ describe('homepage footer links', () => {
 
 	footerPages.forEach(page => {
 		it(`opens ${String(page.label)}`, () => {
-			cy.contains('a', page.label, { timeout: 30000 })
+			cy.contains('a', new RegExp(`^\\s*${page.label}\\s*$`, 'i'), {
+				timeout: 30000,
+			})
 				.filter(':visible')
 				.first()
 				.click({ force: true })
