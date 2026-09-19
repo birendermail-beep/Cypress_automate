@@ -33,23 +33,42 @@ import {
 } from '../../../../page-objects/pages/index'
 
 const vendors = [
+	{ name: 'Adobe', slug: 'Adobe', destination: /\/p\/Adobe\.html$/i },
+	{ name: 'Amazon', slug: 'Amazon', destination: /\/p\/Amazon\.html$/i },
+	{
+		name: 'Axelos',
+		slug: 'Axelos',
+		destination: /\/p\/(Axelos|catalog)\.html$/i,
+	},
+	{ name: 'CWNP', slug: 'CWNP', destination: /\/p\/CWNP\.html$/i },
+	{
+		name: 'CertNexus',
+		slug: 'CertNexus',
+		destination: /\/p\/CertNexus\.html$/i,
+	},
+	{
+		name: 'Certiport',
+		slug: 'Certiport',
+		destination: /\/p\/Certiport\.html$/i,
+	},
+	{ name: 'Cisco', slug: 'Cisco', destination: /\/p\/Cisco\.html$/i },
 	{
 		name: 'Microsoft',
 		slug: 'Microsoft',
 		destination: /\/p\/Microsoft\.html$/i,
 	},
 	{ name: 'Oracle', slug: 'Oracle', destination: /\/p\/Oracle\.html$/i },
-	{ name: 'Cisco', slug: 'Cisco', destination: /\/p\/Cisco\.html$/i },
-	{ name: 'CompTIA', slug: 'CompTIA', destination: /\/p\/CompTIA\.html$/i },
-	{ name: 'CIW', slug: 'CIW', destination: /\/p\/CIW\.html$/i },
-	{ name: 'PMI', slug: 'PMI', destination: /\/p\/PMI\.html$/i },
+	{ name: 'RedHat', slug: 'RedHat', destination: /\/p\/RedHat\.html$/i },
 	{ name: 'ISC2', slug: 'ISC2', destination: /\/p\/ISC2\.html$/i },
-	{ name: 'Adobe', slug: 'Adobe', destination: /\/p\/Adobe\.html$/i },
-	{
-		name: 'Axelos',
-		slug: 'Axelos',
-		destination: /\/p\/(Axelos|catalog)\.html$/i,
-	},
+	{ name: 'CIW', slug: 'CIW', destination: /\/p\/CIW\.html$/i },
+	{ name: 'CompTIA', slug: 'CompTIA', destination: /\/p\/CompTIA\.html$/i },
+	{ name: 'Google', slug: 'Google', destination: /\/p\/Google\.html$/i },
+	{ name: 'HRCI', slug: 'HRCI', destination: /\/p\/HRCI\.html$/i },
+	{ name: 'IIBA', slug: 'IIBA', destination: /\/p\/IIBA\.html$/i },
+	{ name: 'PMI', slug: 'PMI', destination: /\/p\/PMI\.html$/i },
+	{ name: 'LPI', slug: 'LPI', destination: /\/p\/LPI\.html$/i },
+	{ name: 'ISACA', slug: 'ISACA', destination: /\/p\/ISACA\.html$/i },
+	{ name: 'VMware', slug: 'VMware', destination: /\/p\/VMware\.html$/i },
 ]
 
 Cypress.on('uncaught:exception', err => {
@@ -83,8 +102,7 @@ describe('Current vendor pages', () => {
 			)
 		})
 
-		cy.visit('https://www.ucertify.com/')
-		cy.scrollTo('bottom')
+		cy.visit('/p/vendors.html')
 	})
 
 	vendors.forEach(vendor => {
