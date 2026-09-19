@@ -23,16 +23,46 @@
 @result: career form for application developer will be shown
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('application form for online sale', function() {
-    it('application form for online sale', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url);
-            cy.get('[data-cy="career_link"]').click();
-            cy.get('[data-cy="app_developer"]').click();
-        })
-    })
+import {
+	Navbar,
+	login_username,
+	login_password,
+	LoginPage,
+} from '../../../../page-objects/pages/index'
+
+describe('career form for application developer', () => {
+	it('shows the application form for application developer', () => {
+		cy.visit('/')
+		Navbar.clickOnLogin()
+		LoginPage.loginPage(login_username, login_password)
+
+		cy.contains('button, a', /^\s*Continue\s*$/i, { timeout: 30000 })
+			.filter(':visible')
+			.first()
+			.click({ force: true })
+
+		cy.location('href', { timeout: 30000 }).should(
+			'not.include',
+			'func=welcome'
+		)
+
+		cy.scrollTo('bottom')
+		cy.contains('a', /^\s*Careers\s*$/i, { timeout: 30000 })
+			.filter(':visible')
+			.first()
+			.click({ force: true })
+
+		cy.location('href', { timeout: 30000 }).should('match', /career/i)
+		cy.contains('a, button', /^\s*Application Developer\s*$/i, {
+			timeout: 30000,
+		})
+			.filter(':visible')
+			.first()
+			.click({ force: true })
+
+		cy.get('form:visible', { timeout: 30000 })
+			.first()
+			.should('be.visible')
+			.and('not.be.empty')
+	})
 })
