@@ -47,13 +47,6 @@
 @test_data: n/a
 @result: home page footer open
 */
-import {
-	Navbar,
-	login_username,
-	login_password,
-	LoginPage,
-} from '../../../../page-objects/pages/index'
-
 const footerPages = [
 	{ label: 'About Us', path: /\/about\/about\.html$/i },
 	{ label: 'Blog', path: /\/blog\/?$/i },
@@ -65,17 +58,7 @@ const footerPages = [
 
 describe('homepage footer links', () => {
 	beforeEach(() => {
-		cy.session(
-			'website-footer-login',
-			() => {
-				cy.visit('/')
-				Navbar.clickOnLogin()
-				LoginPage.loginPage(login_username, login_password)
-				Navbar.clickContinueOnWelcomePage()
-			},
-			{ cacheAcrossSpecs: true }
-		)
-
+		cy.websiteLogin()
 		cy.visit('/')
 		cy.scrollTo('bottom')
 	})

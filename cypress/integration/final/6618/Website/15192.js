@@ -53,13 +53,6 @@
 @test_data: n/a
 @result: home page footer open
 */
-import {
-	Navbar,
-	login_username,
-	login_password,
-	LoginPage,
-} from '../../../../page-objects/pages/index'
-
 const resourcePages = [
 	{ label: 'Vendors', path: /\/p\/vendors\.html$/i },
 	{ label: 'Certifications', path: /\/p\/certifications\.html$/i },
@@ -70,17 +63,7 @@ const resourcePages = [
 
 describe('homepage resource links', () => {
 	beforeEach(() => {
-		cy.session(
-			'website-footer-login',
-			() => {
-				cy.visit('/')
-				Navbar.clickOnLogin()
-				LoginPage.loginPage(login_username, login_password)
-				Navbar.clickContinueOnWelcomePage()
-			},
-			{ cacheAcrossSpecs: true }
-		)
-
+		cy.websiteLogin()
 		cy.visit('/')
 	})
 

@@ -41,13 +41,6 @@
 @test_data: n/a
 @result: home page footer open
 */
-import {
-	Navbar,
-	login_username,
-	login_password,
-	LoginPage,
-} from '../../../../page-objects/pages/index'
-
 const socialLinks = [
 	{ label: 'Facebook', destination: /facebook\.com/i },
 	{ label: /Twitter|X/i, destination: /(?:twitter|x)\.com/i },
@@ -58,17 +51,7 @@ const socialLinks = [
 
 describe('homepage social links', () => {
 	beforeEach(() => {
-		cy.session(
-			'website-footer-login',
-			() => {
-				cy.visit('/')
-				Navbar.clickOnLogin()
-				LoginPage.loginPage(login_username, login_password)
-				Navbar.clickContinueOnWelcomePage()
-			},
-			{ cacheAcrossSpecs: true }
-		)
-
+		cy.websiteLogin()
 		cy.visit('/')
 		cy.scrollTo('bottom')
 	})

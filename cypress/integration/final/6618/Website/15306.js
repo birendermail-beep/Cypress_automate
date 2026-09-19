@@ -23,21 +23,13 @@
 @result: career form for online sale will be shown
 */
 
-import {
-	Navbar,
-	login_username,
-	login_password,
-	LoginPage,
-} from '../../../../page-objects/pages/index'
-
 describe('career form for sales associate', () => {
-	it('opens the current sales application form', () => {
-		cy.visit('/')
-		Navbar.clickOnLogin()
-		LoginPage.loginPage(login_username, login_password)
-		Navbar.clickContinueOnWelcomePage()
+	beforeEach(() => {
+		cy.websiteLogin()
 		cy.visit('/about/career.html')
+	})
 
+	it('opens the current sales application form', () => {
 		cy.contains('a', /^\s*Explore Opportunities\s*$/i, {
 			timeout: 30000,
 		}).click({ force: true })
