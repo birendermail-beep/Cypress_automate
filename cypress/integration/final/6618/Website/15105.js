@@ -15,14 +15,14 @@
 @test_data: n/a
 @result: It will open the test screenshot page
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index' 
-describe('test screenshots', function() {
-    it('test the test screenshots page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + "/products/test/screenshots.html");
-        })
-    })
+
+describe('Test screenshots page', () => {
+	beforeEach(() => cy.websiteLogin())
+
+	it('opens the current page', () => {
+		cy.visit('/products/test/screenshots.html')
+		cy.location('pathname', { timeout: 30000 }).should('eq', '/products/test/screenshots.html')
+		cy.get('body').should('be.visible').and('not.be.empty')
+		cy.contains('h1, h2, h3', "uCertify Test Screenshot", { timeout: 30000 }).should('be.visible')
+	})
 })

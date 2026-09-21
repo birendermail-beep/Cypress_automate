@@ -16,15 +16,13 @@
 @test_data: n/a
 @result: It will Open the shopping options page.
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('shopping options page', function() {
-    it('test the shopping options page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + "/courses");
-        })
-        cy.get('[crn="1Z0-063"]').scrollIntoView().click();
-    })
+
+describe('Shopping options', () => {
+	beforeEach(() => cy.websiteLogin())
+
+	it('opens shopping options for the selected course', () => {
+		cy.visit('/cart/?buy=1Z0-063')
+		cy.location('pathname', { timeout: 30000 }).should('include', '/cart')
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
 })

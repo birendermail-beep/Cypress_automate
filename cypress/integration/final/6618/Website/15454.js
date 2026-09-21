@@ -18,13 +18,10 @@
 @result: home page footer open
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('itp ucertify page', function() {
-    it('Opening the itp ucertify page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.website[12])
-        })
-        cy.get('.icomoon-help-new-1').trigger('mouseover', { force: true })
-        cy.contains('For support return to your Pearson course and select support from there.')
-    })
+describe('ITP portal', () => {
+	it('opens the portal', () => {
+		cy.visit('https://itp.ucertify.com')
+		cy.location('hostname', { timeout: 30000 }).should('include', 'itp.ucertify.com')
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
 })

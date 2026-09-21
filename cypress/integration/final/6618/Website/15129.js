@@ -17,20 +17,18 @@
 @test_data: n/a
 @result: It will Open the security code help modal.
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('security code page', function () {
-    Cypress.on('uncaught:exception', (error, runnable) => {
-        return false;
-    })
 
-    it('test the security code page', function () {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + "/cart/?buy=1Z0-063");
-        })
-        cy.get("#proceed").click();
-        cy.get('[data-target="#modal_sec_code"]').click();
-    })
+describe('Cart security-code help', () => {
+	beforeEach(() => {
+		cy.websiteLogin()
+		cy.visit('/cart/?buy=1Z0-063')
+	})
+
+	it('opens the security-code help dialog', () => {
+		cy.get('#proceed, [data-cy="proceed-checkout"]', { timeout: 30000 })
+			.filter(':visible').first().click({ force: true })
+		cy.get('[data-target="#modal_sec_code"], [data-bs-target="#modal_sec_code"]', { timeout: 30000 })
+			.filter(':visible').first().click({ force: true })
+		cy.get('#modal_sec_code').should('be.visible')
+	})
 })

@@ -15,14 +15,13 @@
 @test_data: n/a
 @result: It will Open the product details new page.
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index' 
-describe('product details page', function() {
-    it('test the product details page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + "/courses/?search_query=70-486-VT");
-        })
-    })
+
+describe('Product search page', () => {
+	beforeEach(() => cy.websiteLogin())
+
+	it('opens the current page', () => {
+		cy.visit('/courses/?search_query=70-486-VT')
+		cy.location('pathname', { timeout: 30000 }).should('eq', '/courses/')
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
 })

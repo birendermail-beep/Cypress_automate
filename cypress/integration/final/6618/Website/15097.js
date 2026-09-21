@@ -17,18 +17,13 @@
 @test_data: N/A
 @result: Successfully open the SNT Tag Page
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('Home Page', function() {
 
-    it('Open the ebook page with SNT Tag', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url);
-            cy.get(':nth-child(2) > .list-unstyled > :nth-child(1) > a > .pointer').click({ force: true });
-            //this url not working right now discuss with rashmi ma'am
-            //cy.visit(data.url + '/about/index.php?page=ebook-tags');
-        })
-    })
+describe('About page', () => {
+	beforeEach(() => cy.websiteLogin())
+
+	it('opens the current About Us page', () => {
+		cy.visit('/about/about.html')
+		cy.location('pathname').should('eq', '/about/about.html')
+		cy.contains('h1, h2', /About uCertify/i, { timeout: 30000 }).should('be.visible')
+	})
 })

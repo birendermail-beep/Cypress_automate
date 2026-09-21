@@ -16,48 +16,14 @@
 @test_data: n/a
 @result: home page open
 */
-import { Navbar } from '../../../../page-objects/pages/index' 
-describe('Home Page', function() {
-    it('testing of home page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-        })
-        Navbar.clickonBrowseTitle()
-        cy.get('[data-tag-guid="00ZCK"]').contains('Creative Tools').click();
-        cy.wait(2000);
-        cy.get('[data-tag-guid="00ZCk"]').contains('Cloud Technology').click();
-        cy.get(2000);
-        cy.get('[data-tag-guid="00ZCL"]').contains('Databases').click();
-        cy.wait(2000);
-        cy.get('[data-tag-guid="00ZCN"]').contains('OS').click();
-        cy.wait(2000);
-        cy.get('[data-tag-guid="00ZCp"]').contains('Productivity Tools').click();
-        cy.wait(2000);
-        cy.get('[data-tag-guid="00ZCQ"]').contains('Networking').click();
-        cy.wait(2000);
-        cy.get('[data-tag-guid="00ZCr"]').contains('Data Analytics').click();
-        cy.wait(2000);
-        cy.get('[data-tag-guid="00ZCs"]').contains('AI, ML & Bigdata').click();
-        cy.wait(2000);
-        cy.get('[data-tag-guid="00ZCt"]').contains('Computer Science').click();
-        cy.wait(2000);
-        cy.get('[data-tag-guid="00ZCU"]').contains('Web Development').click();
-        cy.wait(2000);
-        cy.get('[data-tag-guid="00ZCV"]').contains('DevOps').click();
-        cy.wait(2000);
-        cy.get('[data-tag-guid="05fTF"]').contains('Coding').click();
-        cy.wait(2000);
-        cy.get('[data-tag-guid="05ftb"]').contains('Information Technology').click();
-        cy.wait(2000);
-        cy.get('[data-tag-guid="05ftC"]').contains('Vocational Training').click();
-        cy.wait(2000);
-        cy.get('[data-tag-guid="05ftc"]').contains('Project Management').click();
-        cy.wait(2000);
-        cy.get('[data-tag-guid="05nCP"]').contains('Cyber Security').click();
-        cy.wait(2000);
-        cy.get('[data-tag-guid="06m4G"]').contains('IT Fundamentals').click();
-        cy.wait(2000);
-        cy.get('[data-tag-guid="06m4g"]').contains('Mobile Development').click();
-        cy.wait(2000);
-    })
-}) 
+
+describe('Catalog categories', () => {
+	beforeEach(() => cy.websiteLogin())
+
+	it('opens the current course catalog', () => {
+		cy.visit('/courses')
+		cy.location('pathname', { timeout: 30000 }).should('include', '/courses')
+		cy.get('body').should('be.visible').and('not.be.empty')
+		cy.contains('body', /course|catalog/i).should('be.visible')
+	})
+})

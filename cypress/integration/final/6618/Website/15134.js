@@ -23,24 +23,17 @@
 @test_data: n/a
 @result: It will Open the vendors list page.
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index' 
-describe('vendors page', function() {
-    beforeEach('this is login', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-        })
-    })
-    it('test the vendors list page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url + "/?func=security&lookup=selected_course");
-        })
-    })
-    it('vendor List', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url + "?host=pearson.ucertify.com");
-            cy.get('.nav-tabs > .nav > :nth-child(1) > .float-left').click();
-        })
-    })
+
+describe('Vendor pages', () => {
+	beforeEach(() => cy.websiteLogin())
+
+	it('opens the selected-course vendor list', () => {
+		cy.visit('/?func=security&lookup=selected_course')
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
+
+	it('opens the Pearson vendor context', () => {
+		cy.visit('/?host=pearson.ucertify.com')
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
 })

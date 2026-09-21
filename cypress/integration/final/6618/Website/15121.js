@@ -15,14 +15,13 @@
 @test_data: n/a
 @result: It will open the wgu course page
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index' 
-describe('wgu course', function() {
-    it('test the wgu course page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + "/products/wgu_course.html");
-        })
-    })
+
+describe('WGU course page', () => {
+	beforeEach(() => cy.websiteLogin())
+
+	it('opens the current page', () => {
+		cy.visit('/products/wgu_course.html')
+		cy.location('pathname', { timeout: 30000 }).should('eq', '/products/wgu_course.html')
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
 })

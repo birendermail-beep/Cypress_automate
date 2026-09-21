@@ -15,14 +15,13 @@
 @test_data: n/a
 @result: It will open the how to course help videos
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index' 
-describe('how to labs', function() {
-    it('test the how to lab page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + "/products/labs/videos.html");
-        })
-    })
+
+describe('How-to lab videos page', () => {
+	beforeEach(() => cy.websiteLogin())
+
+	it('opens the current page', () => {
+		cy.visit('/products/labs/videos.html')
+		cy.location('pathname', { timeout: 30000 }).should('eq', '/products/labs/videos.html')
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
 })

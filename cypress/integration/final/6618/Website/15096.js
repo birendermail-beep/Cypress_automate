@@ -19,18 +19,17 @@
 @result: Course will be downlod in doc format
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('Website', function() {
+describe('Course download', () => {
+	beforeEach(() => {
+		cy.websiteLogin()
+		cy.visit('/courses/download_new.php')
+		cy.get('#course', { timeout: 30000 }).should('be.visible')
+	})
 
-    it('Download file in doc', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + "/courses/download_new.php");
-        })
-        cy.get('#course').select('1D0-622:CIW: Data Analyst', { force: true });
-        cy.get('#format').select('DOC', { force: true });
-        cy.get('.btn').click({ force: true });
-    })
+	it('exports the selected course as DOC', () => {
+		cy.get('#course option').filter((index, option) => Boolean(option.value)).first()
+			.invoke('val').then(value => cy.get('#course').select(value, { force: true }))
+		cy.get('#format').select('DOC', { force: true })
+		cy.contains('button', /^Export$/i).should('be.visible').click({ force: true })
+	})
 })

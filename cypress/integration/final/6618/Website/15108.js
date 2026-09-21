@@ -15,14 +15,13 @@
 @test_data: n/a
 @result: It will open the learn screenshot page
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index' 
-describe('app screenshots', function() {
-    it('test the app screenshots page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + "/products/app/screenshots.html");
-        })
-    })
+
+describe('App screenshots page', () => {
+	beforeEach(() => cy.websiteLogin())
+
+	it('opens the current page', () => {
+		cy.visit('/products/app/screenshots.html')
+		cy.location('pathname', { timeout: 30000 }).should('eq', '/products/app/screenshots.html')
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
 })

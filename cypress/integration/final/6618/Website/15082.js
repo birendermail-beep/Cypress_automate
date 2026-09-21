@@ -22,19 +22,12 @@
 @result:Successfully open the certifications page
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('Website Area', function() {
+describe('Oracle certification page', () => {
+	beforeEach(() => cy.websiteLogin())
 
-    it('Our certification home page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url);
-
-            cy.get('.col-md-3 > .list-unstyled > :nth-child(2)').click({ force: true });
-            cy.visit(data.url + "/vendors/Oracle.html")
-            cy.get(':nth-child(3) > .tab').click({ force: true });
-        })
-    })
+	it('opens the current Oracle certification page', () => {
+		cy.visit('/p/Oracle.html')
+		cy.location('pathname').should('eq', '/p/Oracle.html')
+		cy.contains('h1, h2', 'Oracle', { timeout: 30000 }).should('be.visible')
+	})
 })

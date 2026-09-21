@@ -18,17 +18,12 @@
 @result: Successfully open the features page
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('Features Page', function() {
+describe('Help and support page', () => {
+	beforeEach(() => cy.websiteLogin())
 
-    it('In Features page show the faqs', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.get('.icomoon-help-new-1').click({ force: true });
-            cy.get('ul > li:nth-child(1)').contains("Help").click({ force: true })
-            cy.visit(data.url + '/support.php')
-        })
-    })
+	it('opens current support content', () => {
+		cy.visit('/support.php')
+		cy.location('pathname').should('eq', '/support.php')
+		cy.contains('body', /help|support/i, { timeout: 30000 }).should('be.visible')
+	})
 })

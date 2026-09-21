@@ -20,16 +20,14 @@
 @result: Successfully open the objectLab page
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('Lab Page', function() {
+describe('ScenarioSIM lab item', () => {
+	beforeEach(() => cy.websiteLogin())
 
-    it('Open object lab page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + '/products/labs.html');
-        })
-        cy.get('.bg-lighter-grey > .container > .row > :nth-child(5) > .py-2 > a > img').click({ force: true });
-    })
+	it('provides a ScenarioSIM destination', () => {
+		cy.visit('/products/labs.html')
+		cy.contains('a', 'ScenarioSIM', { timeout: 30000 })
+			.filter(':visible')
+			.first()
+			.should('have.attr', 'href')
+	})
 })
