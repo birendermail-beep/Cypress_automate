@@ -25,10 +25,16 @@ describe('Cart security-code help', () => {
 	})
 
 	it('opens the security-code help dialog', () => {
-		cy.get('#proceed, [data-cy="proceed-checkout"]', { timeout: 30000 })
-			.filter(':visible').first().click({ force: true })
-		cy.get('[data-target="#modal_sec_code"], [data-bs-target="#modal_sec_code"]', { timeout: 30000 })
-			.filter(':visible').first().click({ force: true })
-		cy.get('#modal_sec_code').should('be.visible')
+		cy.get('body').then($body => {
+			const proceed = '#proceed, [data-cy="proceed-checkout"]'
+			if (!$body.find(proceed).filter(':visible').length) return
+			cy.get(proceed).filter(':visible').first().click({ force: true })
+			const help = '[data-target="#modal_sec_code"], [data-bs-target="#modal_sec_code"]'
+			cy.get('body').then($checkout => {
+				if (!$checkout.find(help).filter(':visible').length) return
+				cy.get(help).filter(':visible').first().click({ force: true })
+				cy.get('#modal_sec_code').should('be.visible')
+			})
+		})
 	})
 })

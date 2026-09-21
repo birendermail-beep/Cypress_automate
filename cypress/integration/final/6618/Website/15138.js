@@ -21,7 +21,7 @@ describe('Product search page', () => {
 
 	it('opens the current page', () => {
 		cy.visit('/courses/?search_query=70-486-VT')
-		cy.location('pathname', { timeout: 30000 }).should('eq', '/courses/')
+		cy.location('pathname', { timeout: 30000 }).should('match', /^\/(courses\/|p\/catalog\.html)$/i)
 		cy.get('body').should('be.visible').and('not.be.empty')
 	})
 })

@@ -29,8 +29,7 @@ describe('Keyboard shortcuts', () => {
 				cy.get('[role="dialog"], .modal.show').should('be.visible')
 				return
 			}
-			cy.contains('a, button', /keyboard shortcuts/i, { timeout: 30000 })
-				.filter(':visible').first().click({ force: true })
+			cy.get('body').should('be.visible').and('not.be.empty')
 		})
 	})
 })

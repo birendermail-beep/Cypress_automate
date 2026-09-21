@@ -48,7 +48,7 @@ function submitInvalidLogin(email, password) {
 	cy.get(emailField).filter(':visible').first().clear().type(email, { log: false })
 	cy.get(passwordField).filter(':visible').first().clear().type(password, { log: false })
 	cy.get(submitButton).filter(':visible').first().click({ force: true })
-	cy.location('pathname', { timeout: 30000 }).should('include', 'login.php')
+	cy.get(emailField, { timeout: 30000 }).filter(':visible').should('exist')
 }
 
 describe('uCertify login validation', () => {

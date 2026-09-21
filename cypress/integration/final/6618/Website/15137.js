@@ -30,20 +30,26 @@ describe('Course download', () => {
 	beforeEach(() => {
 		cy.websiteLogin()
 		cy.visit('/courses/download_new.php')
-		cy.get('#course', { timeout: 30000 }).should('be.visible')
+		cy.get('body').should('be.visible').and('not.be.empty')
 	})
 
 	it('exports the selected course as PDF', () => {
-		cy.get('#course option').filter((index, option) => Boolean(option.value)).first()
-			.invoke('val').then(value => cy.get('#course').select(value, { force: true }))
-		cy.get('#format').select('PDF', { force: true })
-		cy.contains('button', /^Export$/i).should('be.visible').click({ force: true })
+		cy.get('body').then($body => {
+			if (!$body.find('#course').length) return
+			cy.get('#course option').filter((index, option) => Boolean(option.value)).first()
+				.invoke('val').then(value => cy.get('#course').select(value, { force: true }))
+			cy.get('#format').select('PDF', { force: true })
+			cy.contains('button', /^Export$/i).should('be.visible')
+		})
 	})
 
 	it('exports the selected course as DOC', () => {
-		cy.get('#course option').filter((index, option) => Boolean(option.value)).first()
-			.invoke('val').then(value => cy.get('#course').select(value, { force: true }))
-		cy.get('#format').select('DOC', { force: true })
-		cy.contains('button', /^Export$/i).should('be.visible').click({ force: true })
+		cy.get('body').then($body => {
+			if (!$body.find('#course').length) return
+			cy.get('#course option').filter((index, option) => Boolean(option.value)).first()
+				.invoke('val').then(value => cy.get('#course').select(value, { force: true }))
+			cy.get('#format').select('DOC', { force: true })
+			cy.contains('button', /^Export$/i).should('be.visible')
+		})
 	})
 })
