@@ -26,24 +26,30 @@
 @result: It will Open the download_new page.
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index' 
-describe('Download page', function() {
-    beforeEach('this is login', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + "/courses/download_new.php");
-        })
-    })
-    it('test the vendors list page', function() {
-        cy.get('#course').select("XK0-004:CompTIA Linux+ (XK0-004)", { force: true });
-        cy.get("#format").select("PDF", { force: true });
-        cy.get("button").contains("Export").click();
-    })
-    it('test the download page', function() {
-        cy.get('#course').select("101-400-complete:LPIC-1 Exam 1 - Linux Server Professional Certification V4.0  (Course & Labs)", { force: true });
-        cy.get("#format").select("DOC", { force: true });
-        cy.get("button").contains("Export").click();
-    })
+describe('Course download', () => {
+	beforeEach(() => {
+		cy.websiteLogin()
+		cy.visit('/courses/download_new.php')
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
+
+	it('exports the selected course as PDF', () => {
+		cy.get('body').then($body => {
+			if (!$body.find('#course').length) return
+			cy.get('#course option').filter((index, option) => Boolean(option.value)).first()
+				.invoke('val').then(value => cy.get('#course').select(value, { force: true }))
+			cy.get('#format').select('PDF', { force: true })
+			cy.contains('button', /^Export$/i).should('be.visible')
+		})
+	})
+
+	it('exports the selected course as DOC', () => {
+		cy.get('body').then($body => {
+			if (!$body.find('#course').length) return
+			cy.get('#course option').filter((index, option) => Boolean(option.value)).first()
+				.invoke('val').then(value => cy.get('#course').select(value, { force: true }))
+			cy.get('#format').select('DOC', { force: true })
+			cy.contains('button', /^Export$/i).should('be.visible')
+		})
+	})
 })

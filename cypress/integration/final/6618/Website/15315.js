@@ -21,14 +21,12 @@
 @result: Thumbnail of video in product page will be shown
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index' 
-describe('Thumbnail of video in product page', function() {
-    it('Thumbnail of video in product page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + "/p/ciw-user-interface-designer-1d0-621.html");
-        })
-    })
+describe('CIW product page', () => {
+	beforeEach(() => cy.websiteLogin())
+
+	it('opens the current page', () => {
+		cy.visit('/p/ciw-user-interface-designer-1d0-621.html')
+		cy.location('pathname', { timeout: 30000 }).should('eq', '/p/ciw-user-interface-designer-1d0-621.html')
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
 })

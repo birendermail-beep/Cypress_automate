@@ -17,17 +17,12 @@
 @result: helth check page will be open
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('Website', function() {
+describe('Health check page', () => {
+	beforeEach(() => cy.websiteLogin())
 
-    it('Open the helthcheck page.', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.wait(3000);
-            cy.visit(data.url + '/healthcheck.php')
-        });
-
-    })
+	it('opens the current page', () => {
+		cy.visit('/healthcheck.php')
+		cy.location('pathname', { timeout: 30000 }).should('eq', '/healthcheck.php')
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
 })

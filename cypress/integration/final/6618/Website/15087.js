@@ -16,16 +16,12 @@
 @test_data: N/A
 @result: Successfully show codelab page
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('Code Lab', function() {
-    it('Display Code Page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-                //discuss with rashmi ma'am 
-                //cy.visit(data.url + "/custom/codelab/index.php");
 
-        })
-    })
+describe('CodeLAB', () => {
+	beforeEach(() => cy.websiteLogin())
+
+	it('shows CodeLAB on the current labs page', () => {
+		cy.visit('/products/labs.html')
+		cy.contains('h3, a', 'CodeLAB', { timeout: 30000 }).should('be.visible')
+	})
 })

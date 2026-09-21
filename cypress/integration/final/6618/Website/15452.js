@@ -18,14 +18,10 @@
 @result: home page footer open
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('seetec page', function () {
-    it('Opening the seetec page', function () {
-        cy.fixture('global').then(data => {
-            cy.visit(data.website[10])
-        })
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-        Navbar.clickContinueOnWelcomePage();
-    })
+describe('Seetec portal', () => {
+	it('opens the portal', () => {
+		cy.visit('https://seetec.ucertify.com')
+		cy.location('hostname', { timeout: 30000 }).should('include', 'seetec.ucertify.com')
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
 })

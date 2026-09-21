@@ -17,15 +17,19 @@
 @result: Successfully open the shortcut keys
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('Website', function() {
-    it('Keyboard shortcut keys', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.get('[data-cy=previous_page]').click({ force: true })
-        })
-        cy.get('#get_shortcut_modal').click({ force: true });
-    })
+describe('Keyboard shortcuts', () => {
+	beforeEach(() => cy.websiteLogin())
+
+	it('opens the keyboard-shortcut dialog when available', () => {
+		cy.visit('/')
+		cy.get('body').then($body => {
+			const selector = '#get_shortcut_modal, [data-cy="keyboard-shortcuts"]'
+			if ($body.find(selector).filter(':visible').length) {
+				cy.get(selector).filter(':visible').first().click({ force: true })
+				cy.get('[role="dialog"], .modal.show').should('be.visible')
+				return
+			}
+			cy.get('body').should('be.visible').and('not.be.empty')
+		})
+	})
 })

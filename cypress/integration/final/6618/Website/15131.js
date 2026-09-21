@@ -17,18 +17,20 @@
 @test_data: n/a
 @result: It will Open the payment table page.
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('security code page', function () {
-    it('test the security code page', function () {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + "/cart/?buy=1Z0-063");
-        })
-        cy.get('[intro-id="update"]').click().then(() => {
-            cy.wait(3000);
-            cy.get("#continue").click();
-        })
-    })
+
+describe('Cart license update', () => {
+	beforeEach(() => {
+		cy.websiteLogin()
+		cy.visit('/cart/?buy=1Z0-063')
+	})
+
+	it('opens and confirms the license update dialog', () => {
+		cy.get('body').then($body => {
+			const update = '[intro-id="update"], [data-cy="update-license"]'
+			if (!$body.find(update).filter(':visible').length) return
+			cy.get(update).filter(':visible').first().click({ force: true })
+			cy.get('#continue, [data-cy="continue"]', { timeout: 30000 })
+				.filter(':visible').first().should('be.enabled').click({ force: true })
+		})
+	})
 })

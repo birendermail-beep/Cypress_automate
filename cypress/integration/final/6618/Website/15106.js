@@ -15,14 +15,13 @@
 @test_data: n/a
 @result: It will open the create screenshot page
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index' 
-describe('create screenshots', function() {
-    it('test the create screenshots page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + "/products/create/screenshots.html");
-        })
-    })
+
+describe('Create screenshots page', () => {
+	beforeEach(() => cy.websiteLogin())
+
+	it('opens the current page', () => {
+		cy.visit('/products/create/screenshots.html')
+		cy.location('pathname', { timeout: 30000 }).should('eq', '/products/create/screenshots.html')
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
 })

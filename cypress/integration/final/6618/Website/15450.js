@@ -18,14 +18,10 @@
 @result: home page footer open
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('certification page', function () {
-    it('Opening the certification page', function () {
-        cy.fixture('global').then(data => {
-            cy.visit(data.website[10])
-            // Navbar.clickOnLogin()
-            // LoginPage.loginPage(login_username, login_password)
-            // cy.get('[data-cy=homepage]').click({ force: true })
-        })
-    })
+describe('Certification Partners portal', () => {
+	it('opens the portal', () => {
+		cy.visit('https://certification-partners.ucertify.com')
+		cy.location('hostname', { timeout: 30000 }).should('include', 'certification-partners.ucertify.com')
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
 })

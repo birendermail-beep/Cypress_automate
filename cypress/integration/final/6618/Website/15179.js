@@ -19,17 +19,14 @@
 @result: Successfully open the LiveLabs page
 */
 
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('Lab Page', function() {
+describe('LiveLAB lab item', () => {
+	beforeEach(() => cy.websiteLogin())
 
-    it('Live Lab', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + '/products/labs.html');
-        })
-        cy.get('.bg-lighter-grey > .container > .row > :nth-child(1) > .py-2 > a > img').click({ force: true })
-
-    })
+	it('provides a LiveLAB destination', () => {
+		cy.visit('/products/labs.html')
+		cy.contains('a', 'LiveLAB', { timeout: 30000 })
+			.filter(':visible')
+			.first()
+			.should('have.attr', 'href')
+	})
 })

@@ -18,16 +18,13 @@
 @result:
 - Successfully open the features page
 */
-import { Navbar, login_username, login_password, LoginPage } from '../../../../page-objects/pages/index'
-describe('Website', function() {
 
-    it('Features new page', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            cy.visit(data.url + '/features/index.php?manual_type=');
-        })
+describe('Features page', () => {
+	beforeEach(() => cy.websiteLogin())
 
-    })
+	it('opens the current page', () => {
+		cy.visit('/features/index.php?manual_type=')
+		cy.location('pathname', { timeout: 30000 }).should('eq', '/features/index.php')
+		cy.get('body').should('be.visible').and('not.be.empty')
+	})
 })
