@@ -26,7 +26,9 @@ describe('Student course contents', () => {
     const openLessons = () => {
         restoreStudentLogin()
         cy.visit('/')
-        StudentPage.visitLOAplusCompleteCourse()
+        cy.fixture('global').then(data => {
+            StudentPage.visitLOAplusCompleteCourse(data)
+        })
         cy.get('[intro-id="chapters"]', { timeout: 30000 })
             .filter(':visible')
             .first()
