@@ -2,7 +2,11 @@ import BasePage from '../BasePage'
 
 export default class LoginPage extends BasePage {
 	static loginPage(username, password) {
-		return cy.env(['login_username', 'login_password']).then(environment => {
+		return cy.then(() => {
+			const environment = {
+				login_username: Cypress.env('login_username'),
+				login_password: Cypress.env('login_password'),
+			}
 			const resolvedUsername = username || environment.login_username || ''
 			const resolvedPassword = password || environment.login_password || ''
 
