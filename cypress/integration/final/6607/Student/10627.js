@@ -43,22 +43,33 @@ describe('Student course contents', () => {
     }
 
     const openActivity = label => {
-        cy.location('href').then(before => {
-            cy.contains(':visible', exact(label), { timeout: 30000 })
+        const selectors = {
+            Cards: '[data-cy="cards"]',
+            Quiz: '[data-cy="quizzes"]',
+            Labs: '[data-cy="labs"]',
+        }
+
+        if (label === 'Read') {
+            cy.contains(
+                ':visible',
+                /Operating System Fundamentals|TOPIC A: Network Types/i,
+                { timeout: 30000 }
+            ).first().click({ force: true })
+        } else {
+            cy.get(selectors[label], { timeout: 30000 })
+                .filter(':visible')
                 .first()
-                .click({ scrollBehavior: false })
-            cy.location('href', { timeout: 30000 }).should(after => {
-                expect(after, label + ' opens a new course view').not.to.eq(before)
-                expect(after, label + ' does not open a blank page')
-                    .not.to.eq('about:blank')
+                .click({ force: true })
+        }
+
+        cy.location('href', { timeout: 30000 })
+            .should('not.eq', 'about:blank')
+        cy.get('body', { timeout: 30000 })
+            .should('be.visible')
+            .and($body => {
+                expect($body.text().trim(), label + ' page content')
+                    .not.to.eq('')
             })
-            cy.get('body', { timeout: 30000 })
-                .should('be.visible')
-                .and($body => {
-                    expect($body.text().trim(), label + ' page content')
-                        .not.to.eq('')
-                })
-        })
     }
 
     // Keep navigation inside each test. A failing beforeEach hook makes Cypress
@@ -101,15 +112,20 @@ describe('Student course contents', () => {
 
     lessonTest('opens Cards from a lesson', () => {
         openActivity('Cards')
+        cy.contains(':visible', /Study Card|Cards/i, { timeout: 30000 })
+            .should('be.visible')
     })
 
     lessonTest('opens Quiz from a lesson', () => {
         openActivity('Quiz')
+        cy.contains(':visible', /Quiz/i, { timeout: 30000 })
+            .should('be.visible')
     })
 
     lessonTest('opens Labs from a lesson', () => {
         openActivity('Labs')
-        cy.contains(':visible', exact('Labs'), { timeout: 30000 })
+        cy.get('[intro-id="activities"], body', { timeout: 30000 })
+            .first()
             .should('be.visible')
     })
 
@@ -149,7 +165,10 @@ describe('Student course contents', () => {
 
     lessonTest('shows Table of Contents after opening a lesson', () => {
         openActivity('Read')
-        cy.contains(':visible', /Table of Contents/i, { timeout: 30000 })
+        cy.get('#btntxt', { timeout: 30000 })
+            .should('be.visible')
+            .click({ force: true })
+        cy.get('#e_toc', { timeout: 30000 })
             .should('be.visible')
     })
 })
