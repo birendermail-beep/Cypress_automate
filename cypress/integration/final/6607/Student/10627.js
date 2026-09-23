@@ -61,15 +61,22 @@ describe('Student course contents', () => {
         })
     }
 
-    beforeEach(openLessons)
+    // Keep navigation inside each test. A failing beforeEach hook makes Cypress
+    // skip every remaining test in the suite, hiding independent failures.
+    const lessonTest = (name, test) => {
+        it(name, () => {
+            openLessons()
+            test()
+        })
+    }
 
-    it('opens the Lessons area with course navigation tabs', () => {
+    lessonTest('opens the Lessons area with course navigation tabs', () => {
         cy.contains(':visible', exact('Lessons')).should('be.visible')
         cy.contains(':visible', exact('Glossary')).should('be.visible')
         cy.contains(':visible', exact('Review')).should('be.visible')
     })
 
-    it('shows unique positive lesson numbers', () => {
+    lessonTest('shows unique positive lesson numbers', () => {
         cy.get('body').then($body => {
             const numbers = [...$body.find('button, a, span, div')]
                 .filter(el => Cypress.$(el).is(':visible') &&
@@ -84,7 +91,7 @@ describe('Student course contents', () => {
         })
     })
 
-    it('opens a readable lesson without a blank page', () => {
+    lessonTest('opens a readable lesson without a blank page', () => {
         openActivity('Read')
         cy.location('search').should(search => {
             expect(new URLSearchParams(search).get('chapter_no'))
@@ -92,21 +99,21 @@ describe('Student course contents', () => {
         })
     })
 
-    it('opens Cards from a lesson', () => {
+    lessonTest('opens Cards from a lesson', () => {
         openActivity('Cards')
     })
 
-    it('opens Quiz from a lesson', () => {
+    lessonTest('opens Quiz from a lesson', () => {
         openActivity('Quiz')
     })
 
-    it('opens Labs from a lesson', () => {
+    lessonTest('opens Labs from a lesson', () => {
         openActivity('Labs')
         cy.contains(':visible', exact('Labs'), { timeout: 30000 })
             .should('be.visible')
     })
 
-    it('searches the Lessons list', () => {
+    lessonTest('searches the Lessons list', () => {
         cy.get('input[placeholder*="Search" i], [data-cy="searchbox"]', {
             timeout: 30000,
         }).filter(':visible').first().clear().type('Security')
@@ -114,33 +121,33 @@ describe('Student course contents', () => {
             .should('be.visible')
     })
 
-    it('shows the Resume control', () => {
+    lessonTest('shows the Resume control', () => {
         cy.contains(':visible', /^\s*(Resume|Pick up where you left off)\s*$/i, {
             timeout: 30000,
         }).should('be.visible')
     })
 
-    it('shows the bite-size learning control without changing its state', () => {
+    lessonTest('shows the bite-size learning control without changing its state', () => {
         cy.contains(':visible', /Bite-size lessons|bite-size learning/i, {
             timeout: 30000,
         }).should('be.visible')
     })
 
-    it('opens the Glossary tab', () => {
+    lessonTest('opens the Glossary tab', () => {
         cy.contains(':visible', exact('Glossary')).click()
         cy.contains(':visible', exact('Glossary'), { timeout: 30000 })
             .should('be.visible')
         cy.get('body').should('not.have.text', 'Default blank page')
     })
 
-    it('opens the Review tab', () => {
+    lessonTest('opens the Review tab', () => {
         cy.contains(':visible', exact('Review')).click()
         cy.contains(':visible', exact('Review'), { timeout: 30000 })
             .should('be.visible')
         cy.get('body').should('not.have.text', 'Default blank page')
     })
 
-    it('shows Table of Contents after opening a lesson', () => {
+    lessonTest('shows Table of Contents after opening a lesson', () => {
         openActivity('Read')
         cy.contains(':visible', /Table of Contents/i, { timeout: 30000 })
             .should('be.visible')
