@@ -58,8 +58,9 @@ describe('Post Assessment in Review Mode', () => {
             }
         })
 
-        cy.contains(/^\s*Review\s*$/i, { timeout: 30000 })
-            .last()
+        cy.get('#review_mode', { timeout: 30000 })
+            .should('be.visible')
+            .and('be.enabled')
             .click({ force: true })
 
         cy.get('div[intro-id="item_info"]', { timeout: 30000 }).should('exist')
