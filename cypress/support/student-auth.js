@@ -29,9 +29,18 @@ export const openDemoLesson = () => {
         .first()
         .click({ force: true })
 
-    cy.contains(':visible', /Operating System Fundamentals/i, {
+    cy.get('a[href*="func=ebook"][href*="chapter_no="]', {
         timeout: 30000,
-    }).first().click({ force: true })
+    }).filter(':visible').then($links => {
+        const lessonLink = [...$links].find(link => {
+            const url = new URL(link.getAttribute('href'), window.location.origin)
+            const chapter = url.searchParams.get('chapter_no')
+            return chapter && chapter !== '0'
+        })
+
+        expect(lessonLink, 'first available lesson link').to.exist
+        cy.wrap(lessonLink).click({ force: true })
+    })
 
     cy.location('search', { timeout: 30000 }).should(search => {
         const chapter = new URLSearchParams(search).get('chapter_no')
