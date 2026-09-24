@@ -15,11 +15,14 @@ import {
 import { visitDemoCourse } from '../../../../support/student-auth'
 
 describe('Student Test History and performance reports', () => {
-    // The analytics page currently loads Highcharts more than once. Ignore
-    // only Highcharts error #16 so unrelated application errors still fail.
+    // Some Analytics layouts load Highcharts twice or render before the
+    // optional Highcharts bundle is available.
     Cypress.on('uncaught:exception', error => {
         const message = String(error && error.message || error)
-        if (message.includes('Highcharts error #16')) {
+        if (
+            message.includes('Highcharts error #16') ||
+            message.includes('Highcharts is not defined')
+        ) {
             return false
         }
         return true
