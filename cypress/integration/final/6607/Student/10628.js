@@ -23,16 +23,15 @@ describe('Student annotations', () => {
 
     const openLessons = () => {
         restoreStudentLogin()
+        cy.visit('/')
         cy.fixture('global').then(data => {
             StudentPage.visitLOAplusCompleteCourse(data)
         })
 
-        cy.get('[intro-id="chapters"], [data-cy="chapters"]', {
-            timeout: 30000,
-        })
+        cy.get('[intro-id="chapters"]', { timeout: 30000 })
             .filter(':visible')
             .first()
-            .click({ force: true })
+            .click()
 
         cy.location('search', { timeout: 30000 })
             .should('include', 'func=ebook')
@@ -50,7 +49,7 @@ describe('Student annotations', () => {
                 )
 
             if (!hasVisibleAnnotation) {
-                cy.contains(':visible', /^\\s*Review\\s*$/i, {
+                cy.contains(':visible', /^\s*Review\s*$/i, {
                     timeout: 30000,
                 })
                     .first()
