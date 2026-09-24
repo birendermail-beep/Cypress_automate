@@ -2,9 +2,9 @@
 import { visitDemoCourse } from '../../../../support/student-auth'
 
 describe('Practice Tests', () => {
-    it('opens Practice Tests? from the course dashboard', () => {
+    it('opens Practice Tests from the course dashboard', () => {
         visitDemoCourse()
-        cy.contains(':visible', /^\\s*Practice Tests?\\s*$/i, {
+        cy.contains(':visible', /^\s*Practice Tests?\s*$/i, {
             timeout: 30000,
         }).last().scrollIntoView().click({ force: true })
         cy.get('body', { timeout: 30000 })
