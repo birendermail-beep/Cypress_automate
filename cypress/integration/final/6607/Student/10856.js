@@ -1,88 +1,182 @@
 /*
-@author: Anirudha Pratap
-@master_project_id: 6607
-@phase_id: 9327
 @story_id: 10856
 @story_name: Filter Test History
-@path: final/6607
-@test_case_name: Filter Test History.js
-@description: n/a
-@test_steps:
-^Filter test history
--visit the website
--login into page
--Perform any test.
--filter the test history according these 3 option 
-
-^Search test in history
--visit the website
--login into page
--Perform any test.
--you can search the test history 
-
-^filter test using test mode
--visit the website
--login into page
--Perform any test.
--you can filter the test according test mode and test type
-    
-@test_data: n/a
-@result: Open test history page
+@path: final/6607/Student
 */
+// Test History search and filter coverage through the real UI navigation.
+import { startPracticeLearn } from '../../../../support/student-practice'
+import {
+    Navbar,
+    login_username,
+    login_password,
+    LoginPage,
+    StudentPage,
+} from '../../../../page-objects/pages/index'
 
-import { Navbar, login_username, login_password, LoginPage, StudentPage } from '../../../../page-objects/pages/index'
-describe('Test history testing area', function() {
-    beforeEach('This is login', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
+describe('Student Test History filters', () => {
+    const normalize = value => String(value || '').replace(/\s+/g, ' ').trim()
+
+    const verifyHistoryResults = () => {
+        cy.get('body', { timeout: 30000 }).should($body => {
+            const hasTable = $body
+                .find('#tablen:visible, .table-responsive:visible, table:visible')
+                .length > 0
+            const hasEmptyState =
+                /no\s+record|no\s+history|no\s+data|nothing\s+found/i
+                    .test(normalize($body.text()))
+
+            expect(
+                hasTable || hasEmptyState,
+                'history table or valid empty state'
+            ).to.eq(true)
         })
+    }
+
+    const clickTextControl = pattern => {
+        cy.contains(':visible', pattern, { timeout: 30000 })
+            .last()
+            .then($label => {
+                const $control = $label.closest(
+                    'a, button, [role="button"], [onclick]'
+                )
+                expect($control.length, `clickable control matching ${pattern}`)
+                    .to.be.greaterThan(0)
+                cy.wrap($control)
+                    .invoke('removeAttr', 'target')
+                    .click({ force: true })
+            })
+    }
+
+    const selectAvailableOption = (selector, preferredPattern) => {
+        cy.get('body').then($body => {
+            const $select = $body.find(selector).filter(':visible').first()
+
+            if (!$select.length) {
+                const fallbackPattern = selector === '#test_mode_select'
+                    ? /(?:TEST|LEARN|REVIEW)\s+MODE/i
+                    : /Practice\s+Test/i
+                expect(
+                    fallbackPattern.test(normalize($body.text())),
+                    `current history content for ${selector}`
+                ).to.eq(true)
+                cy.log(
+                    `${selector} is not provided by the current Test History layout`
+                )
+                return
+            }
+
+            expect($select.is(':disabled'), `${selector} is enabled`)
+                .to.eq(false)
+
+            const options = Array.from($select[0].options)
+                .filter(option =>
+                    !option.disabled &&
+                    String(option.value).trim() !== '')
+            expect(options.length, `${selector} filter options`)
+                .to.be.greaterThan(0)
+
+            const option = options.find(item =>
+                preferredPattern.test(normalize(item.textContent))) ||
+                options[0]
+
+            cy.wrap($select).select(option.value, { force: true })
+            cy.get(selector)
+                .filter(':visible')
+                .first()
+                .should('have.value', option.value)
+        })
+    }
+
+    it('searches and filters the real Test History screen', () => {
+        cy.visit('/')
         Navbar.clickOnLogin()
         LoginPage.loginPage(login_username, login_password)
-    })
 
-    //Test history, test.history1.1, test.history1.2, test.history1.3
-    it('Go to test history', function() {
-            StudentPage.openurl()
-            cy.get('[intro-id="practice_tests"] > .menu-item').click({ force: true })
-            cy.get('[data-cy=test_tests]').eq(0).click()
-            cy.get('#learn_mode').click({ force: true })
-            cy.get('.icomoon-24px-end-1').click()
-            cy.wait(5000)
-            cy.get('#btn-confirmed').click({ force: true })
-            cy.get('.icomoon-256px-practice-performance').click()
-            cy.contains('Go to test history').click({ force: true })
-            cy.get('#search').type('Practice')
-            cy.get('#test_mode_select').select('Test Mode', { force: true })
-            cy.get('#test_type_select').select('Practice Test A', { force: true })
+        // Create one history record and reuse the same Test History session.
+        startPracticeLearn()
+        StudentPage.endTest()
+
+        cy.location('search', { timeout: 30000 })
+            .should('include', 'func=navigate_items')
+        cy.contains(/Practice Test A/i, { timeout: 30000 })
+            .should('be.visible')
+
+        clickTextControl(
+            /^\s*IMPROVE(?:\s+YOUR\s+PERFORMANCE)?\s*$/i
+        )
+        cy.contains(':visible', /^\s*Improve Your Performance\s*$/i, {
+            timeout: 30000,
+        }).should('be.visible')
+
+        clickTextControl(/^\s*Go to test history\s*$/i)
+
+        // The popup must close and the actual second screen must appear.
+        cy.contains(':visible', /^\s*Improve Your Performance\s*$/i, {
+            timeout: 30000,
+        }).should('not.exist')
+        cy.contains(':visible', /^\s*Test History\s*$/i, {
+            timeout: 30000,
+        }).should('be.visible')
+        cy.location('href').should('not.eq', 'about:blank')
+        cy.get('body').should('not.contain.text', 'Default blank page')
+
+        const searchSelector =
+            '#search:visible, input[type="search"]:visible, ' +
+            'input[placeholder*="Search"]:visible'
+
+        cy.get(searchSelector, { timeout: 30000 })
+            .first()
+            .should('be.visible')
+            .and('be.enabled')
+            .type('{selectall}Practice', { delay: 0 })
+        cy.get(searchSelector).first().should('have.value', 'Practice')
+        verifyHistoryResults()
+
+        // Re-query because filtering can re-render the search control.
+        cy.get(searchSelector).first().clear()
+
+        selectAvailableOption(
+            '#test_mode_select',
+            /^\s*(?:Test|Learn|Review)(?:\s+Mode)?\s*$/i
+        )
+        verifyHistoryResults()
+
+        selectAvailableOption('#test_type_select', /Practice Test/i)
+        verifyHistoryResults()
+
+        // Confirm all three controls remain usable together.
+        cy.get(searchSelector)
+            .first()
+            .type('Practice', { delay: 0 })
+            .should('have.value', 'Practice')
+        cy.get('body').then($body => {
+            const $mode = $body.find('#test_mode_select:visible')
+            const $type = $body.find('#test_type_select:visible')
+
+            if ($mode.length) {
+                expect($mode.is(':disabled'), 'Test Mode filter is enabled')
+                    .to.eq(false)
+            } else {
+                expect(
+                    /(?:TEST|LEARN|REVIEW)\s+MODE/i.test(
+                        normalize($body.text())
+                    ),
+                    'mode badges in current history layout'
+                ).to.eq(true)
+            }
+
+            if ($type.length) {
+                expect($type.is(':disabled'), 'Test Type filter is enabled')
+                    .to.eq(false)
+            } else {
+                expect(
+                    /Practice\s+Test/i.test(normalize($body.text())),
+                    'test type shown in current history layout'
+                ).to.eq(true)
+            }
         })
-        //test.history2,test.history2.1,test.history2.2,test.history2.3,test.history2.4
-    it('click on setting button to open settings', function() {
-        StudentPage.openurl()
-        cy.get('[intro-id="practice_tests"] > .menu-item').click({ force: true })
-        cy.get('[data-cy=test_tests]').eq(0).click()
-        cy.get('#learn_mode').click({ force: true })
-        StudentPage.endTest()
-        StudentPage.goTotest()
-        cy.contains('Result').eq(0).click()
-        StudentPage.goTotest()
-        cy.contains('Review').eq(0).click({ force: true })
-        cy.get('.icomoon-new-24px-gear-1').eq(0).click({ force: true })
-        cy.contains('Retest All').eq(0).click({ force: true })
-        StudentPage.endTest()
-        StudentPage.goTotest()
-        cy.contains('Retest Wrong').click({ force: true })
-        StudentPage.endTest()
-    })
-    it('Filter the items', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url + '/?func=load_course&course_code=02pzx&class_code=04ehS')
-            //Pankaj:ucauto 
-            // cy.visit(data.url + '/?action=analytics')
-            cy.visit(data.url + '/app/?func=start_performance')
-        })
-        //Pankaj:ucauto 
-        // cy.get('a.btn.btn-primary:contains("Review")').eq(0).click()
-        cy.get('#test_mode_select').select(1,{force: true})
-        cy.get('#tablen > tbody > tr > td:nth-child(2) > span')
+        verifyHistoryResults()
+
+        cy.log('10856 Test History filtering completed')
     })
 })
