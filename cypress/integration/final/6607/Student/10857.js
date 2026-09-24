@@ -51,7 +51,15 @@ describe('Test history testing area', function() {
         visitDemoCourse()
         startPracticeLearn()
         StudentPage.endTest()
-        StudentPage.goTotest()
+
+        cy.get('.icomoon-256px-practice-performance', { timeout: 30000 })
+            .click({ force: true })
+        cy.contains('a, button, [role="button"]', /Go to test history/i, {
+            timeout: 30000,
+        })
+            .filter(':visible')
+            .first()
+            .click({ force: true })
 
         cy.get('table tbody tr:visible, .table-responsive tr:visible', {
             timeout: 30000,
