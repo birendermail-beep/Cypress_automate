@@ -98,8 +98,10 @@ describe('Student annotations', () => {
         cy.get('body').then($body => {
             const $filter = firstVisible($body, [
                 '[data-cy="annotation_button"]',
-                'select[name*="annotat" i]',
-                'button[aria-label*="annotat" i]',
+                'select[name*="annotat"]',
+                'select[name*="Annotat"]',
+                'button[aria-label*="annotat"]',
+                'button[aria-label*="Annotat"]',
             ])
 
             if ($filter) {
@@ -177,7 +179,8 @@ describe('Student annotations', () => {
             const $tab = firstVisible($body, [
                 '[data-cy="annotation_tab"] > .btn',
                 '[data-cy="annotation_tab"]',
-                '[role="tab"][aria-label*="Annotation" i]',
+                '[role="tab"][aria-label*="Annotation"]',
+                '[role="tab"][aria-label*="annotation"]',
             ])
 
             if ($tab) {
