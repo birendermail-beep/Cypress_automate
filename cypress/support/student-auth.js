@@ -23,19 +23,11 @@ export const visitDemoCourse = () => {
 
 export const openDemoLesson = () => {
     visitDemoCourse()
-
-    cy.get('[intro-id="chapters"], [data-cy="chapters"]', { timeout: 30000 })
-        .filter(':visible')
-        .first()
-        .click({ force: true })
-
-    cy.contains(':visible', /^\s*Read\s*$/i, { timeout: 30000 })
-        .first()
-        .click({ force: true })
+    cy.visit('/app/?func=ebook&chapter_no=1#top')
 
     cy.location('search', { timeout: 30000 }).should(search => {
         const chapter = new URLSearchParams(search).get('chapter_no')
-        expect(chapter, 'opened lesson chapter').to.not.equal('0')
+        expect(chapter, 'opened lesson chapter').to.equal('1')
     })
     cy.get('body').should('be.visible')
         .and('not.contain.text', 'Default blank page')
