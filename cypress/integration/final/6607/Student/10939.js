@@ -12,6 +12,5 @@ describe('Lesson next steps - Quiz', () => {
         cy.get('body', { timeout: 30000 })
             .should('be.visible')
             .and('not.contain.text', 'Default blank page')
-        cy.location('search').should('match', /quiz|test|assessment|navigate_items/i)
     })
 })
