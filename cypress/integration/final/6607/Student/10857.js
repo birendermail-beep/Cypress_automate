@@ -61,7 +61,18 @@ describe('Test history testing area', function() {
                 cy.get('td:visible')
                     .last()
                     .should('be.visible')
-                    .click({ force: true })
+                    .then(($actionCell) => {
+                        const $control = $actionCell
+                            .find(
+                                'button, a, [role="button"], ' +
+                                '[data-bs-toggle="dropdown"], [data-toggle="dropdown"], i, span'
+                            )
+                            .filter(':visible')
+                            .last()
+
+                        cy.wrap($control.length ? $control : $actionCell)
+                            .click({ force: true })
+                    })
             })
 
         cy.get('body').should($body => {
