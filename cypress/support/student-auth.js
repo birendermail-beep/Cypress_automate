@@ -20,3 +20,23 @@ export const visitDemoCourse = () => {
         cy.visit(data.url + '/app/?func=load_course&course=Demo.AA1')
     })
 }
+
+export const openDemoLesson = () => {
+    visitDemoCourse()
+
+    cy.get('[intro-id="chapters"], [data-cy="chapters"]', { timeout: 30000 })
+        .filter(':visible')
+        .first()
+        .click({ force: true })
+
+    cy.contains(':visible', /Operating System Fundamentals/i, {
+        timeout: 30000,
+    }).first().click({ force: true })
+
+    cy.location('search', { timeout: 30000 }).should(search => {
+        const chapter = new URLSearchParams(search).get('chapter_no')
+        expect(chapter, 'opened lesson chapter').to.not.equal('0')
+    })
+    cy.get('body').should('be.visible')
+        .and('not.contain.text', 'Default blank page')
+}
