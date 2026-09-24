@@ -29,8 +29,7 @@ export const openDemoLesson = () => {
         .first()
         .click({ force: true })
 
-    cy.get('[data-cy="toc_chapters"]', { timeout: 30000 })
-        .filter(':visible')
+    cy.contains(':visible', /^\s*Read\s*$/i, { timeout: 30000 })
         .first()
         .click({ force: true })
 
