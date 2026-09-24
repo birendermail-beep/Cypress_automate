@@ -9,17 +9,25 @@ import {
     login_username,
     login_password,
     LoginPage,
-    StudentPage,
 } from '../../../../page-objects/pages/index'
 
 describe('Student ebook Glossary', () => {
     const normalize = value => String(value || '').replace(/\s+/g, ' ').trim()
 
+    const restoreStudentLogin = () => {
+        cy.session(['student-login', login_username], () => {
+            cy.visit('/')
+            Navbar.clickOnLogin()
+            LoginPage.loginPage(login_username, login_password)
+        })
+    }
+
     const openGlossary = () => {
+        restoreStudentLogin()
         cy.visit('/')
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-        StudentPage.visitLOAplusCompleteCourse()
+        cy.fixture('global').then(data => {
+            cy.visit(data.url + '/app/?func=load_course&course=Demo.AA1')
+        })
 
         cy.get('[intro-id="chapters"]', { timeout: 30000 })
             .filter(':visible')
@@ -43,15 +51,20 @@ describe('Student ebook Glossary', () => {
         })
     }
 
-    beforeEach(openGlossary)
+    const glossaryTest = (name, test) => {
+        it(name, () => {
+            openGlossary()
+            test()
+        })
+    }
 
-    it('opens the Glossary without a blank page', () => {
+    glossaryTest('opens the Glossary without a blank page', () => {
         cy.contains(':visible', /^\s*Glossary\s*$/i).should('be.visible')
         cy.location('href').should('not.eq', 'about:blank')
         cy.get('body').should('not.contain.text', 'Default blank page')
     })
 
-    it('shows glossary terms or a valid empty state', () => {
+    glossaryTest('shows glossary terms or a valid empty state', () => {
         cy.get('body').then($body => {
             const text = normalize($body.text())
             const hasTerms = $body.find(
@@ -70,7 +83,7 @@ describe('Student ebook Glossary', () => {
         })
     })
 
-    it('checks search when the Glossary layout provides it', () => {
+    glossaryTest('checks search when the Glossary layout provides it', () => {
         cy.get('body').then($body => {
             const $input = $body
                 .find(
@@ -103,7 +116,7 @@ describe('Student ebook Glossary', () => {
         })
     })
 
-    it('detects available glossary filters without changing user data', () => {
+    glossaryTest('detects available glossary filters without changing user data', () => {
         cy.get('body').then($body => {
             const $filters = $body
                 .find(
@@ -129,7 +142,7 @@ describe('Student ebook Glossary', () => {
         })
     })
 
-    it('detects list or grid view controls when available', () => {
+    glossaryTest('detects list or grid view controls when available', () => {
         cy.get('body').then($body => {
             const $viewControls = $body
                 .find(
@@ -155,7 +168,7 @@ describe('Student ebook Glossary', () => {
         })
     })
 
-    it('returns to Lessons without changing course settings', () => {
+    glossaryTest('returns to Lessons without changing course settings', () => {
         cy.contains(':visible', /^\s*Lessons\s*$/i, { timeout: 30000 })
             .first()
             .click()
