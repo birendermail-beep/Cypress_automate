@@ -32,3 +32,29 @@ export const openDemoLesson = () => {
     cy.get('body').should('be.visible')
         .and('not.contain.text', 'Default blank page')
 }
+
+export const clickLessonNextStep = labelPattern => {
+    cy.contains(':visible', labelPattern, { timeout: 30000 })
+        .first()
+        .scrollIntoView()
+        .then($label => {
+            let control = $label.closest('a, button, [role="button"]')
+
+            if (!control.length) {
+                let container = $label.parent()
+                for (let depth = 0; depth < 7 && container.length; depth += 1) {
+                    control = container.find('a, button, [role="button"]')
+                        .filter(':visible')
+                        .filter((_, element) =>
+                            /Open|Start|Launch|Next|Continue/i.test(element.textContent))
+                    if (control.length) break
+                    container = container.parent()
+                }
+            }
+
+            expect(control.length, 'lesson next-step action').to.be.greaterThan(0)
+            cy.wrap(control.first())
+                .invoke('removeAttr', 'target')
+                .click({ force: true })
+        })
+}
