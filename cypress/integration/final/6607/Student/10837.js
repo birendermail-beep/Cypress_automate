@@ -11,15 +11,13 @@ import {
     LoginPage,
     StudentPage,
 } from '../../../../page-objects/pages/index'
+import { visitDemoCourse } from '../../../../support/student-auth'
 
 describe('Student Certificate of Completion', () => {
     const normalize = value => String(value || '').replace(/\s+/g, ' ').trim()
 
     const openCourseDashboard = () => {
-        cy.visit('/')
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-        StudentPage.visitLOAplusCompleteCourse()
+        visitDemoCourse()
 
         cy.location('href', { timeout: 30000 }).should('not.eq', 'about:blank')
         cy.get('body', { timeout: 30000 }).should($body => {
@@ -68,9 +66,14 @@ describe('Student Certificate of Completion', () => {
         })
     }
 
-    beforeEach(openCourseDashboard)
+    const certificateTest = (name, test) => {
+        it(name, () => {
+            openCourseDashboard()
+            test()
+        })
+    }
 
-    it('shows certificate eligibility correctly', () => {
+    certificateTest('shows certificate eligibility correctly', () => {
         cy.get('body').then($body => {
             const $control = findCertificateControl($body)
 
@@ -84,14 +87,14 @@ describe('Student Certificate of Completion', () => {
         })
     })
 
-    it('opens the Certificate of Completion without a blank page', () => {
+    certificateTest('opens the Certificate of Completion without a blank page', () => {
         withCertificate(() => {
             cy.location('href').should('not.eq', 'about:blank')
             cy.get('body').should('not.contain.text', 'Default blank page')
         })
     })
 
-    it('detects a PDF download control when the certificate is available', () => {
+    certificateTest('detects a PDF download control when the certificate is available', () => {
         withCertificate(() => {
             cy.get('body').then($body => {
                 const pageText = normalize($body.text())
@@ -130,7 +133,7 @@ describe('Student Certificate of Completion', () => {
         })
     })
 
-    it('detects an image download control when provided', () => {
+    certificateTest('detects an image download control when provided', () => {
         withCertificate(() => {
             cy.get('body').then($body => {
                 const $image = $body
