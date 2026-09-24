@@ -9,7 +9,6 @@ import {
     login_username,
     login_password,
     LoginPage,
-    StudentPage,
 } from '../../../../page-objects/pages/index'
 
 describe('Student annotations', () => {
