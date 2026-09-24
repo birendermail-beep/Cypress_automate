@@ -14,6 +14,7 @@ import {
     LoginPage,
     StudentPage,
 } from '../../../../page-objects/pages/index'
+import { visitDemoCourse } from '../../../../support/student-auth'
 
 describe('Student Practice Tests - Test controls and Review', () => {
     const openPracticeTests = () => {
@@ -167,13 +168,7 @@ describe('Student Practice Tests - Test controls and Review', () => {
     }
 
     it('verifies Test Mode controls, opens Review, and returns to Dashboard', () => {
-        cy.visit('/')
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-
-        cy.fixture('global').then((data) => {
-            StudentPage.visitLOAplusCompleteCourse(data)
-        })
+        visitDemoCourse()
 
         // TEST MODE: Practice Tests -> A -> Test
         openPracticeTests()
