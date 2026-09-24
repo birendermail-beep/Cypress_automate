@@ -1,42 +1,84 @@
 /*
-@author:Anirudha pratap
-@master_project_id: 6607
-@phase_id:9327(10478)
 @story_id: 10839
 @story_name: Download Result
 @path: final/6607/Student
-@test_case_name: Download Result.js
-@description: 
-@test_steps:
-
-^click on download the result 
--visit the website
--login into page
--open any course
--Perform any test.
--Click End test.
--Result page will appear, on result page, click the Click here to download pdf button.
--Result will be downloaded
-
-@test_data:n/a
-@result:Download result in pdf
+@description: Complete a Practice Test attempt and download its result.
 */
+import { startPracticeLearn } from '../../../../support/student-practice'
+import {
+    Navbar,
+    login_username,
+    login_password,
+    LoginPage,
+    StudentPage,
+} from '../../../../page-objects/pages/index'
 
-import { Navbar, login_username, login_password, LoginPage, StudentPage } from '../../../../page-objects/pages/index'
-describe('Download testing area', function() {
-    //in result area download the pdf
-    it('click on download the result', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-        })
+describe('Student Practice Test result download', () => {
+    const normalize = value => String(value || '').replace(/\s+/g, ' ').trim()
+
+    it('downloads the completed Practice Test result', () => {
+        cy.visit('/')
         Navbar.clickOnLogin()
         LoginPage.loginPage(login_username, login_password)
-        StudentPage.openurl()
-        cy.get('[intro-id="practice_tests"]').click()
-        cy.get('[data-cy=test_tests]').eq(0).click()
-        cy.get('[data-cy=learn_mode]').click({ force: true })
-        cy.get('#next').click({ force: true })
+
+        startPracticeLearn()
+
+        cy.get('#next', { timeout: 30000 })
+            .should('be.visible')
+            .and('be.enabled')
+            .click({ force: true })
+
         StudentPage.endTest()
-        cy.get('.icomoon-24px-download-2').click({ force: true })
+
+        cy.location('search', { timeout: 30000 })
+            .should('include', 'func=navigate_items')
+        cy.contains(/Practice Test A/i, { timeout: 30000 })
+            .should('be.visible')
+        cy.get('body', { timeout: 30000 }).should($body => {
+            const text = normalize($body.text())
+            expect(text, 'result page is not blank').not.to.eq('')
+            expect($body.text()).not.to.include('Default blank page')
+            expect(/score|grade|result/i.test(text), 'result summary')
+                .to.eq(true)
+        })
+
+        cy.get('body').then($body => {
+            const $label = $body
+                .find('*')
+                .filter(':visible')
+                .filter((_, element) =>
+                    /^\s*DOWNLOAD(?:\s+PDF)?\s*$/i.test(
+                        element.textContent || ''
+                    ))
+                .last()
+
+            const $icon = $body
+                .find(
+                    '.icomoon-24px-download-2:visible, ' +
+                    '[class*="download"]:visible, ' +
+                    '[aria-label*="download"]:visible, ' +
+                    '[title*="download"]:visible'
+                )
+                .first()
+
+            const $source = $label.length ? $label : $icon
+            expect($source.length, 'visible result download control')
+                .to.be.greaterThan(0)
+
+            const $control = $source.closest(
+                'a, button, [role="button"], [onclick]'
+            )
+            expect($control.length, 'clickable result download control')
+                .to.be.greaterThan(0)
+
+            cy.wrap($control)
+                .invoke('removeAttr', 'target')
+                .click({ force: true })
+        })
+
+        // A browser download should leave the result page usable.
+        cy.location('href').should('not.eq', 'about:blank')
+        cy.get('body').should('not.contain.text', 'Default blank page')
+        cy.log('10839 result download action completed')
     })
 })
