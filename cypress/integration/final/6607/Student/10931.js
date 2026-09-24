@@ -8,8 +8,8 @@ describe('Keyboard shortcuts in the lesson area', () => {
             timeout: 30000,
         })
             .filter(':visible').first().click({ force: true })
-        cy.get('#kbd', { timeout: 30000 })
-            .filter(':visible').first().click({ force: true })
+        cy.contains(':visible', /Keyboard/i, { timeout: 30000 })
+            .first().click({ force: true })
         cy.get('.modal:visible, [role="dialog"]:visible', { timeout: 30000 })
             .should('exist')
             .and($dialog => {
