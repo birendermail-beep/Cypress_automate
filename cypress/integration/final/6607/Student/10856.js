@@ -12,6 +12,7 @@ import {
     LoginPage,
     StudentPage,
 } from '../../../../page-objects/pages/index'
+import { visitDemoCourse } from '../../../../support/student-auth'
 
 describe('Student Test History filters', () => {
     const normalize = value => String(value || '').replace(/\s+/g, ' ').trim()
@@ -88,9 +89,7 @@ describe('Student Test History filters', () => {
     }
 
     it('searches and filters the real Test History screen', () => {
-        cy.visit('/')
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
+        visitDemoCourse()
 
         // Create one history record and reuse the same Test History session.
         startPracticeLearn()
