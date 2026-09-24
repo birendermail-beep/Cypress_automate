@@ -15,6 +15,8 @@ const findVisibleControl = ($body, selector, label) => {
 
 describe('Student assessments', () => {
     it('opens Assessments from the current view or the Sections view', () => {
+        let assessmentOpened = false
+
         visitDemoCourse()
 
         cy.get('body', { timeout: 30000 }).should('be.visible').then($body => {
@@ -25,6 +27,7 @@ describe('Student assessments', () => {
             )
 
             if (assessments.length) {
+                assessmentOpened = true
                 cy.wrap(assessments).click({ force: true })
                 return
             }
@@ -39,18 +42,28 @@ describe('Student assessments', () => {
             cy.wrap(sections).click({ force: true })
         })
 
-        cy.get('body', { timeout: 30000 }).should('be.visible').then($body => {
-            const assessments = findVisibleControl(
-                $body,
-                '[data-cy="assessments"], [data-cy="assessment"], [aria-label*="Assessment"]',
-                /^Assessments?$/i
-            )
+        cy.then(() => {
+            if (assessmentOpened) {
+                return
+            }
 
-            expect(assessments, 'Assessments in the current or Sections view')
-                .to.have.length.greaterThan(0)
-            cy.wrap(assessments).click({ force: true })
+            cy.get('body', { timeout: 30000 }).should('be.visible').then($body => {
+                const assessments = findVisibleControl(
+                    $body,
+                    '[data-cy="assessments"], [data-cy="assessment"], [aria-label*="Assessment"]',
+                    /^Assessments?$/i
+                )
+
+                expect(assessments, 'Assessments in the Sections view')
+                    .to.have.length.greaterThan(0)
+                assessmentOpened = true
+                cy.wrap(assessments).click({ force: true })
+            })
         })
 
+        cy.then(() => {
+            expect(assessmentOpened, 'Assessments opened after no more than two checks').to.equal(true)
+        })
         cy.get('body').should('not.contain.text', 'Default blank page')
     })
 })
