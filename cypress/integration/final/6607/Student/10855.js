@@ -12,6 +12,7 @@ import {
     LoginPage,
     StudentPage,
 } from '../../../../page-objects/pages/index'
+import { visitDemoCourse } from '../../../../support/student-auth'
 
 describe('Student Test History and performance reports', () => {
     // The analytics page currently loads Highcharts more than once. Ignore
@@ -142,9 +143,7 @@ describe('Student Test History and performance reports', () => {
     }
 
     it('opens Test History and checks the available reports', () => {
-        cy.visit('/')
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
+        visitDemoCourse()
 
         // Create only one result for the complete history/report flow.
         startPracticeLearn()
