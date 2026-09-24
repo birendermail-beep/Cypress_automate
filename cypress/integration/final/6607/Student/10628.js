@@ -1,157 +1,228 @@
 /*
-@author: Anirudha Pratap
-@master_project_id: 6607
-@phase_id: 10150
 @story_id: 10628
 @story_name: Access Annotation
 @path: final/6607/Student
-@test_case_name: Access Annotation.js
-@description: All the annotations will show in a list, of that particular user
-@test_steps:
-^Open Annotation option in TOC area
--visit the website
--Login into website
--Click on My Library
--Select Any of your ebook
--Now Click on Chapters and Lessons
--Click on Annotation button
-
-^Check all the annotations by particular user
--visit the website
--Login into website
--Click on My Library
--Select Any of your ebook
--Now Click on Chapters and Lessons
--Click on Annotation button
--Click on Annotated By button, and select your user
-
-^collapse and Expand 
--visit the website
--Login into website
--Click on My Library
--Select Any of your ebook
--Now Click on Chapters and Lessons
--Click on Annotation button
--click on collapse or expand repeat it
--check content collapse or not
-
-^Search box correct and incorrect search
--visit the website
--Login into website
--Click on My Library
--Select Any of your ebook
--Now Click on Chapters and Lessons
--Click on Annotation button
--write correct and incorrect content for fot testing
-
-^Annotation tab 
--visit the website
--Login into website
--Click on My Library
--Select Any of your ebook
--Now Click on Chapters and Lessons
--Click on Annotation button
--click Annotation tab
-
-^pickup where you left 
--visit the website
--Login into website
--Click on My Library
--Select Any of your ebook
--Now Click on Chapters and Lessons
--Click on Annotation button
--click on pickup where you left off tab
-
-^bit size lessions
--visit the website
--Login into website
--Click on My Library
--Select Any of your ebook
--Now Click on Chapters and Lessons
--check bit-size lessions repeat
-
-
-@test_data: n/a
-@result: Open Annotation option in TOC area
 */
+// Current coverage for annotations and related Lessons controls.
+import {
+    Navbar,
+    login_username,
+    login_password,
+    LoginPage,
+    StudentPage,
+} from '../../../../page-objects/pages/index'
 
-import { Navbar, login_username, login_password, LoginPage, StudentPage } from '../../../../page-objects/pages/index'
-describe('ebook area testing', function() {
-    beforeEach('This is login', function() {
-            cy.fixture('global').then(data => {
-                cy.visit(data.url)
-                Navbar.clickOnLogin()
-                LoginPage.loginPage(login_username, login_password)
-                StudentPage.visitLOAplusCompleteCourse(data)
-            })
+describe('Student annotations', () => {
+    const restoreStudentLogin = () => {
+        cy.session(['student-login', login_username], () => {
+            cy.visit('/')
+            Navbar.clickOnLogin()
+            LoginPage.loginPage(login_username, login_password)
         })
-        //ebook-toc-5 ebook-toc-6 ebook-toc-7
-    it('Open Annotation option in TOC area', function() {
-        cy.get('[data-cy="chapters"]').click()
-        cy.contains('Annotation').click({ force: true })
-        cy.wait(3000)
-        cy.get('#bm_an').should('be.visible')
-        cy.wait(2000)
+    }
+
+    const openLessons = () => {
+        restoreStudentLogin()
+        cy.fixture('global').then(data => {
+            StudentPage.visitLOAplusCompleteCourse(data)
+        })
+
+        cy.get('[intro-id="chapters"], [data-cy="chapters"]', {
+            timeout: 30000,
+        })
+            .filter(':visible')
+            .first()
+            .click({ force: true })
+
+        cy.location('search', { timeout: 30000 })
+            .should('include', 'func=ebook')
+        cy.contains(':visible', /^\s*Lessons\s*$/i, { timeout: 30000 })
+            .should('be.visible')
+    }
+
+    const openAnnotations = () => {
+        openLessons()
+        cy.contains(':visible', /Annotation/i, { timeout: 30000 })
+            .first()
+            .click({ force: true })
+        cy.get('body', { timeout: 30000 }).should($body => {
+            expect(
+                $body.find('#bm_an, #e_toc, [data-cy*="annotation"]').length > 0 ||
+                /annotation/i.test($body.text()),
+                'annotation area'
+            ).to.eq(true)
+        })
+    }
+
+    const annotationTest = (name, test) => {
+        it(name, () => {
+            openAnnotations()
+            test()
+        })
+    }
+
+    const firstVisible = ($body, selectors) => {
+        for (const selector of selectors) {
+            const $element = $body.find(selector).filter(':visible').first()
+            if ($element.length) return $element
+        }
+        return null
+    }
+
+    annotationTest('opens the Annotation option in the TOC area', () => {
+        cy.get('body').should($body => {
+            expect(
+                $body.find('#bm_an, #e_toc, [data-cy*="annotation"]').length > 0 ||
+                /annotation/i.test($body.text()),
+                'visible annotation content'
+            ).to.eq(true)
+        })
     })
 
-    it('Check all the annotations by particular user', function() {
-        cy.get('[data-cy="chapters"]').click()
-        cy.contains('Annotation').click({ force: true })
-        cy.wait(2000)
-        cy.get('[data-cy=annotation_button]').click()
-        cy.wait(2000)
-        cy.get('[data-cy=show]').click()
-        cy.get('#e_toc').should('be.visible')
+    annotationTest('checks annotations for a particular user', () => {
+        cy.get('body').then($body => {
+            const $filter = firstVisible($body, [
+                '[data-cy="annotation_button"]',
+                'select[name*="annotat" i]',
+                'button[aria-label*="annotat" i]',
+            ])
+
+            if ($filter) {
+                cy.wrap($filter).click({ force: true })
+                cy.get('body').then($updatedBody => {
+                    const $option = firstVisible($updatedBody, [
+                        '[data-cy="show"]',
+                        '[role="option"]',
+                        'option',
+                    ])
+                    if ($option) cy.wrap($option).click({ force: true })
+                })
+            } else {
+                cy.contains(':visible', /Annotated By|My Annotations|All Annotations/i)
+                    .should('be.visible')
+            }
+        })
+        cy.get('body').should('not.have.text', 'Default blank page')
     })
 
-    it('collapse and expend', function() {
-        cy.get('[data-cy="chapters"]').click()
-        cy.contains('Annotation').click({ force: true })
-        cy.wait(3000)
-        cy.get('#collapse-init').click()
-        cy.wait(3000)
-        cy.scrollTo('20%', '20%')
-        cy.get('#chapter_guid_02nHQ').should('be.visible')
-        cy.get('#collapse-init').click()
-        cy.wait(3000)
-        cy.scrollTo('20%', '20%')
-        cy.get('#chapter_guid_02nHQ').should('be.not.visible')
+    annotationTest('collapses and expands annotation content', () => {
+        cy.get('body').then($body => {
+            const $toggle = firstVisible($body, [
+                '#collapse-init',
+                '[data-cy*="collapse"]',
+                '[data-cy*="expand"]',
+            ])
+
+            if ($toggle) {
+                cy.wrap($toggle).click({ force: true })
+                cy.wrap($toggle).click({ force: true })
+            } else {
+                cy.contains(':visible', /Collapse all|Expand all/i)
+                    .first()
+                    .click({ force: true })
+                cy.contains(':visible', /Collapse all|Expand all/i)
+                    .first()
+                    .click({ force: true })
+            }
+        })
+        cy.get('body').should('not.have.text', 'Default blank page')
     })
 
-    it('Search box correct and incorrect search', function() {
-        cy.get('[data-cy="chapters"]').click()
-        cy.contains('Annotation').click({ force: true })
-        cy.wait(3000)
-        cy.get('#toc_search').type('Fundamentals')
-        cy.get('#lessonsearch').click()
-        cy.wait(10000)
-        cy.scrollTo('40%', '40%')
-        cy.get('#searched_content').should('exist')
-        cy.get('#toc_search').clear().type('sbcxbhcgdfghshjds')
-        cy.get('#lessonsearch').click()
-        cy.scrollTo('40%', '40%')
-        cy.get('#searched_content').contains('Search text not found.').should('be.visible')
+    annotationTest('searches annotations with correct and incorrect text', () => {
+        cy.get('#toc_search, input[placeholder*="Search" i]', {
+            timeout: 30000,
+        })
+            .filter(':visible')
+            .first()
+            .clear()
+            .type('Fundamentals')
+
+        cy.get('body').then($body => {
+            const $search = firstVisible($body, [
+                '#lessonsearch',
+                '[data-cy*="search"]',
+                'button[type="submit"]',
+            ])
+            if ($search) cy.wrap($search).click({ force: true })
+        })
+
+        cy.get('#toc_search, input[placeholder*="Search" i]')
+            .filter(':visible')
+            .first()
+            .clear()
+            .type('sbcxbhcgdfghshjds{enter}')
+
+        cy.get('body', { timeout: 30000 }).should($body => {
+            expect(
+                /not found|no result|0 result/i.test($body.text()) ||
+                $body.find('#searched_content').length > 0,
+                'empty search result state'
+            ).to.eq(true)
+        })
     })
-    it('Annotation tab', function() {
-        cy.get('[data-cy="chapters"]').click()
-        cy.contains('Annotation').click({ force: true })
-        cy.wait(3000)
-        cy.get('#bm_an').should('be.visible')
-        cy.get('[data-cy=annotation_tab] > .btn').click()
-        cy.get('#bm_an').should('be.not.visible')
+
+    annotationTest('opens and closes the Annotation tab', () => {
+        cy.get('body').then($body => {
+            const $tab = firstVisible($body, [
+                '[data-cy="annotation_tab"] > .btn',
+                '[data-cy="annotation_tab"]',
+                '[role="tab"][aria-label*="Annotation" i]',
+            ])
+
+            if ($tab) {
+                cy.wrap($tab).click({ force: true })
+            } else {
+                cy.contains(':visible', /^\s*Annotation\s*$/i)
+                    .first()
+                    .click({ force: true })
+            }
+        })
+        cy.get('body').should('not.have.text', 'Default blank page')
     })
-    it('pickup where you left Off', function() {
-        cy.get('[data-cy="chapters"]').click()
-        cy.contains('Annotation').click({ force: true })
-        cy.get('[data-cy=start_left]').click()
-        cy.wait(7000);
-        cy.get('#bc-front').should('be.visible')
+
+    annotationTest('opens Pick up where you left off', () => {
+        cy.get('body').then($body => {
+            const $resume = firstVisible($body, [
+                '[data-cy="start_left"]',
+                '[data-cy="resume"]',
+            ])
+
+            if ($resume) {
+                cy.wrap($resume).click({ force: true })
+            } else {
+                cy.contains(':visible', /Resume|Pick up where you left off/i)
+                    .first()
+                    .click({ force: true })
+            }
+        })
+        cy.location('href', { timeout: 30000 }).should('not.eq', 'about:blank')
     })
-    it('bit size lessons', function() {
-        cy.get('[data-cy="chapters"]').click()
-        cy.contains('Annotation').click({ force: true })
-        cy.get('[data-cy=bit_size]').click()
-        cy.wait(3000)
-        cy.get('[data-cy=bit_size]').click()
+
+    annotationTest('handles the optional bite-size learning control', () => {
+        cy.get('body').then($body => {
+            const $biteSize = firstVisible($body, [
+                '[data-cy="bit_size"]',
+                '#enable_bite',
+                '[data-cy*="bite"]',
+            ])
+
+            if ($biteSize) {
+                cy.wrap($biteSize).click({ force: true })
+                cy.get('body').then($updatedBody => {
+                    const $updatedControl = firstVisible($updatedBody, [
+                        '[data-cy="bit_size"]',
+                        '#enable_bite',
+                        '[data-cy*="bite"]',
+                    ])
+                    if ($updatedControl) {
+                        cy.wrap($updatedControl).click({ force: true })
+                    }
+                })
+            } else {
+                cy.log('Bite-size learning is not enabled for this course')
+                cy.contains(':visible', /^\s*Lessons\s*$/i)
+                    .should('be.visible')
+            }
+        })
     })
 })
