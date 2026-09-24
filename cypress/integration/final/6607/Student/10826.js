@@ -15,6 +15,7 @@ import {
     LoginPage,
     StudentPage,
 } from '../../../../page-objects/pages/index'
+import { visitDemoCourse } from '../../../../support/student-auth'
 
 describe('Post Assessment - all modes', () => {
     const openPostAssessment = () => {
@@ -115,13 +116,7 @@ describe('Post Assessment - all modes', () => {
     }
 
     it('runs Test Mode, Learn Mode, Review Mode, then finishes on Dashboard', () => {
-        cy.visit('/')
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-
-        cy.fixture('global').then((data) => {
-            StudentPage.visitLOAplusCompleteCourse(data)
-        })
+        visitDemoCourse()
 
         // TEST MODE
         openPostAssessment()
