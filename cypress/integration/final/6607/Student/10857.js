@@ -61,9 +61,10 @@ describe('Test history testing area', function() {
             .first()
             .click({ force: true })
 
-        cy.get('table tbody tr:visible, .table-responsive tr:visible', {
+        cy.get('table tr:visible, .table-responsive tr:visible', {
             timeout: 30000,
         })
+            .filter((_, row) => Cypress.$(row).find('td').length > 0)
             .first()
             .within(() => {
                 cy.get('td:visible')
