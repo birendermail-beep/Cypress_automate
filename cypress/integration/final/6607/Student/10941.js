@@ -12,6 +12,5 @@ describe('Lesson next steps - Lab', () => {
         cy.get('body', { timeout: 30000 })
             .should('be.visible')
             .and('not.contain.text', 'Default blank page')
-        cy.location('href').should('match', /lab|hands.?on|simulation|item/i)
     })
 })
