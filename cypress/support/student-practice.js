@@ -147,7 +147,7 @@ export function startPracticeLearn() {
             })
     }
 
-    StudentPage.visitLOAplusCompleteCourse()
+    cy.visit('/app/?func=load_course&course=Demo.AA1')
     openPracticeTests()
     openPracticeTestA()
     discardIncompleteTestIfPresent()
