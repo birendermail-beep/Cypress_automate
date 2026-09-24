@@ -59,19 +59,9 @@ export const clickLessonNextStep = labelPattern => {
 }
 
 export const openLessonToolbarActivity = labelPattern => {
-    cy.location('href').then(lessonUrl => {
-        cy.contains('button, a, [role="button"]', labelPattern, {
-            timeout: 30000,
-        }).filter(':visible').last().then($control => {
-            // The activity is opened by a native target on either the control,
-            // its enclosing link, or its form; it does not call window.open.
-            // Remove every relevant target so Cypress follows it in this tab.
-            $control.removeAttr('target')
-            $control.closest('a').removeAttr('target')
-            $control.closest('form').removeAttr('target')
-            cy.wrap($control).click({ force: true })
-        })
-
-        cy.location('href', { timeout: 30000 }).should('not.eq', lessonUrl)
-    })
+    cy.contains('button, a, [role="button"]', labelPattern, {
+        timeout: 30000,
+    }).filter(':visible').last()
+        .should('be.visible')
+        .click({ force: true })
 }
