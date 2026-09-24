@@ -106,10 +106,16 @@ describe('Post Assessment - all modes', () => {
     const finishOnDashboard = () => {
         clickGoBack()
 
-        cy.contains('a, button, [role="button"]', /^\s*DASHBOARD\s*$/i, { timeout: 30000 })
-            .filter(':visible')
-            .last()
-            .click({ force: true })
+        cy.location('search', { timeout: 30000 }).then(search => {
+            if (/action=cover|func=load_course/i.test(search)) return
+
+            cy.contains('a, button, [role="button"]', /^\s*DASHBOARD\s*$/i, {
+                timeout: 30000,
+            })
+                .filter(':visible')
+                .last()
+                .click({ force: true })
+        })
 
         cy.contains(/POST\s*ASSESSMENT/i, { timeout: 30000 }).should('exist')
         cy.contains(/PRACTICE\s*TESTS/i).should('exist')
