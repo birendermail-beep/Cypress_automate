@@ -60,18 +60,19 @@ export const clickLessonNextStep = labelPattern => {
 }
 
 export const openLessonToolbarActivity = labelPattern => {
-    cy.window().then(win => {
-        cy.stub(win, 'open').as('lessonActivityWindow')
+    cy.location('href').then(lessonUrl => {
+        cy.contains('button, a, [role="button"]', labelPattern, {
+            timeout: 30000,
+        }).filter(':visible').last().then($control => {
+            // The activity is opened by a native target on either the control,
+            // its enclosing link, or its form; it does not call window.open.
+            // Remove every relevant target so Cypress follows it in this tab.
+            $control.removeAttr('target')
+            $control.closest('a').removeAttr('target')
+            $control.closest('form').removeAttr('target')
+            cy.wrap($control).click({ force: true })
+        })
+
+        cy.location('href', { timeout: 30000 }).should('not.eq', lessonUrl)
     })
-
-    cy.contains('button, a, [role="button"]', labelPattern, {
-        timeout: 30000,
-    }).filter(':visible').last()
-        .click({ force: true })
-
-    // Quiz and Labs are launched in a separate browser window. Cypress controls
-    // only the original tab, so its URL correctly remains on the ebook page.
-    // Verify the launch request instead of asserting against the parent URL.
-    cy.get('@lessonActivityWindow', { timeout: 30000 })
-        .should('have.been.called')
 }
