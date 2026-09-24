@@ -45,14 +45,11 @@ import { startPracticeLearn } from '../../../../support/student-practice'
 
 
 import { Navbar, login_username, login_password, LoginPage, StudentPage } from '../../../../page-objects/pages/index'
+import { visitDemoCourse } from '../../../../support/student-auth'
 describe('Test history testing area', function() {
     //test.history2,test.history2.1,test.history2.2,test.history2.3,test.history2.4
     it('click on setting button to open settings', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-        })
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
+        visitDemoCourse()
         startPracticeLearn()
         StudentPage.endTest()
         StudentPage.goTotest()
