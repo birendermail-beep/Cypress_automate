@@ -2,80 +2,83 @@ import BasePage from '../BasePage'
 
 export default class LoginPage extends BasePage {
 	static loginPage(username, password) {
-		return cy.env([
-			'USERNAME',
-			'PASSWORD',
-			'login_username',
-			'login_password',
-		]).then(environment => {
-			const resolvedUsername =
-				username ||
-				environment.USERNAME ||
-				environment.login_username ||
-				''
-			const resolvedPassword =
-				password ||
-				environment.PASSWORD ||
-				environment.login_password ||
-				''
+		const environment = Cypress.env()
+		const resolvedUsername = String(
+			username ||
+			environment.USERNAME ||
+			environment.login_username ||
+			''
+		).trim()
+		const resolvedPassword = String(
+			password ||
+			environment.PASSWORD ||
+			environment.login_password ||
+			''
+		)
 
-			if (!resolvedUsername || !resolvedPassword) {
-				throw new Error(
-					'Missing Cypress login credentials. Set CYPRESS_login_username and CYPRESS_login_password before starting Cypress.'
-				)
-			}
-
-			cy.location('pathname', { timeout: 30000 }).should('include', 'login.php')
-
-			cy.get(
-				'#email, input[type="email"], input[name="email"], input[placeholder="ENTER EMAIL"]',
-				{ timeout: 30000 }
+		if (!resolvedUsername || !resolvedPassword) {
+			throw new Error(
+				'Missing Cypress login credentials. Set CYPRESS_USERNAME and CYPRESS_PASSWORD before starting Cypress.'
 			)
-				.filter(':visible')
-				.first()
-				.clear()
-				.type(resolvedUsername, {
-					log: false,
-					parseSpecialCharSequences: false,
-				})
+		}
 
-			cy.get(
-				'#password, input[type="password"], input[name="password"], input[placeholder="ENTER PASSWORD"]',
-				{ timeout: 30000 }
+		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resolvedUsername)) {
+			throw new Error(
+				'CYPRESS_USERNAME must contain a valid email address. Check for missing @, spaces, or incorrect PowerShell environment-variable syntax.'
 			)
-				.filter(':visible')
-				.first()
-				.clear()
-				.type(resolvedPassword, {
-					log: false,
-					parseSpecialCharSequences: false,
-				})
+		}
 
-			cy.get('body').then($body => {
-				const submitSelector = [
-					'#submit',
-					'button[type="submit"]',
-					'input[type="submit"]',
-				].find(selector => $body.find(selector).filter(':visible').length)
+		cy.location('pathname', { timeout: 30000 }).should('include', 'login.php')
 
-				if (submitSelector) {
-					cy.get(submitSelector)
-						.filter(':visible')
-						.first()
-						.click({ force: true })
-					return
-				}
+		cy.get(
+			'#email, input[type="email"], input[name="email"], input[placeholder="ENTER EMAIL"]',
+			{ timeout: 30000 }
+		)
+			.filter(':visible')
+			.first()
+			.clear()
+			.type(resolvedUsername, {
+				log: false,
+				parseSpecialCharSequences: false,
+			})
+			.should('have.value', resolvedUsername)
 
-				cy.contains('button', /^\s*SIGN IN\s*$/i, { timeout: 30000 })
-					.should('be.visible')
-					.click({ force: true })
+		cy.get(
+			'#password, input[type="password"], input[name="password"], input[placeholder="ENTER PASSWORD"]',
+			{ timeout: 30000 }
+		)
+			.filter(':visible')
+			.first()
+			.clear()
+			.type(resolvedPassword, {
+				log: false,
+				parseSpecialCharSequences: false,
 			})
 
-			cy.location('pathname', { timeout: 30000 }).should(
-				'not.include',
-				'login.php'
-			)
+		cy.get('body').then($body => {
+			const submitSelector = [
+				'#submit',
+				'button[type="submit"]',
+				'input[type="submit"]',
+			].find(selector => $body.find(selector).filter(':visible').length)
+
+			if (submitSelector) {
+				cy.get(submitSelector)
+					.filter(':visible')
+					.first()
+					.click({ force: true })
+				return
+			}
+
+			cy.contains('button', /^\s*SIGN IN\s*$/i, { timeout: 30000 })
+				.should('be.visible')
+				.click({ force: true })
 		})
+
+		cy.location('pathname', { timeout: 30000 }).should(
+			'not.include',
+			'login.php'
+		)
 	}
 
 	static visitOnClick(selector) {
