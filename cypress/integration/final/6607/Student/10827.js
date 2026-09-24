@@ -15,16 +15,11 @@ import {
     LoginPage,
     StudentPage,
 } from '../../../../page-objects/pages/index'
+import { visitDemoCourse } from '../../../../support/student-auth'
 
 describe('Post Assessment in Learn Mode', () => {
     it('opens Learn Mode, verifies feedback controls, and navigates questions', () => {
-        cy.visit('/')
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-
-        cy.fixture('global').then((data) => {
-            StudentPage.visitLOAplusCompleteCourse(data)
-        })
+        visitDemoCourse()
 
         cy.get('body').then(($body) => {
             const selectors = [
