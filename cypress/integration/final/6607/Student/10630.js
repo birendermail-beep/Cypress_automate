@@ -9,17 +9,25 @@ import {
     login_username,
     login_password,
     LoginPage,
-    StudentPage,
 } from '../../../../page-objects/pages/index'
 
 describe('Student ebook Videos', () => {
     const normalize = value => String(value || '').replace(/\s+/g, ' ').trim()
 
+    const restoreStudentLogin = () => {
+        cy.session(['student-login', login_username], () => {
+            cy.visit('/')
+            Navbar.clickOnLogin()
+            LoginPage.loginPage(login_username, login_password)
+        })
+    }
+
     const openEbook = () => {
+        restoreStudentLogin()
         cy.visit('/')
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-        StudentPage.visitLOAplusCompleteCourse()
+        cy.fixture('global').then(data => {
+            cy.visit(data.url + '/app/?func=load_course&course=Demo.AA1')
+        })
 
         cy.get('[intro-id="chapters"]', { timeout: 30000 })
             .filter(':visible')
@@ -61,9 +69,14 @@ describe('Student ebook Videos', () => {
         })
     }
 
-    beforeEach(openEbook)
+    const videoTest = (name, test) => {
+        it(name, () => {
+            openEbook()
+            test()
+        })
+    }
 
-    it('opens Videos when available without a blank page', () => {
+    videoTest('opens Videos when available without a blank page', () => {
         withVideos(() => {
             cy.contains(':visible', /^\s*Videos?\s*$/i)
                 .should('be.visible')
@@ -71,7 +84,7 @@ describe('Student ebook Videos', () => {
         })
     })
 
-    it('shows video content or a valid empty state', () => {
+    videoTest('shows video content or a valid empty state', () => {
         withVideos(() => {
             cy.get('body').then($body => {
                 const text = normalize($body.text())
@@ -91,7 +104,7 @@ describe('Student ebook Videos', () => {
         })
     })
 
-    it('detects video search when the layout provides it', () => {
+    videoTest('detects video search when the layout provides it', () => {
         withVideos(() => {
             cy.get('body').then($body => {
                 const $input = $body
@@ -123,7 +136,7 @@ describe('Student ebook Videos', () => {
         })
     })
 
-    it('detects list or grid view controls when available', () => {
+    videoTest('detects list or grid view controls when available', () => {
         withVideos(() => {
             cy.get('body').then($body => {
                 const $controls = $body
@@ -151,7 +164,7 @@ describe('Student ebook Videos', () => {
         })
     })
 
-    it('detects video filters without changing user data', () => {
+    videoTest('detects video filters without changing user data', () => {
         withVideos(() => {
             cy.get('body').then($body => {
                 const $filters = $body
@@ -181,7 +194,7 @@ describe('Student ebook Videos', () => {
         })
     })
 
-    it('returns to Lessons without changing course settings', () => {
+    videoTest('returns to Lessons without changing course settings', () => {
         cy.contains(':visible', /^\s*Lessons\s*$/i, { timeout: 30000 })
             .first()
             .click()
