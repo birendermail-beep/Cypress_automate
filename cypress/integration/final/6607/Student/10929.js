@@ -8,10 +8,10 @@ describe('Manage settings options in the lesson area', () => {
             timeout: 30000,
         })
             .filter(':visible').first().click({ force: true })
-        cy.get('#fcs', { timeout: 30000 }).should('be.visible')
-        cy.get('body').should($body => {
-            const count = $body.find('#fcs, #kbd, #acs').filter(':visible').length
-            expect(count, 'visible lesson setting options').to.be.at.least(1)
-        })
+        cy.contains(':visible', /Font.*(?:Color|Colour)|Color.*Font/i, {
+            timeout: 30000,
+        }).should('be.visible')
+        cy.contains(':visible', /Keyboard/i).should('be.visible')
+        cy.contains(':visible', /Accessibility/i).should('be.visible')
     })
 })
