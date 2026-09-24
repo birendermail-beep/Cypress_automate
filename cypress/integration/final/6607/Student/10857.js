@@ -1,3 +1,4 @@
+import { startPracticeLearn } from '../../../../support/student-practice'
 /*
 @author: Anirudha Pratap
 @master_project_id: 6607
@@ -52,10 +53,7 @@ describe('Test history testing area', function() {
         })
         Navbar.clickOnLogin()
         LoginPage.loginPage(login_username, login_password)
-        StudentPage.openurl()
-        cy.get('[intro-id="practice_tests"] > .menu-item').click({ force: true })
-        cy.get('[data-cy=test_tests]').eq(0).click()
-        cy.get('#learn_mode').click({ force: true })
+        startPracticeLearn()
         StudentPage.endTest()
         StudentPage.goTotest()
         cy.contains('Result').eq(0).click()
