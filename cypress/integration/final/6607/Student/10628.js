@@ -142,7 +142,7 @@ describe('Student annotations', () => {
     })
 
     annotationTest('searches annotations with correct and incorrect text', () => {
-        cy.get('#toc_search, input[placeholder*="Search" i]', {
+        cy.get('#toc_search, input[placeholder*="Search"], input[placeholder*="search"]', {
             timeout: 30000,
         })
             .filter(':visible')
@@ -159,7 +159,7 @@ describe('Student annotations', () => {
             if ($search) cy.wrap($search).click({ force: true })
         })
 
-        cy.get('#toc_search, input[placeholder*="Search" i]')
+        cy.get('#toc_search, input[placeholder*="Search"], input[placeholder*="search"]')
             .filter(':visible')
             .first()
             .clear()
