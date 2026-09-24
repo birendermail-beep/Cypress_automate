@@ -42,9 +42,26 @@ describe('Student annotations', () => {
 
     const openAnnotations = () => {
         openLessons()
-        cy.contains(':visible', /Annotation/i, { timeout: 30000 })
-            .first()
-            .click({ force: true })
+        cy.get('body').then($body => {
+            const hasVisibleAnnotation = [...$body.find('a, button, [role="tab"]')]
+                .some(element =>
+                    Cypress.$(element).is(':visible') &&
+                    /annotation/i.test((element.textContent || '').trim())
+                )
+
+            if (!hasVisibleAnnotation) {
+                cy.contains(':visible', /^\\s*Review\\s*$/i, {
+                    timeout: 30000,
+                })
+                    .first()
+                    .click({ force: true })
+            }
+
+            cy.contains(':visible', /Annotation/i, { timeout: 30000 })
+                .first()
+                .click({ force: true })
+        })
+
         cy.get('body', { timeout: 30000 }).should($body => {
             expect(
                 $body.find('#bm_an, #e_toc, [data-cy*="annotation"]').length > 0 ||
