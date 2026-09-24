@@ -1,10 +1,10 @@
 /* @story_id: 10939 @story_name: Open Quiz */
-import { visitDemoCourse } from '../../../../support/student-auth'
+import { openDemoLesson } from '../../../../support/student-auth'
 
 describe('Lesson next steps - Quiz', () => {
     it('opens the chapter quiz without a blank page', () => {
-        visitDemoCourse()
-        cy.visit('/app/?func=ebook&chapter_no=0')
+        openDemoLesson()
+        cy.scrollTo('bottom')
         cy.get('[data-cy="quiz_open"]', { timeout: 30000 })
             .filter(':visible').first().scrollIntoView()
             .invoke('removeAttr', 'target').click({ force: true })
