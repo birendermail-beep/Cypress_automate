@@ -8,7 +8,7 @@ export default class LoginPage extends BasePage {
 			environment.USERNAME ||
 			environment.login_username ||
 			''
-		).trim()
+		).replace(/[\\s\\u200B-\\u200D\\uFEFF]/g, '')
 		const resolvedPassword = String(
 			password ||
 			environment.PASSWORD ||
@@ -42,6 +42,12 @@ export default class LoginPage extends BasePage {
 				parseSpecialCharSequences: false,
 			})
 			.should('have.value', resolvedUsername)
+			.trigger('input')
+			.trigger('change')
+			.blur()
+			.should($input => {
+				expect($input[0].checkValidity(), 'email field validity').to.equal(true)
+			})
 
 		cy.get(
 			'#password, input[type="password"], input[name="password"], input[placeholder="ENTER PASSWORD"]',
