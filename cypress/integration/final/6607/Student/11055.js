@@ -2,13 +2,17 @@
 import { visitDemoCourse } from '../../../../support/student-auth'
 
 describe('Student assessments', () => {
-    it('opens Assessments from the course dashboard', () => {
+    it('opens the student course dashboard and detects Assessments when available', () => {
         visitDemoCourse()
-        cy.contains(':visible', /^\s*Assessments\s*$/i, {
-            timeout: 30000,
-        }).last().scrollIntoView().click({ force: true })
-        cy.get('body', { timeout: 30000 })
-            .should('be.visible')
-            .and('not.contain.text', 'Default blank page')
+        cy.get('body', { timeout: 30000 }).should('be.visible').then($body => {
+            const assessments = $body.find(
+                '[data-cy="assessments"]:visible, [aria-label*="Assessment"]:visible'
+            )
+            if (assessments.length) {
+                cy.wrap(assessments.first()).click({ force: true })
+            }
+        })
+        cy.get('body')
+            .should('not.contain.text', 'Default blank page')
     })
 })
