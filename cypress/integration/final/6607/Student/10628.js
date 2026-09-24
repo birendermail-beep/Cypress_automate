@@ -25,7 +25,7 @@ describe('Student annotations', () => {
         restoreStudentLogin()
         cy.visit('/')
         cy.fixture('global').then(data => {
-            StudentPage.visitLOAplusCompleteCourse(data)
+            cy.visit(data.url + '/app/?func=load_course&course=Demo.AA1')
         })
 
         cy.get('[intro-id="chapters"]', { timeout: 30000 })
