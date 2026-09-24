@@ -147,7 +147,9 @@ describe('Student annotations', () => {
         })
             .filter(':visible')
             .first()
-            .clear()
+            .invoke('val', '')
+            .trigger('input')
+            .trigger('change')
             .type('Fundamentals')
 
         cy.get('body').then($body => {
@@ -162,7 +164,9 @@ describe('Student annotations', () => {
         cy.get('#toc_search, input[placeholder*="Search"], input[placeholder*="search"]')
             .filter(':visible')
             .first()
-            .clear()
+            .invoke('val', '')
+            .trigger('input')
+            .trigger('change')
             .type('sbcxbhcgdfghshjds{enter}')
 
         cy.get('body', { timeout: 30000 }).should($body => {
