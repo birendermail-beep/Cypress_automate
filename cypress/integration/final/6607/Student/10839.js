@@ -12,14 +12,13 @@ import {
     LoginPage,
     StudentPage,
 } from '../../../../page-objects/pages/index'
+import { visitDemoCourse } from '../../../../support/student-auth'
 
 describe('Student Practice Test result download', () => {
     const normalize = value => String(value || '').replace(/\s+/g, ' ').trim()
 
     it('downloads the completed Practice Test result', () => {
-        cy.visit('/')
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
+        visitDemoCourse()
 
         startPracticeLearn()
 
