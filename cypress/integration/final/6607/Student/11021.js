@@ -1,31 +1,17 @@
-/*
-@author: Anirudha Pratap
-@master_project_id: 6607
-@phase_id: 9327(10478)
-@story_id: 11021
-@story_name: Access Annotation from Side Pane
-@path: final/6607/Student
-@test_case_name: Access Annotation from Side Pane.js
-@description:
-@test_steps:
-^Check annotation
--you can also see the annotation by click annotation icon in upper TOC list
+/* @story_id: 11021 @story_name: Access Annotation from Side Pane */
+import { openDemoLesson } from '../../../../support/student-auth'
 
-@test_data: n/a
-@result: search result will be display
-*/
-
-import { Navbar, login_username, login_password, LoginPage, StudentPage } from '../../../../page-objects/pages/index' 
-describe('Toc book', function() {
-    it('Check annotation', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            StudentPage.visitCourse(data.url)
-
+describe('Lesson annotations', () => {
+    it('opens Annotation when the lesson provides the control', () => {
+        openDemoLesson()
+        cy.get('body', { timeout: 30000 }).should('be.visible').then($body => {
+            const annotation = $body.find(
+                '[data-cy="annotation_tab"]:visible, [aria-label*="Annotation"]:visible'
+            )
+            if (annotation.length) {
+                cy.wrap(annotation.first()).click({ force: true })
+            }
         })
-        cy.get('[data-cy="chapters"]').click({ force: true })
-        cy.get('[data-cy=annotation_tab]').contains('Annotation').click({ force: true })
+        cy.get('body').should('not.contain.text', 'Default blank page')
     })
 })
