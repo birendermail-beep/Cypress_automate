@@ -58,3 +58,24 @@ export const clickLessonNextStep = labelPattern => {
                 .click({ force: true })
         })
 }
+
+export const openLessonToolbarActivity = labelPattern => {
+    cy.window().then(win => {
+        cy.stub(win, 'open').as('lessonActivityWindow')
+    })
+
+    cy.contains('button, a, [role="button"]', labelPattern, {
+        timeout: 30000,
+    }).filter(':visible').last()
+        .invoke('removeAttr', 'target')
+        .click({ force: true })
+
+    cy.get('@lessonActivityWindow').then(openWindow => {
+        if (!openWindow.called) return
+
+        const targetUrl = openWindow.firstCall.args[0]
+        expect(targetUrl, 'activity popup URL').to.be.a('string').and.not.be.empty
+        expect(targetUrl, 'activity popup URL').not.to.equal('about:blank')
+        cy.visit(targetUrl)
+    })
+}
