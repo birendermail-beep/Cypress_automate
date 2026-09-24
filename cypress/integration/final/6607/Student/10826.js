@@ -21,13 +21,17 @@ describe('Post Assessment - all modes', () => {
     const openPostAssessment = () => {
         cy.get('body').then(($body) => {
             const selectors = [
-                '[data-cy="post_assesment"]',
                 '[data-cy="post_assessment"]',
+                '[data-cy="post_assesment"]',
                 '[intro-id="post_assessment"]',
             ]
             const matchedSelector = selectors.find((selector) => $body.find(selector).length)
 
             if (matchedSelector) {
+                cy.get(matchedSelector)
+                    .first()
+                    .should('have.attr', 'href')
+                    .and('include', 'func=start_test')
                 cy.get(matchedSelector).first().click({ force: true })
                 return
             }
