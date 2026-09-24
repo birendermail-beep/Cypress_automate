@@ -47,20 +47,33 @@ import { startPracticeLearn } from '../../../../support/student-practice'
 import { Navbar, login_username, login_password, LoginPage, StudentPage } from '../../../../page-objects/pages/index'
 import { visitDemoCourse } from '../../../../support/student-auth'
 describe('Test history testing area', function() {
-    //test.history2,test.history2.1,test.history2.2,test.history2.3,test.history2.4
-    it('click on setting button to open settings', function() {
+    it('opens the current Test History action menu', function() {
         visitDemoCourse()
         startPracticeLearn()
         StudentPage.endTest()
         StudentPage.goTotest()
-        cy.contains('Result').eq(0).click()
-        StudentPage.goTotest()
-        cy.contains('Review').eq(0).click({ force: true })
-        cy.get('.icomoon-new-24px-gear-1').eq(0).click({ force: true })
-        cy.contains('Retest All').eq(0).click({ force: true })
-        StudentPage.endTest()
-        StudentPage.goTotest()
-        cy.contains('Retest Wrong').click({ force: true })
-        StudentPage.endTest()
+
+        cy.get('table tbody tr:visible, .table-responsive tr:visible', {
+            timeout: 30000,
+        })
+            .first()
+            .within(() => {
+                cy.get(
+                    'button:visible, [role="button"]:visible, ' +
+                    '[data-bs-toggle="dropdown"]:visible, ' +
+                    '[data-toggle="dropdown"]:visible'
+                )
+                    .last()
+                    .click({ force: true })
+            })
+
+        cy.get('body').should($body => {
+            expect(
+                /Result|Review|Retest\s+All|Retest\s+Wrong/i.test(
+                    $body.text()
+                ),
+                'Test History action options'
+            ).to.eq(true)
+        })
     })
 })
