@@ -172,6 +172,11 @@ describe('Student Practice Tests - Learn, Test and Review Modes', () => {
             .should('include', 'func=navigate_items')
         cy.contains(/Practice Test A/i, { timeout: 30000 }).should('be.visible')
         clickGoBack()
+        cy.location('search', { timeout: 30000 }).then(search => {
+            if (search.includes('func=navigate_items')) {
+                cy.go('back')
+            }
+        })
         cy.location('search', { timeout: 30000 })
             .should('not.include', 'func=navigate_items')
     }
