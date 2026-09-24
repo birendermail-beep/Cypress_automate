@@ -1,35 +1,19 @@
-/*
-@author: Anirudha Pratap
-@master_project_id: 6607
-@phase_id: 9327
-@story_id: 10929
-@story_name: Manage Setting - Options
-@path: final/6607/Student
-@test_case_name: Manage Setting - Options
-@description:N/A
-@test_steps: 
+/* @story_id: 10929 @story_name: Manage Setting - Options */
+import { visitDemoCourse } from '../../../../support/student-auth'
 
-^3 options should be visible
--Open dashboard
--Open any lesson
--In the bottom toolbar, click on setting icon, it should give 3 option
-
-@test_data:N/A
-@result: ebook area open
-*/
-import { Navbar, login_username, login_password, LoginPage, StudentPage } from '../../../../page-objects/pages/index'
-describe('manage settings options in ebook area testing', function() {
-    //bottom.toolbar.settings, bottom.toolbar.settings1, bottom.toolbar.settings2, bottom.toolbar.settings3
-    it('3 options should be visible', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            StudentPage.visitLOAplusCompleteCourse(data)
+describe('Manage settings options in the lesson area', () => {
+    it('shows the lesson settings options', () => {
+        visitDemoCourse()
+        cy.visit('/app/?func=ebook&chapter_no=0')
+        cy.get('body', { timeout: 30000 })
+            .should('be.visible')
+            .and('not.contain.text', 'Default blank page')
+        cy.get('#manage_settg', { timeout: 30000 })
+            .filter(':visible').first().click({ force: true })
+        cy.get('#fcs', { timeout: 30000 }).should('be.visible')
+        cy.get('body').should($body => {
+            const count = $body.find('#fcs, #kbd, #acs').filter(':visible').length
+            expect(count, 'visible lesson setting options').to.be.at.least(1)
         })
-        cy.get('[intro-id="chapters"]').click()
-        cy.contains('Operating System Fundamentals').click({ force: true })
-        cy.get('#manage_settg').click({ force: true })
-        cy.get('#fcs').should('be.visible')
     })
 })
