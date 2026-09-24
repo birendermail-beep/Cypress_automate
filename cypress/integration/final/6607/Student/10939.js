@@ -1,35 +1,16 @@
-/*
-@author: Anirudha Pratap
-@master_project_id: 6607
-@phase_id: 
-@story_id: 10939
-@story_name: Open Quiz
-@path: final/6607/Student
-@test_case_name: Open Quiz.js
-@description: 
-@test_steps:
-^Open quiz of chapter
--Open the given prepkit
--Open any chapter.
--Scroll at the bottom of the chapter
--Click open in front of quiz option
+/* @story_id: 10939 @story_name: Open Quiz */
+import { visitDemoCourse } from '../../../../support/student-auth'
 
-@test_data: n/a
-@result: It will open the quiz of the chapter
-*/
-import { Navbar, login_username, login_password, LoginPage, StudentPage } from '../../../../page-objects/pages/index'
-describe('next steps in ebook area testing', function() {
-    //toc.next_steps1
-    it('attempt quiz in 1st option', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            StudentPage.visitLOAplusCompleteCourse(data)
-        })
-        cy.get('[intro-id="chapters"]').click()
-        cy.contains('Operating System Fundamentals').click({ force: true })
-        cy.scrollTo('100%', '100%')
-        cy.get('[data-cy="quiz_open"]').click({ force: true })
+describe('Lesson next steps - Quiz', () => {
+    it('opens the chapter quiz without a blank page', () => {
+        visitDemoCourse()
+        cy.visit('/app/?func=ebook&chapter_no=0')
+        cy.get('[data-cy="quiz_open"]', { timeout: 30000 })
+            .filter(':visible').first().scrollIntoView()
+            .invoke('removeAttr', 'target').click({ force: true })
+        cy.get('body', { timeout: 30000 })
+            .should('be.visible')
+            .and('not.contain.text', 'Default blank page')
+        cy.location('search').should('match', /quiz|test|assessment|navigate_items/i)
     })
 })
