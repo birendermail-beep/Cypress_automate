@@ -58,12 +58,9 @@ describe('Test history testing area', function() {
         })
             .first()
             .within(() => {
-                cy.get(
-                    'button:visible, [role="button"]:visible, ' +
-                    '[data-bs-toggle="dropdown"]:visible, ' +
-                    '[data-toggle="dropdown"]:visible'
-                )
+                cy.get('td:visible')
                     .last()
+                    .should('be.visible')
                     .click({ force: true })
             })
 
