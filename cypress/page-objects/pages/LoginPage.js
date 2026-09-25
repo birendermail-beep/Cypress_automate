@@ -38,21 +38,36 @@ export default class LoginPage extends BasePage {
 			const emailSelector =
 				'#email, input[type="email"], input[name="email"], input[placeholder="ENTER EMAIL"]'
 
-			// The login form re-renders after input events. Re-query the field for
-			// each action so Cypress never continues with a detached element.
-			cy.get(emailSelector, { timeout: 30000 })
-				.filter(':visible')
-				.first()
-				.should('be.enabled')
-				.clear()
+			// Headed Chrome can render this controlled input more slowly than
+			// headless Chrome. Type at a human pace and retry once if a render
+			// replaces the field before its state is retained.
+			const typeEmail = delay => {
+				cy.get(emailSelector, { timeout: 30000 })
+					.filter(':visible')
+					.first()
+					.should('be.enabled')
+					.type(resolvedUsername, {
+						log: false,
+						delay,
+						parseSpecialCharSequences: false,
+					})
+			}
+
+			typeEmail(20)
 
 			cy.get(emailSelector, { timeout: 30000 })
 				.filter(':visible')
 				.first()
-				.should('be.enabled')
-				.type(resolvedUsername, {
-					log: false,
-					parseSpecialCharSequences: false,
+				.then($input => {
+					if ($input.val() !== resolvedUsername) {
+						cy.get(emailSelector, { timeout: 30000 })
+							.filter(':visible')
+							.first()
+							.should('be.enabled')
+							.clear()
+
+						typeEmail(40)
+					}
 				})
 
 			cy.get(emailSelector, { timeout: 30000 })
