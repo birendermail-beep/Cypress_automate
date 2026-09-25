@@ -35,22 +35,29 @@ export default class LoginPage extends BasePage {
 
 			cy.location('pathname', { timeout: 30000 }).should('include', 'login.php')
 
-			cy.get(
-				'#email, input[type="email"], input[name="email"], input[placeholder="ENTER EMAIL"]',
-				{ timeout: 30000 }
-			)
+			const emailSelector =
+				'#email, input[type="email"], input[name="email"], input[placeholder="ENTER EMAIL"]'
+
+			// The login form re-renders after input events. Re-query the field for
+			// each action so Cypress never continues with a detached element.
+			cy.get(emailSelector, { timeout: 30000 })
 				.filter(':visible')
 				.first()
 				.clear()
+
+			cy.get(emailSelector, { timeout: 30000 })
+				.filter(':visible')
+				.first()
 				.type(resolvedUsername, {
 					log: false,
 					parseSpecialCharSequences: false,
 				})
+
+			cy.get(emailSelector, { timeout: 30000 })
+				.filter(':visible')
+				.first()
 				.should('have.value', resolvedUsername)
-				.trigger('input')
-				.trigger('change')
-				.blur()
-				.should($input => {
+				.and($input => {
 					expect($input[0].checkValidity(), 'email field validity').to.equal(true)
 				})
 
