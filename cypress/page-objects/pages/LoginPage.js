@@ -43,11 +43,13 @@ export default class LoginPage extends BasePage {
 			cy.get(emailSelector, { timeout: 30000 })
 				.filter(':visible')
 				.first()
+				.should('be.enabled')
 				.clear()
 
 			cy.get(emailSelector, { timeout: 30000 })
 				.filter(':visible')
 				.first()
+				.should('be.enabled')
 				.type(resolvedUsername, {
 					log: false,
 					parseSpecialCharSequences: false,
@@ -61,17 +63,28 @@ export default class LoginPage extends BasePage {
 					expect($input[0].checkValidity(), 'email field validity').to.equal(true)
 				})
 
-			cy.get(
-				'#password, input[type="password"], input[name="password"], input[placeholder="ENTER PASSWORD"]',
-				{ timeout: 30000 }
-			)
+			const passwordSelector =
+				'#password, input[type="password"], input[name="password"], input[placeholder="ENTER PASSWORD"]'
+
+			cy.get(passwordSelector, { timeout: 30000 })
 				.filter(':visible')
 				.first()
+				.should('be.enabled')
 				.clear()
+
+			cy.get(passwordSelector, { timeout: 30000 })
+				.filter(':visible')
+				.first()
+				.should('be.enabled')
 				.type(resolvedPassword, {
 					log: false,
 					parseSpecialCharSequences: false,
 				})
+
+			cy.get(passwordSelector, { timeout: 30000 })
+				.filter(':visible')
+				.first()
+				.should('be.enabled')
 
 			cy.get('body').then($body => {
 				const submitSelector = [
