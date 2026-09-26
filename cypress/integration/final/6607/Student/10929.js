@@ -4,7 +4,7 @@ import { openDemoLesson } from '../../../../support/student-auth'
 describe('Manage settings options in the lesson area', () => {
     it('shows the lesson settings options', () => {
         openDemoLesson()
-        cy.get('#manage_settg, .icomoon-new-24px-gear-1, [aria-label*="Settings" i]', {
+        cy.get('#manage_settg, .icomoon-new-24px-gear-1, [aria-label*="Settings"], [aria-label*="settings"]', {
             timeout: 30000,
         })
             .filter(':visible').first().click({ force: true })
