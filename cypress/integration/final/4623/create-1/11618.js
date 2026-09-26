@@ -172,9 +172,19 @@ describe('Create Area - Add Item', () => {
 
         cy.contains(':visible', /^\s*New\s+Item\s*$/i, {
             timeout: 30000,
-        }).first()
-            .invoke('removeAttr', 'target')
-            .click({ force: true })
+        }).first().then($newItemLabel => {
+            // The visible text can be inside the link. Removing target from the
+            // text node does nothing and Editor 2.0 opens in a second tab,
+            // which Cypress cannot control. Always modify and click the anchor.
+            const newItemLink = $newItemLabel.is('a')
+                ? $newItemLabel
+                : $newItemLabel.closest('a')
+
+            expect(newItemLink.length, 'New Item link').to.be.greaterThan(0)
+            cy.wrap(newItemLink)
+                .invoke('removeAttr', 'target')
+                .click({ force: true })
+        })
 
         cy.get('body', { timeout: 30000 }).should($body => {
             expect($body.text(), 'new item type choices')
