@@ -11,7 +11,7 @@ describe('Amazon purchase option', () => {
             .and('not.contain.text', 'Default blank page')
         cy.get('body').then($body => {
             const amazon = $body.find(
-                '#amazon_submit:visible, [name*="amazon" i]:visible'
+                '#amazon_submit:visible, [name*="amazon"]:visible, [name*="Amazon"]:visible'
             )
             if (amazon.length) cy.wrap(amazon.first()).should('be.visible')
         })
