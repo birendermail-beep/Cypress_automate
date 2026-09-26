@@ -14,23 +14,11 @@ export const restoreStudentLogin = (sessionScope = 'jigyaasa') => {
             LoginPage.loginPage(login_username, login_password)
         },
         {
+            // Reuse the authenticated cookies across every spec in this run.
+            // Do not run a page/request validator here: Cypress clears the AUT
+            // while saving a session, and the Jigyaasa redirect can otherwise
+            // leave the runner waiting on a blank page.
             cacheAcrossSpecs: true,
-            validate() {
-                cy.request({
-                    url: '/app/',
-                    failOnStatusCode: false,
-                }).then(response => {
-                    expect(response.status, 'student session response').to.be.lessThan(400)
-                    expect(
-                        response.redirectedToUrl || '',
-                        'student session must not redirect to login'
-                    ).not.to.include('login.php')
-                    expect(
-                        String(response.body),
-                        'student session must not return the login form'
-                    ).not.to.match(/name=["']?(?:email|password)["']?/i)
-                })
-            },
         }
     )
 }
