@@ -70,7 +70,7 @@ export default class StudentPage extends BasePage {
         cy.visit(url + '/?func=load_course&course_code=03Hy5&class_code=05SOh')
     }
     static visitLOAplusCompleteCourse(data) {
-        cy.visit(data.url + '/?func=load_course&course=LO-Aplus-complete&class_code=' + data.class_code[10])
+        cy.visit(data.url + '/app/?func=load_course&course=LO-Aplus-complete&class_code=' + data.class_code[10])
     }
 
     static loadCourse() {

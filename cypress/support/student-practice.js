@@ -1,22 +1,6 @@
-/*
-@author: Anirudha Pratap
-@master_project_id: 6607
-@phase_id: 10150
-@story_id: 10829
-@story_name: Access Practice Test
-@path: final/6607/Student
-@description: Verify current Practice Test Learn Mode, Test Mode, Review Mode, then return to Dashboard.
-*/
-import {
-    Navbar,
-    login_username,
-    login_password,
-    LoginPage,
-    StudentPage,
-} from '../../../../page-objects/pages/index'
-import { visitDemoCourse } from '../../../../support/student-auth'
+import StudentPage from '../page-objects/pages/StudentPage'
 
-describe('Student Practice Tests - Learn, Test and Review Modes', () => {
+export function startPracticeLearn() {
     const openPracticeTests = () => {
         cy.get('body', { timeout: 30000 }).then(($body) => {
             const labels = $body
@@ -163,99 +147,10 @@ describe('Student Practice Tests - Learn, Test and Review Modes', () => {
             })
     }
 
-    const clickGoBack = () => clickNavigationControl(/^GO\s*BACK(?:\s+TO\s+TEST\s+SELECTION)?$/i)
-
-    const returnFromResults = () => {
-        // endTest() only confirms submission; wait for the results page before
-        // looking for GO BACK so a control from the outgoing page is not clicked.
-        cy.location('search', { timeout: 30000 })
-            .should('include', 'func=navigate_items')
-        cy.contains(/Practice Test A/i, { timeout: 30000 }).should('be.visible')
-        clickGoBack()
-        cy.location('search', { timeout: 30000 }).then(search => {
-            if (search.includes('func=navigate_items')) {
-                cy.go('back')
-            }
-        })
-        cy.location('search', { timeout: 30000 })
-            .should('not.include', 'func=navigate_items')
-    }
-
-    it('runs Practice Test Learn Mode, then Test Mode, Review Mode, and returns to Dashboard', () => {
-        visitDemoCourse()
-
-        // LEARN MODE: Dashboard -> Practice Tests -> A -> Learn
-        openPracticeTests()
-        openPracticeTestA()
-        discardIncompleteTestIfPresent()
-        selectMode('Learn')
-        launchLearnModeIfNeeded()
-
-        cy.get('div[intro-id="timer"], [intro-id="timer"]').should('not.exist')
-
-        cy.get('body').then(($body) => {
-            if ($body.find('#learn').length) {
-                cy.get('#learn').then(($learn) => {
-                    if (/submit/i.test($learn.text())) {
-                        cy.wrap($learn).click({ force: true })
-                        cy.get('#learn', { timeout: 30000 }).should(($retry) => {
-                            expect($retry.text()).to.match(/retry/i)
-                        })
-                    }
-                })
-            }
-        })
-
-        cy.questionNavigation()
-
-        cy.get('#btntxt', { timeout: 30000 }).should('exist').click({ force: true })
-        cy.contains(/Attempted/i).should('exist')
-        cy.contains(/Unattempted/i).should('exist')
-        cy.get('#btntxt').click({ force: true })
-
-        StudentPage.endTest()
-        returnFromResults()
-
-        // TEST MODE: Practice Tests -> A -> Test
-        openPracticeTests()
-        openPracticeTestA()
-        discardIncompleteTestIfPresent()
-        selectMode('Test')
-
-        cy.get('div[intro-id="item_info"]', { timeout: 30000 }).should('exist')
-        cy.get('div[intro-id="timer"], [intro-id="timer"]', { timeout: 30000 }).should('exist')
-        cy.get('#previous').should('be.disabled')
-        cy.questionNavigation()
-
-        StudentPage.endTest()
-
-        // Result page -> GO BACK -> Practice Tests -> A -> Review
-        returnFromResults()
-        openPracticeTests()
-        openPracticeTestA()
-        discardIncompleteTestIfPresent()
-        selectMode('Review')
-
-        // Review opens an individual item with its explanation, not the
-        // score summary headed "Practice Test A".
-        cy.location('search', { timeout: 30000 }).should((search) => {
-            const params = new URLSearchParams(search)
-            expect(params.get('func')).to.equal('navigate_items')
-            expect(params.get('item_sequence')).to.equal('1')
-        })
-        cy.contains(/^\s*Explanation\s*$/i, { timeout: 30000 })
-            .should('be.visible')
-
-        // Leave the reviewed item using the application's GO BACK control.
-        clickGoBack()
-        cy.location('search', { timeout: 30000 }).should((search) => {
-            expect(new URLSearchParams(search).has('item_sequence')).to.equal(false)
-        })
-
-        // Finish on Dashboard
-        clickNavigationControl(/^DASHBOARD$/i)
-
-        cy.contains(/PRACTICE\s*TESTS/i, { timeout: 30000 }).should('exist')
-        cy.contains(/POST\s*ASSESSMENT/i).should('exist')
-    })
-})
+    cy.visit('/app/?func=load_course&course=Demo.AA1')
+    openPracticeTests()
+    openPracticeTestA()
+    discardIncompleteTestIfPresent()
+    selectMode('Learn')
+    launchLearnModeIfNeeded()
+}

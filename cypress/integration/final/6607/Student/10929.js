@@ -1,35 +1,17 @@
-/*
-@author: Anirudha Pratap
-@master_project_id: 6607
-@phase_id: 9327
-@story_id: 10929
-@story_name: Manage Setting - Options
-@path: final/6607/Student
-@test_case_name: Manage Setting - Options
-@description:N/A
-@test_steps: 
+/* @story_id: 10929 @story_name: Manage Setting - Options */
+import { openDemoLesson } from '../../../../support/student-auth'
 
-^3 options should be visible
--Open dashboard
--Open any lesson
--In the bottom toolbar, click on setting icon, it should give 3 option
-
-@test_data:N/A
-@result: ebook area open
-*/
-import { Navbar, login_username, login_password, LoginPage, StudentPage } from '../../../../page-objects/pages/index'
-describe('manage settings options in ebook area testing', function() {
-    //bottom.toolbar.settings, bottom.toolbar.settings1, bottom.toolbar.settings2, bottom.toolbar.settings3
-    it('3 options should be visible', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            StudentPage.visitLOAplusCompleteCourse(data)
+describe('Manage settings options in the lesson area', () => {
+    it('shows the lesson settings options', () => {
+        openDemoLesson()
+        cy.get('#manage_settg, .icomoon-new-24px-gear-1, [aria-label*="Settings"], [aria-label*="settings"]', {
+            timeout: 30000,
         })
-        cy.get('[intro-id="chapters"]').click()
-        cy.contains('Operating System Fundamentals').click({ force: true })
-        cy.get('#manage_settg').click({ force: true })
-        cy.get('#fcs').should('be.visible')
+            .filter(':visible').first().click({ force: true })
+        cy.contains(':visible', /Font.*(?:Color|Colour)|Color.*Font/i, {
+            timeout: 30000,
+        }).should('be.visible')
+        cy.contains(':visible', /Keyboard/i).should('be.visible')
+        cy.contains(':visible', /Accessibility/i).should('be.visible')
     })
 })

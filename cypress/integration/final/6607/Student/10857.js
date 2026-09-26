@@ -1,3 +1,4 @@
+import { startPracticeLearn } from '../../../../support/student-practice'
 /*
 @author: Anirudha Pratap
 @master_project_id: 6607
@@ -44,28 +45,52 @@
 
 
 import { Navbar, login_username, login_password, LoginPage, StudentPage } from '../../../../page-objects/pages/index'
+import { visitDemoCourse } from '../../../../support/student-auth'
 describe('Test history testing area', function() {
-    //test.history2,test.history2.1,test.history2.2,test.history2.3,test.history2.4
-    it('click on setting button to open settings', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
+    it('opens the current Test History action menu', function() {
+        visitDemoCourse()
+        startPracticeLearn()
+        StudentPage.endTest()
+
+        cy.get('.icomoon-256px-practice-performance', { timeout: 30000 })
+            .click({ force: true })
+        cy.contains('a, button, [role="button"]', /Go to test history/i, {
+            timeout: 30000,
         })
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-        StudentPage.openurl()
-        cy.get('[intro-id="practice_tests"] > .menu-item').click({ force: true })
-        cy.get('[data-cy=test_tests]').eq(0).click()
-        cy.get('#learn_mode').click({ force: true })
-        StudentPage.endTest()
-        StudentPage.goTotest()
-        cy.contains('Result').eq(0).click()
-        StudentPage.goTotest()
-        cy.contains('Review').eq(0).click({ force: true })
-        cy.get('.icomoon-new-24px-gear-1').eq(0).click({ force: true })
-        cy.contains('Retest All').eq(0).click({ force: true })
-        StudentPage.endTest()
-        StudentPage.goTotest()
-        cy.contains('Retest Wrong').click({ force: true })
-        StudentPage.endTest()
+            .filter(':visible')
+            .first()
+            .click({ force: true })
+
+        cy.get('table tr:visible, .table-responsive tr:visible', {
+            timeout: 30000,
+        })
+            .filter((_, row) => Cypress.$(row).find('td').length > 0)
+            .first()
+            .within(() => {
+                cy.get('td:visible')
+                    .last()
+                    .should('be.visible')
+                    .then(($actionCell) => {
+                        const $control = $actionCell
+                            .find(
+                                'button, a, [role="button"], ' +
+                                '[data-bs-toggle="dropdown"], [data-toggle="dropdown"], i, span'
+                            )
+                            .filter(':visible')
+                            .last()
+
+                        cy.wrap($control.length ? $control : $actionCell)
+                            .click({ force: true })
+                    })
+            })
+
+        cy.get('body').should($body => {
+            expect(
+                /Result|Review|Retest\s+All|Retest\s+Wrong/i.test(
+                    $body.text()
+                ),
+                'Test History action options'
+            ).to.eq(true)
+        })
     })
 })

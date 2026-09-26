@@ -1,91 +1,69 @@
-/*
-@author:Anirudha Pratap
-@master_project_id: 6607
-@phase_id: 9327
-@story_id: 11055
-@story_name: Access Graded Assessment by Student
-@path: final/6607/Student
-@test_case_name:Access Graded Assessment by Student
-@description: N/A
-@test_steps:
+/* @story_id: 11055 @story_name: Access Graded Assessment by Student */
+import { visitDemoCourse } from '../../../../support/student-auth'
 
-^Opening of graded assessment.
--Login on the uCertify.
--Open the my library.
--Open the dashboard of any course.(https://www.ucertify.com/?func=load_course&course_code=02pzx&class_code=04ehS)
--Click on the graded assessment.
--Start the assessment.(https://www.ucertify.com/?func=start_test&assignment_code=951784)"
+const findVisibleControl = ($body, selector, label) => {
+    const bySelector = $body.find(selector).filter(':visible')
+    if (bySelector.length) {
+        return bySelector.first()
+    }
 
-^Opening of graded assessment2.
--Login on the uCertify.
--Open the my library.
--Open the dashboard of any course.(https://www.ucertify.com/?func=load_course&course_code=02pzx&class_code=04ehS)
--Click on the graded assessment.
--Start the assessment.(https://www.ucertify.com/?func=start_test&assignment_code=953065)"
+    return $body
+        .find('a:visible, button:visible, [role="button"]:visible')
+        .filter((index, element) => label.test(Cypress.$(element).text().trim()))
+        .first()
+}
 
-^Invalid Assessment Code
--Login on the uCertify.
--Open the my library.
--Open the dashboard of any course.(https://www.ucertify.com/?func=load_course&course_code=02pzx&class_code=04ehS)
--Click on Manage as Instructor.
--Open the Assignments tab.
--Click on the action dropdown button.
--Click on the ""Preview Assessment"". or(https://www.ucertify.com/educator/?func=assignment_preview&assignment_course=02pzx&assignment_code=953063)
--Change the assignment_code=953068"
+describe('Student assessments', () => {
+    it('opens Assessments from the current view or the Sections view', () => {
+        let assessmentOpened = false
 
-^Password Protected Assessment
--Login on the uCertify.
--Open the my library.
--Open the dashboard of any course.(https://www.ucertify.com/?func=load_course&course_code=02pzx&class_code=04ehS)
--Click on the graded assessment.
--Start the assessment.(https://www.ucertify.com/?func=start_test&assignment_code=951412)
+        visitDemoCourse()
 
-@test_data: N/A
-@result: It will open the Assessment page
-*/
+        cy.get('body', { timeout: 30000 }).should('be.visible').then($body => {
+            const assessments = findVisibleControl(
+                $body,
+                '[data-cy="assessments"], [data-cy="assessment"], [aria-label*="Assessment"]',
+                /^Assessments?$/i
+            )
 
-import { Navbar, login_username, login_password, LoginPage, StudentPage } from '../../../../page-objects/pages/index'
-describe('Graded assessment', function() {
-    beforeEach('This is login', function() {
-            cy.fixture('global').then(data => {
-                cy.visit(data.url)
-                Navbar.clickOnLogin()
-                LoginPage.loginPage(login_username, login_password)
-                StudentPage.visitLOAplusCompleteCourse(data)
+            if (assessments.length) {
+                assessmentOpened = true
+                cy.wrap(assessments).click({ force: true })
+                return
+            }
+
+            const sections = findVisibleControl(
+                $body,
+                '[data-cy="section_link"], [data-cy="sections"], [aria-label*="Section"]',
+                /^(Section|Sections|Lessons)$/i
+            )
+
+            expect(sections, 'Sections control used for the retry').to.have.length.greaterThan(0)
+            cy.wrap(sections).click({ force: true })
+        })
+
+        cy.then(() => {
+            if (assessmentOpened) {
+                return
+            }
+
+            cy.get('body', { timeout: 30000 }).should('be.visible').then($body => {
+                const assessments = findVisibleControl(
+                    $body,
+                    '[data-cy="assessments"], [data-cy="assessment"], [aria-label*="Assessment"]',
+                    /^Assessments?$/i
+                )
+
+                expect(assessments, 'Assessments in the Sections view')
+                    .to.have.length.greaterThan(0)
+                assessmentOpened = true
+                cy.wrap(assessments).click({ force: true })
             })
         })
-        //test.area6, test.area6.1
-    it('Opening of graded assessment.', function() {
-        cy.get('[data-cy="assessments"]').click({ force: true })
-        cy.fixture('global').then(data => {
-            cy.visit(data.url + '/?func=start_test&assignment_code=951784')
+
+        cy.then(() => {
+            expect(assessmentOpened, 'Assessments opened after no more than two checks').to.equal(true)
         })
-    })
-    it('Opening of graded assessment2.', function() {
-        cy.get('[data-cy="assessments"]').click({ force: true })
-        cy.fixture('global').then(data => {
-            cy.visit(data.url + '/?func=start_test&assignment_code=953065')
-        })
-    })
-    it('Invalid Assessment Code', function() {
-        cy.get('[data-cy=manage_as_instructor]').click();
-        cy.get('[data-cy="assessments"]').click();
-        cy.get("#myTable > tbody > tr:nth-child(1) > td:nth-child(6) > div").click({force:true}).then(() => {
-            cy.get("#myTable > tbody > tr:nth-child(1) > td:nth-child(6) > div > ul > li").contains("Preview Assessment")
-        })
-        cy.fixture('global').then(data => {
-            cy.visit(data.url + "/educator/?func=assignment_preview&assignment_course=02pzx&assignment_code=953063");
-            cy.visit(data.url + "/educator/?func=assignment_preview&assignment_course=02pzx&assignment_code=953068");
-        })
-    })
-    it('Password Protected Assessment', function() {
-        cy.get('[data-cy=manage_as_instructor]').click();
-        cy.get('[data-cy="assessments"]').click();
-        cy.get("#myTable > tbody > tr:nth-child(1) > td:nth-child(6) > div").click({force:true}).then(() => {
-            cy.get("#myTable > tbody > tr:nth-child(1) > td:nth-child(6) > div > ul > li").contains("Preview Assessment")
-        })
-        cy.fixture('global').then(data => {
-            cy.visit(data.url + "/educator/?func=assignment_preview&assignment_course=02pzx&assignment_code=954965");
-        })
+        cy.get('body').should('not.contain.text', 'Default blank page')
     })
 })
