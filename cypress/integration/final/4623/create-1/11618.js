@@ -11,42 +11,17 @@ describe('Create Area - Add Item', () => {
 
     const setEditorText = (selector, value) => {
         cy.get(selector, { timeout: 30000 })
+            .filter(':visible')
+            .first()
             .should('exist')
-            .then($field => {
-                const field = $field[0]
-                const editorWindow = field.ownerDocument.defaultView
-                field.focus()
+            .click({ force: true })
 
-                if (/^(INPUT|TEXTAREA)$/.test(field.tagName)) {
-                    const prototype = field.tagName === 'INPUT'
-                        ? editorWindow.HTMLInputElement.prototype
-                        : editorWindow.HTMLTextAreaElement.prototype
-                    const valueSetter = Object.getOwnPropertyDescriptor(
-                        prototype,
-                        'value'
-                    ).set
-                    valueSetter.call(field, value)
-                } else {
-                    field.textContent = value
-                }
-
-                // Editor 2.0 replaces editable nodes after an input event.
-                // Dispatch everything from this callback so Cypress does not
-                // continue a command chain against the detached old node.
-                field.dispatchEvent(new editorWindow.InputEvent('input', {
-                    bubbles: true,
-                    inputType: 'insertText',
-                    data: value,
-                }))
-                field.dispatchEvent(new editorWindow.Event(
-                    'change',
-                    { bubbles: true }
-                ))
-                field.dispatchEvent(new editorWindow.FocusEvent(
-                    'blur',
-                    { bubbles: true }
-                ))
-            })
+        // Clicking activates the rich-text editor and replaces its DOM node.
+        // Re-query it before typing instead of chaining from the old node.
+        cy.get(selector, { timeout: 30000 })
+            .filter(':visible')
+            .first()
+            .type(`{selectall}{backspace}${value}`, { force: true })
     }
 
     const restoreCreateLogin = () => {
@@ -263,21 +238,18 @@ describe('Create Area - Add Item', () => {
 
         // Editor 2.0 can report a zero-height body while its fixed authoring
         // surface is fully rendered. Wait for the actual required fields.
-        setEditorText('#title', 'text')
+        setEditorText(
+            '#title .ebook_item_text, #title [contenteditable="true"], ' +
+            '#title textarea, #title input, #title',
+            'Sample Test Question'
+        )
 
-        cy.get('#stem', { timeout: 30000 })
-            .should('exist')
-            .then($stem => {
-                const editor = $stem
-                    .find('.ebook_item_text, [contenteditable="true"], textarea, input')
-                    .filter(':visible')
-                    .first()
-                const stemSelector = editor.length
-                    ? '#stem .ebook_item_text, #stem [contenteditable="true"], ' +
-                        '#stem textarea, #stem input'
-                    : '#stem'
-                setEditorText(stemSelector, 'text')
-            })
+        setEditorText(
+            '#stem .ebook_item_text, #stem [contenteditable="true"], ' +
+            '#stem textarea, #stem input, #stem',
+            'Which of the following is the primary function of an ' +
+            'operating system?'
+        )
 
         // Mark option A as the correct answer without toggling it off on retry.
         cy.get('#userans-A, input[type="checkbox"]', { timeout: 30000 })
@@ -301,23 +273,30 @@ describe('Create Area - Add Item', () => {
             .first()
             .click({ force: true })
 
-        // Saving a new item opens a confirmation dialog. Confirm it using the
-        // dialog-local action so the fixed toolbar Save button is not reused.
-        cy.get(
-            '[role="dialog"], .modal:visible, .sweet-alert:visible, ' +
-            '.swal2-popup:visible',
-            { timeout: 30000 }
-        ).filter(':visible')
-            .first()
-            .should('exist')
-            .then($dialog => {
-                const confirm = $dialog
-                    .find('#approve, button, a, [role="button"]')
+        // This confirmation component has no stable dialog class or role.
+        // Anchor on its heading, then use the Save action from that popup.
+        cy.contains(':visible', /^\s*Confirmation\s*$/i, {
+            timeout: 30000,
+        }).should('be.visible')
+            .then($heading => {
+                const dialog = $heading.parents().filter((_, container) => {
+                    const actions = Cypress.$(container)
+                        .find('button, a, [role="button"]')
+                        .filter(':visible')
+                    const labels = actions.toArray().map(action =>
+                        (action.textContent || '').trim()
+                    )
+                    return labels.includes('Cancel') && labels.includes('Save')
+                }).first()
+
+                expect(dialog.length, 'Confirmation dialog')
+                    .to.be.greaterThan(0)
+
+                const confirm = dialog
+                    .find('button, a, [role="button"]')
                     .filter(':visible')
                     .filter((_, control) =>
-                        /^\s*(Save|Yes|OK|Confirm|Approve)\s*$/i.test(
-                            control.textContent || ''
-                        ) || control.id === 'approve'
+                        /^\s*Save\s*$/i.test(control.textContent || '')
                     )
                     .first()
 
