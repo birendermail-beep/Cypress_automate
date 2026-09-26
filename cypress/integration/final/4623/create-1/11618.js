@@ -165,8 +165,9 @@ describe('Create Area - Add Item', () => {
             )
         })
 
-        cy.get('[data-original-title="Add Item"]', { timeout: 30000 })
-            .filter(':visible')
+        cy.contains('button, a, [role="button"]', /^\s*Add\s+Item\s*$/i, {
+            timeout: 30000,
+        }).filter(':visible')
             .first()
             .click({ force: true })
 
