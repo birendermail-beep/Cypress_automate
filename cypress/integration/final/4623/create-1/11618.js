@@ -149,18 +149,12 @@ describe('Create Area - Add Item', () => {
         cy.get('body', { timeout: 30000 }).should('be.visible')
             .and('not.contain.text', 'Default blank page')
 
-        // Add Item is hidden until a lesson is selected in the left panel.
-        cy.contains(':visible', /^\s*Java\s+Building\s+Blocks\s*$/i, {
-            timeout: 30000,
-        }).first().then($lesson => {
-            // Do not click the surrounding li: that only focuses the row and
-            // leaves the right panel empty. Click the real lesson control.
-            const clickableLesson = $lesson.closest(
-                'a, button, [role="button"], [onclick]'
-            )
-            cy.wrap(clickableLesson.length ? clickableLesson : $lesson)
-                .click({ force: true })
-        })
+        // Use the Item Bank's actual lesson control. Text/row clicks only
+        // focus the chapter and leave the right panel empty.
+        cy.get('[data-cy="lesson_obj"]', { timeout: 30000 })
+            .filter(':visible')
+            .first()
+            .click({ force: true })
 
         cy.get('body', { timeout: 30000 }).should($body => {
             expect(
@@ -171,15 +165,10 @@ describe('Create Area - Add Item', () => {
             )
         })
 
-        cy.contains(':visible', /^\s*Add\s+Item\s*$/i, {
-            timeout: 30000,
-        }).first().then($addItem => {
-            const clickableAddItem = $addItem.closest(
-                'a, button, [role="button"], [data-toggle="dropdown"]'
-            )
-            cy.wrap(clickableAddItem.length ? clickableAddItem : $addItem)
-                .click({ force: true })
-        })
+        cy.get('[data-original-title="Add Item"]', { timeout: 30000 })
+            .filter(':visible')
+            .first()
+            .click({ force: true })
 
         // New Item launches Editor 2.0 with window.open(). Cypress cannot
         // control the new browser tab, so capture its URL and visit it here.
