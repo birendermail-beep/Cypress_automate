@@ -58,7 +58,7 @@ describe('Create Area - Add Item', () => {
             expect(projectName, 'BirenderTesting project').to.exist
 
             let project = Cypress.$(projectName).closest(
-                '[data-cy="project-card"], .project-card, .course-card, .card'
+                '[data-cy="project-card"], .my_library_course, .project-card, .course-card, .card'
             )
             if (!project.length) project = Cypress.$(projectName).parent()
 
