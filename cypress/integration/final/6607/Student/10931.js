@@ -4,7 +4,7 @@ import { openDemoLesson } from '../../../../support/student-auth'
 describe('Keyboard shortcuts in the lesson area', () => {
     it('opens the keyboard-shortcut list', () => {
         openDemoLesson()
-        cy.get('#manage_settg, .icomoon-new-24px-gear-1, [aria-label*="Settings" i]', {
+        cy.get('#manage_settg, .icomoon-new-24px-gear-1, [aria-label*="Settings"], [aria-label*="settings"]', {
             timeout: 30000,
         })
             .filter(':visible').first().click({ force: true })
