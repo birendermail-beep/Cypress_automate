@@ -137,7 +137,7 @@ describe('Create Area - Add Item', () => {
                 return
             }
 
-            // The Item Bank is inside the nine-dot switcher immediately
+            // The Item Bank appears when hovering over the nine-dot switcher immediately
             // to the left of the BirenderTesting link in the author header.
             const projectLabels = $body
                 .find('*')
@@ -186,11 +186,15 @@ describe('Create Area - Add Item', () => {
                 'nine-dot author-area switcher beside project name'
             ).to.be.greaterThan(0)
 
-            cy.wrap(headerControls[0]).click({ force: true })
+            cy.wrap(headerControls[0])
+                .trigger('mouseenter', { force: true })
+                .trigger('mouseover', { force: true })
 
             cy.contains(':visible', /^\s*Item\s+Bank\s*$/i, {
                 timeout: 30000,
-            }).first().click({ force: true })
+            }).first()
+                .should('be.visible')
+                .click({ force: true })
         })
 
         cy.get('body', { timeout: 30000 }).should('be.visible')
