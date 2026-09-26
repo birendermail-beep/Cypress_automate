@@ -27,15 +27,20 @@ describe('Create Area - Add Item', () => {
         cy.get('body', { timeout: 30000 }).should('be.visible')
             .and('not.contain.text', 'Default blank page')
 
-        cy.contains('a, button, [role="tab"]', /^\s*Create\s*$/i, {
+        cy.contains(':visible', /^\s*Create\s*$/i, {
             timeout: 30000,
-        }).filter(':visible').first().click({ force: true })
+        }).last().then($label => {
+            const clickable = $label.closest(
+                'a, button, [role="tab"], [role="button"], li'
+            )
+            cy.wrap(clickable.length ? clickable : $label)
+                .click({ force: true })
+        })
 
         // Library and Create can share the same URL. Wait for the Create
         // view itself, identified by the Author action on project cards.
-        cy.contains('a, button', /^\s*Author\s*$/i, { timeout: 30000 })
-            .filter(':visible')
-            .should('have.length.greaterThan', 0)
+        cy.contains(':visible', /^\s*Author\s*$/i, { timeout: 30000 })
+            .should('exist')
         cy.get('body').should('not.contain.text', 'Default blank page')
     }
 
