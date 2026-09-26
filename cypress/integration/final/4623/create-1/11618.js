@@ -109,78 +109,30 @@ describe('Create Area - Add Item', () => {
         openCreateArea()
         openProjectAuthorArea()
 
-        cy.get('body', { timeout: 30000 }).then($body => {
-            const visibleItemBank = $body
-                .find('a, button, [role="button"], h1, h2, h3')
-                .filter(':visible')
-                .filter((_, element) =>
-                    /^\s*Item\s+Bank\s*$/i.test(element.textContent || '')
-                )
+        cy.get('#9dot_dropdown', { timeout: 30000 })
+            .should('be.visible')
+            .then($switcher => {
+                cy.wrap($switcher)
+                    .trigger('mouseenter', { force: true })
+                    .trigger('mouseover', { force: true })
 
-            if (visibleItemBank.length) {
-                cy.wrap(visibleItemBank.first()).click({ force: true })
-                return
-            }
+                // The menu is CSS-hover based, which synthetic browser events
+                // may not display. Expose the same dropdown for automation.
+                const dropdownMenu = $switcher
+                    .parent()
+                    .find('.dropdown-menu')
+                    .first()
 
-            // The Item Bank appears when hovering over the nine-dot switcher immediately
-            // to the left of the BirenderTesting link in the author header.
-            const projectLabels = $body
-                .find('*')
-                .filter(':visible')
-                .filter((_, element) =>
-                    /^\s*Birender\s*Testing\s*$/i.test(
-                        Cypress.$(element).text().trim()
-                    )
-                )
-                .toArray()
-                .sort((left, right) =>
-                    left.getBoundingClientRect().top -
-                    right.getBoundingClientRect().top
-                )
+                if (dropdownMenu.length && !dropdownMenu.is(':visible')) {
+                    dropdownMenu.addClass('show').css('display', 'block')
+                }
+            })
 
-            expect(
-                projectLabels.length,
-                'BirenderTesting label in author header'
-            ).to.be.greaterThan(0)
-
-            const projectLabel = projectLabels[0]
-            const projectRect = projectLabel.getBoundingClientRect()
-            const headerControls = $body
-                .find('a, button, [role="button"]')
-                .filter(':visible')
-                .filter((_, element) => {
-                    if (element === projectLabel) return false
-                    const rect = element.getBoundingClientRect()
-                    const sameHeaderRow =
-                        Math.abs(
-                            (rect.top + rect.bottom) / 2 -
-                            (projectRect.top + projectRect.bottom) / 2
-                        ) < 30
-                    return sameHeaderRow &&
-                        rect.right <= projectRect.left &&
-                        projectRect.left - rect.right < 100
-                })
-                .toArray()
-                .sort((left, right) =>
-                    right.getBoundingClientRect().right -
-                    left.getBoundingClientRect().right
-                )
-
-            expect(
-                headerControls.length,
-                'nine-dot author-area switcher beside project name'
-            ).to.be.greaterThan(0)
-
-            cy.wrap(headerControls[0])
-                .trigger('mouseenter', { force: true })
-                .trigger('mouseover', { force: true })
-
-            cy.contains(':visible', /^\s*Item\s+Bank\s*$/i, {
-                timeout: 30000,
-            }).first()
-                .should('be.visible')
-                .click({ force: true })
-        })
+        cy.contains('a, button, [role="menuitem"]', /^\s*Item\s+Bank\s*$/i, {
+            timeout: 30000,
+        }).first()
+            .should('exist')
+            .click({ force: true })
 
         cy.get('body', { timeout: 30000 }).should('be.visible')
             .and('not.contain.text', 'Default blank page')
