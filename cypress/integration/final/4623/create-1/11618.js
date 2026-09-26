@@ -27,6 +27,34 @@ describe('Create Area - Add Item', () => {
         cy.get('body', { timeout: 30000 }).should('be.visible')
             .and('not.contain.text', 'Default blank page')
 
+        // A restored session may open the last learner course dashboard.
+        // Return to My Library before looking for the Create navigation tab.
+        cy.get('body').then($body => {
+            const createTab = $body.find('*').filter((_, element) =>
+                Cypress.$(element).is(':visible') &&
+                /^\s*Create\s*$/i.test(Cypress.$(element).text().trim())
+            )
+
+            if (createTab.length) return
+
+            const myLibrary = $body
+                .find('a, button, [role="button"]')
+                .filter(':visible')
+                .filter((_, element) =>
+                    /^\s*My\s+Library\s*$/i.test(element.textContent || '')
+                )
+                .first()
+
+            expect(
+                myLibrary.length,
+                'My Library control on restored learner dashboard'
+            ).to.be.greaterThan(0)
+
+            cy.wrap(myLibrary)
+                .invoke('removeAttr', 'target')
+                .click({ force: true })
+        })
+
         cy.contains(':visible', /^\s*Create\s*$/i, {
             timeout: 30000,
         }).last().then($label => {
