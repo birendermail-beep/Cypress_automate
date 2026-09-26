@@ -185,20 +185,34 @@ describe('Create Area - Add Item', () => {
         cy.get('body', { timeout: 30000 }).should('be.visible')
             .and('not.contain.text', 'Default blank page')
 
-        cy.get('body').then($body => {
-            const addItem = $body.find('a, button, [role="button"]')
-                .filter(':visible')
-                .filter((_, element) =>
-                    /^\s*Add\s+Item\s*$/i.test(element.textContent || '')
-                )
-
-            expect(addItem.length, 'Add Item control').to.be.greaterThan(0)
-            cy.wrap(addItem.first()).click({ force: true })
+        // Add Item is hidden until a lesson is selected in the left panel.
+        cy.contains(':visible', /^\s*Java\s+Building\s+Blocks\s*$/i, {
+            timeout: 30000,
+        }).first().then($lesson => {
+            const clickableLesson = $lesson.closest(
+                'a, button, [role="button"], li, [onclick]'
+            )
+            cy.wrap(clickableLesson.length ? clickableLesson : $lesson)
+                .click({ force: true })
         })
 
+        cy.contains(':visible', /^\s*Add\s+Item\s*$/i, {
+            timeout: 30000,
+        }).first().then($addItem => {
+            const clickableAddItem = $addItem.closest(
+                'a, button, [role="button"], [data-toggle="dropdown"]'
+            )
+            cy.wrap(clickableAddItem.length ? clickableAddItem : $addItem)
+                .click({ force: true })
+        })
+
+        cy.contains(':visible', /^\s*New\s+Item\s*$/i, {
+            timeout: 30000,
+        }).first().click({ force: true })
+
         cy.get('body', { timeout: 30000 }).should($body => {
-            expect($body.text(), 'item type choices')
-                .to.match(/Multiple\s+Choice|Add\s+Item/i)
+            expect($body.text(), 'new item type choices')
+                .to.match(/Multiple\s+Choice|New\s+Item|Add\s+Item/i)
         })
 
         cy.get('body').then($body => {
