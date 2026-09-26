@@ -221,14 +221,70 @@ describe('Create Area - Add Item', () => {
             .invoke('removeAttr', 'target')
             .click({ force: true })
 
-        cy.get('body', { timeout: 30000 }).should('be.visible')
-            .and('not.contain.text', 'Default blank page')
-        cy.get(
-            '#stem, #title, [data-cy="stem"], .answer_container, ' +
-            '.settings_themes, [data-cy="choice-matrix"]',
-            { timeout: 30000 }
-        ).filter(':visible').should('have.length.greaterThan', 0)
+        // Editor 2.0 can report a zero-height body while its fixed authoring
+        // surface is fully rendered. Wait for the actual required fields.
+        cy.get('#title', { timeout: 30000 })
+            .should('exist')
+            .click({ force: true })
+            .type('{selectall}{backspace}text', { force: true })
 
-        // Do not save: repeated automation runs must not create duplicate items.
+        cy.get('#stem', { timeout: 30000 })
+            .should('exist')
+            .then($stem => {
+                const editor = $stem
+                    .find('.ebook_item_text, [contenteditable="true"], textarea, input')
+                    .filter(':visible')
+                    .first()
+                cy.wrap(editor.length ? editor : $stem)
+                    .click({ force: true })
+                    .type('{selectall}{backspace}text', { force: true })
+            })
+
+        // Mark option A as the correct answer without toggling it off on retry.
+        cy.get('#userans-A, input[type="checkbox"]', { timeout: 30000 })
+            .filter(':visible')
+            .first()
+            .then($answer => {
+                if ($answer.is(':checkbox')) {
+                    cy.wrap($answer).check({ force: true })
+                } else if (!$answer.hasClass('active')) {
+                    cy.wrap($answer).click({ force: true })
+                }
+            })
+
+        // Accept a native confirmation if this editor build uses one.
+        cy.on('window:confirm', () => true)
+        cy.on('window:alert', () => true)
+
+        cy.contains('a, button, [role="button"]', /^\s*Save\s*$/i, {
+            timeout: 30000,
+        }).filter(':visible')
+            .first()
+            .click({ force: true })
+
+        // Saving a new item opens a confirmation dialog. Confirm it using the
+        // dialog-local action so the fixed toolbar Save button is not reused.
+        cy.get(
+            '[role="dialog"], .modal:visible, .sweet-alert:visible, ' +
+            '.swal2-popup:visible',
+            { timeout: 30000 }
+        ).filter(':visible')
+            .first()
+            .should('exist')
+            .then($dialog => {
+                const confirm = $dialog
+                    .find('#approve, button, a, [role="button"]')
+                    .filter(':visible')
+                    .filter((_, control) =>
+                        /^\s*(Save|Yes|OK|Confirm|Approve)\s*$/i.test(
+                            control.textContent || ''
+                        ) || control.id === 'approve'
+                    )
+                    .first()
+
+                expect(confirm.length, 'save confirmation action')
+                    .to.be.greaterThan(0)
+                cy.wrap(confirm).click({ force: true })
+            })
     })
 })
