@@ -139,27 +139,32 @@ describe('Create Area - Add Item', () => {
 
             // The Item Bank is inside the nine-dot switcher immediately
             // to the left of the BirenderTesting link in the author header.
-            const projectLink = $body
-                .find('a')
+            const projectLabels = $body
+                .find('*')
                 .filter(':visible')
                 .filter((_, element) =>
                     /^\s*Birender\s*Testing\s*$/i.test(
-                        element.textContent || ''
+                        Cypress.$(element).text().trim()
                     )
                 )
-                .first()
+                .toArray()
+                .sort((left, right) =>
+                    left.getBoundingClientRect().top -
+                    right.getBoundingClientRect().top
+                )
 
             expect(
-                projectLink.length,
-                'BirenderTesting link in author header'
+                projectLabels.length,
+                'BirenderTesting label in author header'
             ).to.be.greaterThan(0)
 
-            const projectRect = projectLink[0].getBoundingClientRect()
+            const projectLabel = projectLabels[0]
+            const projectRect = projectLabel.getBoundingClientRect()
             const headerControls = $body
                 .find('a, button, [role="button"]')
                 .filter(':visible')
                 .filter((_, element) => {
-                    if (element === projectLink[0]) return false
+                    if (element === projectLabel) return false
                     const rect = element.getBoundingClientRect()
                     const sameHeaderRow =
                         Math.abs(
