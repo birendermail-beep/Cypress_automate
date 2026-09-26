@@ -24,7 +24,7 @@ describe('Change student email', () => {
                 .first()
                 .click({ force: true })
             cy.get(
-                'input[type="email"], input[name*="email"], input[placeholder*="email" i]',
+                'input[type="email"], input[name*="email"], input[placeholder*="email"], input[placeholder*="Email"], input[placeholder*="EMAIL"]',
                 { timeout: 30000 }
             ).filter(':visible').should('have.length.greaterThan', 0)
             // Intentionally do not submit or modify the real account email.
