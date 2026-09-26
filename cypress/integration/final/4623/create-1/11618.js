@@ -9,6 +9,46 @@ import {
 describe('Create Area - Add Item', () => {
     const projectName = 'BirenderTesting'
 
+    const setEditorText = (selector, value) => {
+        cy.get(selector, { timeout: 30000 })
+            .should('exist')
+            .then($field => {
+                const field = $field[0]
+                const editorWindow = field.ownerDocument.defaultView
+                field.focus()
+
+                if (/^(INPUT|TEXTAREA)$/.test(field.tagName)) {
+                    const prototype = field.tagName === 'INPUT'
+                        ? editorWindow.HTMLInputElement.prototype
+                        : editorWindow.HTMLTextAreaElement.prototype
+                    const valueSetter = Object.getOwnPropertyDescriptor(
+                        prototype,
+                        'value'
+                    ).set
+                    valueSetter.call(field, value)
+                } else {
+                    field.textContent = value
+                }
+
+                // Editor 2.0 replaces editable nodes after an input event.
+                // Dispatch everything from this callback so Cypress does not
+                // continue a command chain against the detached old node.
+                field.dispatchEvent(new editorWindow.InputEvent('input', {
+                    bubbles: true,
+                    inputType: 'insertText',
+                    data: value,
+                }))
+                field.dispatchEvent(new editorWindow.Event(
+                    'change',
+                    { bubbles: true }
+                ))
+                field.dispatchEvent(new editorWindow.FocusEvent(
+                    'blur',
+                    { bubbles: true }
+                ))
+            })
+    }
+
     const restoreCreateLogin = () => {
         cy.session(
             ['create-area-login', login_username],
@@ -223,10 +263,7 @@ describe('Create Area - Add Item', () => {
 
         // Editor 2.0 can report a zero-height body while its fixed authoring
         // surface is fully rendered. Wait for the actual required fields.
-        cy.get('#title', { timeout: 30000 })
-            .should('exist')
-            .click({ force: true })
-            .type('{selectall}{backspace}text', { force: true })
+        setEditorText('#title', 'text')
 
         cy.get('#stem', { timeout: 30000 })
             .should('exist')
@@ -235,9 +272,11 @@ describe('Create Area - Add Item', () => {
                     .find('.ebook_item_text, [contenteditable="true"], textarea, input')
                     .filter(':visible')
                     .first()
-                cy.wrap(editor.length ? editor : $stem)
-                    .click({ force: true })
-                    .type('{selectall}{backspace}text', { force: true })
+                const stemSelector = editor.length
+                    ? '#stem .ebook_item_text, #stem [contenteditable="true"], ' +
+                        '#stem textarea, #stem input'
+                    : '#stem'
+                setEditorText(stemSelector, 'text')
             })
 
         // Mark option A as the correct answer without toggling it off on retry.
