@@ -37,38 +37,53 @@ export default class LoginPage extends BasePage {
 
 			const emailSelector =
 				'#email, input[type="email"], input[name="email"], input[placeholder="ENTER EMAIL"]'
+			const passwordSelector =
+				'#password, input[type="password"], input[name="password"], input[placeholder="ENTER PASSWORD"]'
 
-			// Headed Chrome can render this controlled input more slowly than
-			// headless Chrome. Type at a human pace and retry once if a render
-			// replaces the field before its state is retained.
-			const typeEmail = delay => {
-				cy.get(emailSelector, { timeout: 30000 })
+			// The login form replaces its inputs while rendering. Set values through
+			// the native property setter, notify the framework, then re-query the DOM.
+			// Retry against the replacement node if the value was not retained.
+			const setStableInputValue = (selector, value, fieldName, attempt = 0) => {
+				return cy.get(selector, { timeout: 30000 })
 					.filter(':visible')
 					.first()
 					.should('be.enabled')
-					.type(resolvedUsername, {
-						log: false,
-						delay,
-						parseSpecialCharSequences: false,
+					.then($input => {
+						const input = $input[0]
+						const valueSetter = Object.getOwnPropertyDescriptor(
+							window.HTMLInputElement.prototype,
+							'value'
+						).set
+
+						input.focus()
+						valueSetter.call(input, value)
+						input.dispatchEvent(new Event('input', { bubbles: true }))
+						input.dispatchEvent(new Event('change', { bubbles: true }))
+						input.blur()
 					})
-			}
-
-			typeEmail(20)
-
-			cy.get(emailSelector, { timeout: 30000 })
-				.filter(':visible')
-				.first()
-				.then($input => {
-					if ($input.val() !== resolvedUsername) {
-						cy.get(emailSelector, { timeout: 30000 })
+					.then(() => cy.wait(300, { log: false }))
+					.then(() =>
+						cy.get(selector, { timeout: 30000 })
 							.filter(':visible')
 							.first()
-							.should('be.enabled')
-							.clear()
+							.then($input => {
+								if ($input.val() === value) return
+								if (attempt < 3) {
+									return setStableInputValue(
+										selector,
+										value,
+										fieldName,
+										attempt + 1
+									)
+								}
+								throw new Error(
+									`${fieldName} input did not retain its value after the login form re-rendered.`
+								)
+							})
+					)
+			}
 
-						typeEmail(40)
-					}
-				})
+			setStableInputValue(emailSelector, resolvedUsername, 'Email')
 
 			cy.get(emailSelector, { timeout: 30000 })
 				.filter(':visible')
@@ -78,28 +93,12 @@ export default class LoginPage extends BasePage {
 					expect($input[0].checkValidity(), 'email field validity').to.equal(true)
 				})
 
-			const passwordSelector =
-				'#password, input[type="password"], input[name="password"], input[placeholder="ENTER PASSWORD"]'
+			setStableInputValue(passwordSelector, resolvedPassword, 'Password')
 
 			cy.get(passwordSelector, { timeout: 30000 })
 				.filter(':visible')
 				.first()
-				.should('be.enabled')
-				.clear()
-
-			cy.get(passwordSelector, { timeout: 30000 })
-				.filter(':visible')
-				.first()
-				.should('be.enabled')
-				.type(resolvedPassword, {
-					log: false,
-					parseSpecialCharSequences: false,
-				})
-
-			cy.get(passwordSelector, { timeout: 30000 })
-				.filter(':visible')
-				.first()
-				.should('be.enabled')
+				.should('have.value', resolvedPassword)
 
 			cy.get('body').then($body => {
 				const submitSelector = [
@@ -112,12 +111,14 @@ export default class LoginPage extends BasePage {
 					cy.get(submitSelector)
 						.filter(':visible')
 						.first()
+						.should('be.enabled')
 						.click({ force: true })
 					return
 				}
 
 				cy.contains('button', /^\s*SIGN IN\s*$/i, { timeout: 30000 })
 					.should('be.visible')
+					.and('be.enabled')
 					.click({ force: true })
 			})
 
