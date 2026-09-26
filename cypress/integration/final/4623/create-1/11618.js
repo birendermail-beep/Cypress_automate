@@ -45,10 +45,23 @@ describe('Create Area - Add Item', () => {
     }
 
     const openProjectAuthorArea = () => {
-        cy.contains(/^\s*Birender\s*Testing\s*$/i, {
-            timeout: 30000,
-        }).filter(':visible').first().then($projectName => {
-            const projectCard = $projectName.parents().filter((_, element) => {
+        const visibleProjectTitles = $body =>
+            $body.find('*').filter((_, element) => {
+                const $element = Cypress.$(element)
+                return $element.is(':visible') &&
+                    /^\s*Birender\s*Testing\s*$/i.test(
+                        $element.text().trim()
+                    )
+            })
+
+        cy.get('body', { timeout: 30000 }).should($body => {
+            expect(
+                visibleProjectTitles($body).length,
+                'visible BirenderTesting project title'
+            ).to.be.greaterThan(0)
+        }).then($body => {
+            const projectName = visibleProjectTitles($body).first()
+            const projectCard = projectName.parents().filter((_, element) => {
                 return Cypress.$(element)
                     .find('a, button, [role="button"]')
                     .filter(':visible')
