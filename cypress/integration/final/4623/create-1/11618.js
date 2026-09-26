@@ -137,26 +137,51 @@ describe('Create Area - Add Item', () => {
                 return
             }
 
-            const authorMenu = $body.find([
-                '[aria-label*="menu" i]',
-                '[title*="menu" i]',
-                '[aria-label*="app" i]',
-                '[title*="app" i]',
-                '[class*="icomoon"][class*="grid"]',
-                '[class*="icomoon"][class*="menu"]',
-                '[class*="icomoon"][class*="app"]',
-            ].join(',')).filter(':visible').first()
+            // The Item Bank is inside the nine-dot switcher immediately
+            // to the left of the BirenderTesting link in the author header.
+            const projectLink = $body
+                .find('a')
+                .filter(':visible')
+                .filter((_, element) =>
+                    /^\s*Birender\s*Testing\s*$/i.test(
+                        element.textContent || ''
+                    )
+                )
+                .first()
 
             expect(
-                authorMenu.length,
-                'author-area application menu beside the logo'
+                projectLink.length,
+                'BirenderTesting link in author header'
             ).to.be.greaterThan(0)
 
-            const clickableMenu = authorMenu.closest(
-                'a, button, [role="button"]'
-            )
-            cy.wrap(clickableMenu.length ? clickableMenu : authorMenu)
-                .click({ force: true })
+            const projectRect = projectLink[0].getBoundingClientRect()
+            const headerControls = $body
+                .find('a, button, [role="button"]')
+                .filter(':visible')
+                .filter((_, element) => {
+                    if (element === projectLink[0]) return false
+                    const rect = element.getBoundingClientRect()
+                    const sameHeaderRow =
+                        Math.abs(
+                            (rect.top + rect.bottom) / 2 -
+                            (projectRect.top + projectRect.bottom) / 2
+                        ) < 30
+                    return sameHeaderRow &&
+                        rect.right <= projectRect.left &&
+                        projectRect.left - rect.right < 100
+                })
+                .toArray()
+                .sort((left, right) =>
+                    right.getBoundingClientRect().right -
+                    left.getBoundingClientRect().right
+                )
+
+            expect(
+                headerControls.length,
+                'nine-dot author-area switcher beside project name'
+            ).to.be.greaterThan(0)
+
+            cy.wrap(headerControls[0]).click({ force: true })
 
             cy.contains(':visible', /^\s*Item\s+Bank\s*$/i, {
                 timeout: 30000,
