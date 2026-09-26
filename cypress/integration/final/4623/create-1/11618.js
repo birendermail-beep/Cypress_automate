@@ -96,9 +96,44 @@ describe('Create Area - Add Item', () => {
         openCreateArea()
         openProjectAuthorArea()
 
-        cy.contains('a, button, [role="button"], h1, h2, h3', /^\s*Item\s+Bank\s*$/i, {
-            timeout: 30000,
-        }).filter(':visible').first().click({ force: true })
+        cy.get('body', { timeout: 30000 }).then($body => {
+            const visibleItemBank = $body
+                .find('a, button, [role="button"], h1, h2, h3')
+                .filter(':visible')
+                .filter((_, element) =>
+                    /^\s*Item\s+Bank\s*$/i.test(element.textContent || '')
+                )
+
+            if (visibleItemBank.length) {
+                cy.wrap(visibleItemBank.first()).click({ force: true })
+                return
+            }
+
+            const authorMenu = $body.find([
+                '[aria-label*="menu" i]',
+                '[title*="menu" i]',
+                '[aria-label*="app" i]',
+                '[title*="app" i]',
+                '[class*="icomoon"][class*="grid"]',
+                '[class*="icomoon"][class*="menu"]',
+                '[class*="icomoon"][class*="app"]',
+            ].join(',')).filter(':visible').first()
+
+            expect(
+                authorMenu.length,
+                'author-area application menu beside the logo'
+            ).to.be.greaterThan(0)
+
+            const clickableMenu = authorMenu.closest(
+                'a, button, [role="button"]'
+            )
+            cy.wrap(clickableMenu.length ? clickableMenu : authorMenu)
+                .click({ force: true })
+
+            cy.contains(':visible', /^\s*Item\s+Bank\s*$/i, {
+                timeout: 30000,
+            }).first().click({ force: true })
+        })
 
         cy.get('body', { timeout: 30000 }).should('be.visible')
             .and('not.contain.text', 'Default blank page')
