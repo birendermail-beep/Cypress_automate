@@ -126,6 +126,28 @@ export default class LoginPage extends BasePage {
 				'not.include',
 				'login.php'
 			)
+
+			// The post-login welcome page now has a timed Continue button.
+			// Bypass its 15-second timer by using the lower My Library action.
+			cy.get('body', { timeout: 30000 }).then($body => {
+				const hasTimedContinue = /Continue\s*\(\s*\d+s?\s*\)/i.test(
+					$body.text()
+				)
+				const libraryActions = $body
+					.find('a, button, [role="button"]')
+					.filter(':visible')
+					.filter((_, element) =>
+						/^\s*My Library\s*$/i.test(element.textContent || '')
+					)
+
+				if (hasTimedContinue && libraryActions.length) {
+					cy.wrap(libraryActions.last())
+						.should('be.visible')
+						.click({ force: true })
+					cy.location('pathname', { timeout: 30000 })
+						.should('not.include', 'login.php')
+				}
+			})
 		})
 	}
 
