@@ -21,21 +21,21 @@ describe('Create Area - Add Item', () => {
         )
     }
 
-    const openMyProjects = () => {
+    const openCreateArea = () => {
         restoreCreateLogin()
         cy.visit('/app/')
         cy.get('body', { timeout: 30000 }).should('be.visible')
             .and('not.contain.text', 'Default blank page')
 
         cy.get('body').then($body => {
-            const projects = $body.find(
-                '[data-cy="project"]:visible, a:visible, button:visible, [role="tab"]:visible'
+            const createTab = $body.find(
+                '[data-cy="create"]:visible, [data-cy="project"]:visible, a:visible, button:visible, [role="tab"]:visible'
             ).filter((_, element) =>
-                /^\s*My\s+Projects?\s*$/i.test(element.textContent || '')
+                /^\s*(Create|My\s+Projects?)\s*$/i.test(element.textContent || '')
             )
 
-            if (projects.length) {
-                cy.wrap(projects.first()).click({ force: true })
+            if (createTab.length) {
+                cy.wrap(createTab.first()).click({ force: true })
             } else {
                 cy.visit('/educator/project/', { failOnStatusCode: false })
             }
@@ -74,7 +74,7 @@ describe('Create Area - Add Item', () => {
     }
 
     it('opens Add Item for the Birender testing project', () => {
-        openMyProjects()
+        openCreateArea()
         openProjectAuthorArea()
 
         cy.contains('a, button, [role="button"], h1, h2, h3', /^\s*Item\s+Bank\s*$/i, {
