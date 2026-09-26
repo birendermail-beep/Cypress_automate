@@ -172,35 +172,76 @@ describe('Create Area - Add Item', () => {
 
         cy.contains(':visible', /^\s*New\s+Item\s*$/i, {
             timeout: 30000,
-        }).first().click({ force: true })
+        }).first()
+            .invoke('removeAttr', 'target')
+            .click({ force: true })
 
         cy.get('body', { timeout: 30000 }).should($body => {
             expect($body.text(), 'new item type choices')
                 .to.match(/Multiple\s+Choice|New\s+Item|Add\s+Item/i)
         })
 
-        cy.get('body').then($body => {
-            const multipleChoice = $body.find(
-                '.multiple_choice:visible, [data-cy="multiple_choice"]:visible, a:visible, button:visible'
-            ).filter((_, element) =>
-                /Multiple\s+Choice/i.test(
-                    element.textContent || element.getAttribute('title') || ''
+        cy.get('body', { timeout: 30000 }).then($body => {
+            const findTemplateCard = templateName => {
+                const labels = $body.find('*').filter((_, element) =>
+                    Cypress.$(element).is(':visible') &&
+                    Cypress.$(element).text().trim() === templateName
                 )
-            )
 
-            if (!multipleChoice.length) {
-                cy.log('Multiple Choice template is not exposed in the current Add Item view')
-                return
+                let result = Cypress.$()
+                labels.each((_, label) => {
+                    const card = Cypress.$(label).parents().filter(
+                        (__, ancestor) => Cypress.$(ancestor)
+                            .find('a, button, [role="button"]')
+                            .filter(':visible')
+                            .filter((___, control) =>
+                                /^\s*Create\s*$/i.test(
+                                    control.textContent || ''
+                                )
+                            ).length > 0
+                    ).first()
+
+                    if (!result.length && card.length) result = card
+                })
+                return result
             }
 
-            cy.wrap(multipleChoice.first()).click({ force: true })
-            cy.get('body', { timeout: 30000 }).should('be.visible')
-                .and('not.contain.text', 'Default blank page')
-            cy.get(
-                '#stem, #title, [data-cy="stem"], .answer_container, .settings_themes',
-                { timeout: 30000 }
-            ).filter(':visible').should('have.length.greaterThan', 0)
+            const multipleChoiceCard = findTemplateCard('Multiple Choice')
+            const choiceMatrixCard = findTemplateCard('Choice Matrix')
+            const templateCard = multipleChoiceCard.length
+                ? multipleChoiceCard
+                : choiceMatrixCard
+
+            expect(
+                templateCard.length,
+                'Multiple Choice or Choice Matrix template card'
+            ).to.be.greaterThan(0)
+
+            const selectedTemplate = multipleChoiceCard.length
+                ? 'Multiple Choice'
+                : 'Choice Matrix'
+            cy.log(`Creating ${selectedTemplate} item`)
+
+            const createButton = templateCard
+                .find('a, button, [role="button"]')
+                .filter(':visible')
+                .filter((_, control) =>
+                    /^\s*Create\s*$/i.test(control.textContent || '')
+                )
+                .first()
+
+            cy.wrap(createButton)
+                .invoke('removeAttr', 'target')
+                .click({ force: true })
         })
+
+        cy.get('body', { timeout: 30000 }).should('be.visible')
+            .and('not.contain.text', 'Default blank page')
+        cy.get(
+            '#stem, #title, [data-cy="stem"], .answer_container, ' +
+            '.settings_themes, [data-cy="choice-matrix"]',
+            { timeout: 30000 }
+        ).filter(':visible').should('have.length.greaterThan', 0)
 
         // Do not save: repeated automation runs must not create duplicate items.
     })
