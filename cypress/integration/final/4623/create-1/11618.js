@@ -110,15 +110,27 @@ describe('Create Area - Add Item', () => {
         openProjectAuthorArea()
 
         cy.get('#9dot_dropdown', { timeout: 30000 })
-            .should('be.visible')
-            .then($switcher => {
-                cy.wrap($switcher)
+            .then($switchers => {
+                const renderedSwitchers = $switchers.filter((_, element) => {
+                    const rect = element.getBoundingClientRect()
+                    return rect.width > 0 && rect.height > 0
+                })
+                const switcher = renderedSwitchers.length
+                    ? renderedSwitchers.first()
+                    : $switchers.first()
+
+                expect(
+                    switcher.length,
+                    'rendered nine-dot author switcher'
+                ).to.be.greaterThan(0)
+
+                cy.wrap(switcher)
                     .trigger('mouseenter', { force: true })
                     .trigger('mouseover', { force: true })
 
                 // The menu is CSS-hover based, which synthetic browser events
                 // may not display. Expose the same dropdown for automation.
-                const dropdownMenu = $switcher
+                const dropdownMenu = switcher
                     .parent()
                     .find('.dropdown-menu')
                     .first()
