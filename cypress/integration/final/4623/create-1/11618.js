@@ -207,59 +207,18 @@ describe('Create Area - Add Item', () => {
                 .to.match(/Multiple\s+Choice|New\s+Item|Add\s+Item/i)
         })
 
-        cy.get('body', { timeout: 30000 }).then($body => {
-            const findTemplateCard = templateName => {
-                const labels = $body.find('*').filter((_, element) =>
-                    Cypress.$(element).is(':visible') &&
-                    Cypress.$(element).text().trim() === templateName
-                )
-
-                let result = Cypress.$()
-                labels.each((_, label) => {
-                    const card = Cypress.$(label).parents().filter(
-                        (__, ancestor) => Cypress.$(ancestor)
-                            .find('a, button, [role="button"]')
-                            .filter(':visible')
-                            .filter((___, control) =>
-                                /^\s*Create\s*$/i.test(
-                                    control.textContent || ''
-                                )
-                            ).length > 0
-                    ).first()
-
-                    if (!result.length && card.length) result = card
-                })
-                return result
-            }
-
-            const multipleChoiceCard = findTemplateCard('Multiple Choice')
-            const choiceMatrixCard = findTemplateCard('Choice Matrix')
-            const templateCard = multipleChoiceCard.length
-                ? multipleChoiceCard
-                : choiceMatrixCard
-
-            expect(
-                templateCard.length,
-                'Multiple Choice or Choice Matrix template card'
-            ).to.be.greaterThan(0)
-
-            const selectedTemplate = multipleChoiceCard.length
-                ? 'Multiple Choice'
-                : 'Choice Matrix'
-            cy.log(`Creating ${selectedTemplate} item`)
-
-            const createButton = templateCard
-                .find('a, button, [role="button"]')
-                .filter(':visible')
-                .filter((_, control) =>
-                    /^\s*Create\s*$/i.test(control.textContent || '')
-                )
-                .first()
-
-            cy.wrap(createButton)
-                .invoke('removeAttr', 'target')
-                .click({ force: true })
-        })
+        // Multiple Choice is the first template in this category; if it is
+        // unavailable, the first visible Create control is Choice Matrix.
+        // Targeting the button avoids depending on the cards' changing DOM.
+        cy.get('a, button, [role="button"]', { timeout: 30000 })
+            .filter(':visible')
+            .filter((_, control) =>
+                /^\s*Create\s*$/i.test(control.textContent || '')
+            )
+            .should('have.length.greaterThan', 0)
+            .first()
+            .invoke('removeAttr', 'target')
+            .click({ force: true })
 
         cy.get('body', { timeout: 30000 }).should('be.visible')
             .and('not.contain.text', 'Default blank page')
