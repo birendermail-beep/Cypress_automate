@@ -22,7 +22,7 @@ describe('Student account activation', () => {
             cy.get('.modal:visible, [role="dialog"]:visible', { timeout: 30000 })
                 .should('be.visible')
             cy.get(
-                'input[name*="code"], input[id*="code"], input[placeholder*="code" i]',
+                'input[name*="code"], input[id*="code"], input[placeholder*="code"], input[placeholder*="Code"], input[placeholder*="CODE"]',
                 { timeout: 30000 }
             ).filter(':visible').should('have.length.greaterThan', 0)
             // Intentionally do not enter or submit an activation code.
