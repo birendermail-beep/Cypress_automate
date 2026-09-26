@@ -10,7 +10,7 @@ describe('Course credit', () => {
 
         cy.get('body').then($body => {
             const profile = $body.find(
-                '[aria-label*="profile" i]:visible, [title*="profile" i]:visible, .profile:visible, .user-profile:visible'
+                '[aria-label*="profile"]:visible, [aria-label*="Profile"]:visible, [title*="profile"]:visible, [title*="Profile"]:visible, .profile:visible, .user-profile:visible'
             ).first()
 
             if (profile.length) cy.wrap(profile).click({ force: true })
