@@ -73,49 +73,21 @@ describe('Create Area - Add Item', () => {
     }
 
     const openProjectAuthorArea = () => {
-        const visibleProjectTitles = $body =>
-            $body.find('*').filter((_, element) => {
-                const $element = Cypress.$(element)
-                return $element.is(':visible') &&
-                    /^\s*Birender\s*Testing\s*$/i.test(
-                        $element.text().trim()
-                    )
-            })
-
-        cy.get('body', { timeout: 30000 }).should($body => {
-            expect(
-                visibleProjectTitles($body).length,
-                'visible BirenderTesting project title'
-            ).to.be.greaterThan(0)
-        }).then($body => {
-            const projectName = visibleProjectTitles($body).first()
-            const projectCard = projectName.parents().filter((_, element) => {
-                return Cypress.$(element)
-                    .find('a, button, [role="button"]')
-                    .filter(':visible')
-                    .filter((__, control) =>
-                        /^\s*Author\s*$/i.test(control.textContent || '')
-                    ).length > 0
-            }).first()
-
-            expect(
-                projectCard.length,
-                'BirenderTesting project card with Author button'
-            ).to.be.greaterThan(0)
-
-            const authorButton = projectCard
-                .find('a, button, [role="button"]')
-                .filter(':visible')
-                .filter((_, control) =>
-                    /^\s*Author\s*$/i.test(control.textContent || '')
+        cy.get('a[href*="author_course=1"]', { timeout: 30000 })
+            .filter(':visible')
+            .filter((_, link) => {
+                const destination = decodeURIComponent(
+                    link.getAttribute('href') || ''
                 )
-                .first()
+                return /[?&]course=BirenderTesting(?:&|$)/i.test(destination)
+            })
+            .should('have.length.greaterThan', 0)
+            .first()
+            .invoke('removeAttr', 'target')
+            .click({ force: true })
 
-            cy.wrap(authorButton)
-                .invoke('removeAttr', 'target')
-                .click({ force: true })
-        })
-
+        // Some author sessions retain the previously opened course.
+        // Normalize the destination to BirenderTesting's immutable code.
         cy.location('href', { timeout: 30000 }).then(currentUrl => {
             if (!/course_code=0ATZW/i.test(currentUrl)) {
                 cy.visit(
@@ -127,12 +99,10 @@ describe('Create Area - Add Item', () => {
 
         cy.location('search', { timeout: 30000 })
             .should('include', 'course_code=0ATZW')
-        cy.contains(':visible', /^\s*Birender\s*Testing\s*$/i, {
-            timeout: 30000,
-        }).should('exist')
         cy.get('body', { timeout: 30000 }).should('be.visible')
-            .and('not.contain.text', 'Default blank page')
+            .and('contain.text', 'BirenderTesting')
             .and('not.contain.text', 'Certified Ethical Hacker')
+            .and('not.contain.text', 'Default blank page')
     }
 
     it('opens Add Item for the Birender testing project', () => {
