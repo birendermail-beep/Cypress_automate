@@ -85,10 +85,17 @@ describe('Student course contents', () => {
         cy.contains(':visible', exact('Lessons')).should('be.visible')
         cy.get('body').then($body => {
             const visibleTabs = ['Lessons', 'Glossary', 'Review'].filter(label =>
-                [...$body.find('a, button, [role="tab"]')]
-                    .some(element =>
-                        Cypress.$(element).is(':visible') &&
-                        new RegExp('^\\s*' + label + '\\s*
+                [...$body.find('a, button, [role="tab"]')].some(element => {
+                    const text = (element.textContent || '').trim()
+                    return Cypress.$(element).is(':visible') &&
+                        text.toLowerCase() === label.toLowerCase()
+                })
+            )
+            expect(visibleTabs, 'available course navigation tabs')
+                .to.include('Lessons')
+            cy.log('Available navigation: ' + visibleTabs.join(', '))
+        })
+    })
 
     lessonTest('shows unique positive lesson numbers', () => {
         cy.get('body').then($body => {
