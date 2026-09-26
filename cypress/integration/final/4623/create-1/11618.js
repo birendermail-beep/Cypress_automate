@@ -7,7 +7,7 @@ import {
 } from '../../../../page-objects/pages/index'
 
 describe('Create Area - Add Item', () => {
-    const projectName = 'Birender testing'
+    const projectName = 'BirenderTesting'
 
     const restoreCreateLogin = () => {
         cy.session(
@@ -45,14 +45,32 @@ describe('Create Area - Add Item', () => {
     }
 
     const openProjectAuthorArea = () => {
-        cy.contains(
-            '.my_library_course',
-            /Birender\s*Testing/i,
-            { timeout: 30000 }
-        ).filter(':visible').first().within(() => {
-            cy.contains('a, button', /^\s*Author\s*$/i, {
-                timeout: 30000,
-            }).filter(':visible').first()
+        cy.contains(/^\s*Birender\s*Testing\s*$/i, {
+            timeout: 30000,
+        }).filter(':visible').first().then($projectName => {
+            const projectCard = $projectName.parents().filter((_, element) => {
+                return Cypress.$(element)
+                    .find('a, button, [role="button"]')
+                    .filter(':visible')
+                    .filter((__, control) =>
+                        /^\s*Author\s*$/i.test(control.textContent || '')
+                    ).length > 0
+            }).first()
+
+            expect(
+                projectCard.length,
+                'BirenderTesting project card with Author button'
+            ).to.be.greaterThan(0)
+
+            const authorButton = projectCard
+                .find('a, button, [role="button"]')
+                .filter(':visible')
+                .filter((_, control) =>
+                    /^\s*Author\s*$/i.test(control.textContent || '')
+                )
+                .first()
+
+            cy.wrap(authorButton)
                 .invoke('removeAttr', 'target')
                 .click({ force: true })
         })
