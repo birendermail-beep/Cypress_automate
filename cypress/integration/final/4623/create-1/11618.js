@@ -116,8 +116,23 @@ describe('Create Area - Add Item', () => {
                 .click({ force: true })
         })
 
+        cy.location('href', { timeout: 30000 }).then(currentUrl => {
+            if (!/course_code=0ATZW/i.test(currentUrl)) {
+                cy.visit(
+                    '/educator/project/?author_course=1&func=properties' +
+                    '&from_myproject=1&course_code=0ATZW'
+                )
+            }
+        })
+
+        cy.location('search', { timeout: 30000 })
+            .should('include', 'course_code=0ATZW')
+        cy.contains(':visible', /^\s*Birender\s*Testing\s*$/i, {
+            timeout: 30000,
+        }).should('exist')
         cy.get('body', { timeout: 30000 }).should('be.visible')
             .and('not.contain.text', 'Default blank page')
+            .and('not.contain.text', 'Certified Ethical Hacker')
     }
 
     it('opens Add Item for the Birender testing project', () => {
