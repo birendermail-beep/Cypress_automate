@@ -130,7 +130,7 @@ describe('Student course contents', () => {
     })
 
     lessonTest('searches the Lessons list', () => {
-        cy.get('input[placeholder*="Search" i], [data-cy="searchbox"]', {
+        cy.get('input[placeholder*="Search"], input[placeholder*="search"], [data-cy="searchbox"]', {
             timeout: 30000,
         }).filter(':visible').first().clear().type('Security')
         cy.contains(':visible', /Search\s+Lessons/i)
