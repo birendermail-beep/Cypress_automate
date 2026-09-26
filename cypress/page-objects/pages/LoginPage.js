@@ -51,7 +51,7 @@ export default class LoginPage extends BasePage {
 					.then($input => {
 						const input = $input[0]
 						const valueSetter = Object.getOwnPropertyDescriptor(
-							window.HTMLInputElement.prototype,
+							input.ownerDocument.defaultView.HTMLInputElement.prototype,
 							'value'
 						).set
 
