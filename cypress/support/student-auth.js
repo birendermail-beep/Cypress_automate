@@ -6,11 +6,33 @@ import {
 } from '../page-objects/pages/index'
 
 export const restoreStudentLogin = (sessionScope = 'jigyaasa') => {
-    cy.session(['student-login', sessionScope, login_username], () => {
-        cy.visit('/app/')
-        Navbar.clickOnLogin()
-        LoginPage.loginPage(login_username, login_password)
-    })
+    cy.session(
+        ['student-login', sessionScope, login_username],
+        () => {
+            cy.visit('/app/')
+            Navbar.clickOnLogin()
+            LoginPage.loginPage(login_username, login_password)
+        },
+        {
+            cacheAcrossSpecs: true,
+            validate() {
+                cy.request({
+                    url: '/app/',
+                    failOnStatusCode: false,
+                }).then(response => {
+                    expect(response.status, 'student session response').to.be.lessThan(400)
+                    expect(
+                        response.redirectedToUrl || '',
+                        'student session must not redirect to login'
+                    ).not.to.include('login.php')
+                    expect(
+                        String(response.body),
+                        'student session must not return the login form'
+                    ).not.to.match(/name=["']?(?:email|password)["']?/i)
+                })
+            },
+        }
+    )
 }
 
 export const visitDemoCourse = () => {
