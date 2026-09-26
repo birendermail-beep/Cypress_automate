@@ -170,6 +170,12 @@ describe('Create Area - Add Item', () => {
                 .click({ force: true })
         })
 
+        // New Item launches Editor 2.0 with window.open(). Cypress cannot
+        // control the new browser tab, so capture its URL and visit it here.
+        cy.window().then(win => {
+            cy.stub(win, 'open').as('newItemWindow').returns(null)
+        })
+
         cy.contains(':visible', /^\s*New\s+Item\s*$/i, {
             timeout: 30000,
         }).first().then($newItemLabel => {
@@ -185,6 +191,16 @@ describe('Create Area - Add Item', () => {
                 .invoke('removeAttr', 'target')
                 .click({ force: true })
         })
+
+        cy.get('@newItemWindow', { timeout: 30000 })
+            .should('have.been.called')
+            .then(openStub => {
+                const editorUrl = openStub.firstCall.args[0]
+                expect(editorUrl, 'Editor 2.0 popup URL')
+                    .to.be.a('string')
+                    .and.not.be.empty
+                cy.visit(editorUrl)
+            })
 
         cy.get('body', { timeout: 30000 }).should($body => {
             expect($body.text(), 'new item type choices')
