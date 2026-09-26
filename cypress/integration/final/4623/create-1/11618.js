@@ -153,11 +153,22 @@ describe('Create Area - Add Item', () => {
         cy.contains(':visible', /^\s*Java\s+Building\s+Blocks\s*$/i, {
             timeout: 30000,
         }).first().then($lesson => {
+            // Do not click the surrounding li: that only focuses the row and
+            // leaves the right panel empty. Click the real lesson control.
             const clickableLesson = $lesson.closest(
-                'a, button, [role="button"], li, [onclick]'
+                'a, button, [role="button"], [onclick]'
             )
             cy.wrap(clickableLesson.length ? clickableLesson : $lesson)
                 .click({ force: true })
+        })
+
+        cy.get('body', { timeout: 30000 }).should($body => {
+            expect(
+                $body.text(),
+                'items loaded after selecting Java Building Blocks'
+            ).not.to.contain(
+                'From the left panel, select an appropriate option to show items.'
+            )
         })
 
         cy.contains(':visible', /^\s*Add\s+Item\s*$/i, {
