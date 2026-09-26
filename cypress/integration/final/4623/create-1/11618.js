@@ -46,13 +46,21 @@ describe('Create Area - Add Item', () => {
     }
 
     const openProjectAuthorArea = () => {
-        cy.contains(':visible', new RegExp('^\\s*' + projectName + '\\s*$', 'i'), {
-            timeout: 30000,
-        }).first().scrollIntoView().then($name => {
-            let project = $name.closest(
-                '[data-cy="project-card"], .project-card, .course-card, .card, li'
+        cy.get('body', { timeout: 30000 }).then($body => {
+            const projectName = [...$body.find('h1, h2, h3, h4, a, p, span, div')]
+                .filter(element => Cypress.$(element).is(':visible'))
+                .find(element =>
+                    (element.textContent || '')
+                        .replace(/[^a-z0-9]/gi, '')
+                        .toLowerCase() === 'birendertesting'
+                )
+
+            expect(projectName, 'BirenderTesting project').to.exist
+
+            let project = Cypress.$(projectName).closest(
+                '[data-cy="project-card"], .project-card, .course-card, .card'
             )
-            if (!project.length) project = $name.parent()
+            if (!project.length) project = Cypress.$(projectName).parent()
 
             const author = project.find('a, button, [role="button"]')
                 .filter(':visible')
@@ -60,13 +68,11 @@ describe('Create Area - Add Item', () => {
                     /^\s*Author\s*$/i.test(element.textContent || '')
                 )
 
-            if (author.length) {
-                cy.wrap(author.first())
-                    .invoke('removeAttr', 'target')
-                    .click({ force: true })
-            } else {
-                cy.wrap($name).click({ force: true })
-            }
+            expect(author.length, 'Author button for BirenderTesting')
+                .to.be.greaterThan(0)
+            cy.wrap(author.first())
+                .invoke('removeAttr', 'target')
+                .click({ force: true })
         })
 
         cy.get('body', { timeout: 30000 }).should('be.visible')
