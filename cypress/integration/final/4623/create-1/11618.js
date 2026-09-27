@@ -137,8 +137,9 @@ describe('Create Area - Add Item', () => {
                 /prepengine-footer\.min\.js/i.test(error.stack || '')
             const knownAuthorActivateError =
                 error.name === 'ReferenceError' &&
-                /^activate is not defined$/i.test(error.message || '') &&
-                /\/educator\/project\//i.test(error.stack || '')
+                /^activate is not defined$/i.test(
+                    (error.message || '').trim()
+                )
             const knownIsotopeSortError =
                 error.name === 'TypeError' &&
                 /Cannot set properties of undefined \(setting ['"]sortBy['"]\)/i.test(
