@@ -152,13 +152,22 @@ describe('Create Area - Add Item', () => {
                 /svelte_items\/public\/build\/editor\/main\.js/i.test(
                     error.stack || ''
                 )
+            const knownMathJaxPackageError =
+                error.name === 'TypeError' &&
+                /Cannot set property Package of .*which has only a getter/i.test(
+                    error.message || ''
+                ) &&
+                /cdn\.jsdelivr\.net\/npm\/mathjax@3\/es5\/mml-chtml\.js/i.test(
+                    error.stack || ''
+                )
 
             if (
                 knownEditorAppendError ||
                 knownEditorFocusError ||
                 knownAuthorActivateError ||
                 knownIsotopeSortError ||
-                knownSvelteEffectOrphanError
+                knownSvelteEffectOrphanError ||
+                knownMathJaxPackageError
             ) return false
             return undefined
         })
