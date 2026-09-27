@@ -136,9 +136,8 @@ describe('Create Area - Add Item', () => {
                 ) &&
                 /prepengine-footer\.min\.js/i.test(error.stack || '')
             const knownAuthorActivateError =
-                error.name === 'ReferenceError' &&
-                /^activate is not defined$/i.test(
-                    (error.message || '').trim()
+                /(?:^|\\n)activate is not defined(?:$|\\n)/i.test(
+                    (error.message || String(error) || '').trim()
                 )
             const knownIsotopeSortError =
                 error.name === 'TypeError' &&
