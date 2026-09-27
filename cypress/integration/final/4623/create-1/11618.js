@@ -292,8 +292,10 @@ describe('Create Area - Add Item', () => {
         // headless Chrome. Use TinyMCE when registered; otherwise update the
         // rendered contenteditable field and dispatch the events Svelte uses.
         const setRichText = (selector, text, html = text) => {
+            // Editor 2.0 can render its inline TinyMCE body with zero computed
+            // height in headless Chrome. Cypress then marks it hidden even
+            // though the editor exists and accepts forced keyboard input.
             cy.get(selector, { timeout: 60000 })
-                .filter(':visible')
                 .first()
                 .should('exist')
                 .then($field => {
@@ -312,12 +314,8 @@ describe('Create Area - Add Item', () => {
                         return
                     }
 
-                    // Use real keyboard input for the Svelte fallback.
-                    // Direct innerHTML changes are discarded on its next render.
-                    cy.wrap($field).click({ force: true })
-                    cy.get(selector, { timeout: 30000 })
-                        .filter(':visible')
-                        .first()
+                    cy.wrap($field)
+                        .click({ force: true })
                         .type(`{selectall}{backspace}${text}`, {
                             force: true,
                             delay: 0,
@@ -326,7 +324,6 @@ describe('Create Area - Add Item', () => {
                 })
 
             cy.get(selector, { timeout: 30000 })
-                .filter(':visible')
                 .first()
                 .should($field => {
                     const currentText = $field.val() || $field.text()
