@@ -121,16 +121,22 @@ describe('Create Area - Add Item', () => {
     }
 
     it('opens Add Item for the Birender testing project', () => {
-        // Jigyaasa occasionally injects malformed optional UI content while
-        // Editor 2.0 loads. Ignore only this known application-side exception.
+        // Jigyaasa occasionally throws known application-side errors while
+        // Editor 2.0 loads. Ignore only these exact editor initialization errors.
         cy.on('uncaught:exception', error => {
             const knownEditorAppendError =
                 error.name === 'SyntaxError' &&
                 /appendChild.*Invalid or unexpected token/i.test(
                     error.message || ''
                 )
+            const knownEditorFocusError =
+                error.name === 'TypeError' &&
+                /Cannot read properties of null \\(reading ['"]focus['"]\\)/i.test(
+                    error.message || ''
+                ) &&
+                /prepengine-footer\\.min\\.js/i.test(error.stack || '')
 
-            if (knownEditorAppendError) return false
+            if (knownEditorAppendError || knownEditorFocusError) return false
             return undefined
         })
 
