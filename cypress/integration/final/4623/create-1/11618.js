@@ -121,6 +121,19 @@ describe('Create Area - Add Item', () => {
     }
 
     it('opens Add Item for the Birender testing project', () => {
+        // Jigyaasa occasionally injects malformed optional UI content while
+        // Editor 2.0 loads. Ignore only this known application-side exception.
+        cy.on('uncaught:exception', error => {
+            const knownEditorAppendError =
+                error.name === 'SyntaxError' &&
+                /appendChild.*Invalid or unexpected token/i.test(
+                    error.message || ''
+                )
+
+            if (knownEditorAppendError) return false
+            return undefined
+        })
+
         openCreateArea()
         openProjectAuthorArea()
 
