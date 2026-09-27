@@ -304,9 +304,9 @@ describe('Create Area - Add Item', () => {
 
                     field.focus()
                     field.innerHTML = html
-                    field.dispatchEvent(new Event('input', { bubbles: true }))
-                    field.dispatchEvent(new Event('change', { bubbles: true }))
-                    field.dispatchEvent(new Event('blur', { bubbles: true }))
+                    field.dispatchEvent(new editorWindow.Event('input', { bubbles: true }))
+                    field.dispatchEvent(new editorWindow.Event('change', { bubbles: true }))
+                    field.dispatchEvent(new editorWindow.Event('blur', { bubbles: true }))
                 })
 
             cy.get(selector, { timeout: 30000 })
