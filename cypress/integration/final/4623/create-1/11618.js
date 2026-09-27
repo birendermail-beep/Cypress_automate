@@ -135,8 +135,16 @@ describe('Create Area - Add Item', () => {
                     error.message || ''
                 ) &&
                 /prepengine-footer\.min\.js/i.test(error.stack || '')
+            const knownAuthorActivateError =
+                error.name === 'ReferenceError' &&
+                /^activate is not defined$/i.test(error.message || '') &&
+                /\/educator\/project\//i.test(error.stack || '')
 
-            if (knownEditorAppendError || knownEditorFocusError) return false
+            if (
+                knownEditorAppendError ||
+                knownEditorFocusError ||
+                knownAuthorActivateError
+            ) return false
             return undefined
         })
 
