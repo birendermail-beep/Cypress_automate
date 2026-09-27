@@ -131,10 +131,10 @@ describe('Create Area - Add Item', () => {
                 )
             const knownEditorFocusError =
                 error.name === 'TypeError' &&
-                /Cannot read properties of null \\(reading ['"]focus['"]\\)/i.test(
+                /Cannot read properties of null \(reading ['"]focus['"]\)/i.test(
                     error.message || ''
                 ) &&
-                /prepengine-footer\\.min\\.js/i.test(error.stack || '')
+                /prepengine-footer\.min\.js/i.test(error.stack || '')
 
             if (knownEditorAppendError || knownEditorFocusError) return false
             return undefined
