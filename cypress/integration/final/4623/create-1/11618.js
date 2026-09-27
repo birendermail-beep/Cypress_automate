@@ -239,11 +239,31 @@ describe('Create Area - Add Item', () => {
         // Editor 2.0 can report a zero-height body while its fixed authoring
         // surface is fully rendered. Wait for the actual required fields.
         const titleText = 'Sample Test Question'
-        setEditorText(
-            '#title .ebook_item_text, #title [contenteditable="true"], ' +
-            '#title textarea, #title input, #title',
-            titleText
-        )
+
+        // Title is an inline TinyMCE field. Set it only after the editor
+        // model is initialized so a later render cannot clear the value.
+        cy.get('#title', { timeout: 60000 })
+            .should('be.visible')
+            .should($title => {
+                const title = $title[0]
+                const editorWindow = title.ownerDocument.defaultView
+                expect(editorWindow.tinymce, 'TinyMCE API').to.exist
+                expect(
+                    editorWindow.tinymce.get(title.id),
+                    'initialized Title TinyMCE editor'
+                ).to.exist
+            })
+            .then($title => {
+                const title = $title[0]
+                const editorWindow = title.ownerDocument.defaultView
+                const editor = editorWindow.tinymce.get(title.id)
+                editor.setContent(titleText)
+                editor.setDirty(true)
+                editor.fire('input')
+                editor.fire('change')
+                editor.save()
+            })
+
         cy.get('#title', { timeout: 30000 })
             .should('contain.text', titleText)
 
