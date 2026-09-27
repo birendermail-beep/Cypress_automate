@@ -251,31 +251,30 @@ describe('Create Area - Add Item', () => {
             'Which of the following is the primary function of an ' +
             'operating system?'
 
-        // Stem is an inline TinyMCE field. Typing before TinyMCE finishes
-        // initialization is overwritten when the editor loads its model.
-        cy.window({ timeout: 30000 }).should(win => {
-            const stem = win.document.querySelector(
-                '#stem > .ebook_item_text'
-            )
-            expect(stem, 'Stem editable area').to.exist
-            expect(stem.id, 'Stem TinyMCE element id').not.to.be.empty
-            expect(win.tinymce, 'TinyMCE API').to.exist
-            expect(
-                win.tinymce.get(stem.id),
-                'initialized Stem TinyMCE editor'
-            ).to.exist
-        }).then(win => {
-            const stem = win.document.querySelector(
-                '#stem > .ebook_item_text'
-            )
-            const editor = win.tinymce.get(stem.id)
-            editor.setContent(`<p>${stemText}</p>`)
-            editor.setDirty(true)
-            editor.fire('input')
-            editor.fire('change')
-            editor.save()
-            editor.fire('blur')
-        })
+        // Stem is an inline TinyMCE field. Retry the real editable
+        // element first because TinyMCE loads dictionaries asynchronously.
+        cy.get('#stem > .ebook_item_text', { timeout: 60000 })
+            .should('be.visible')
+            .should($stem => {
+                const stem = $stem[0]
+                const editorWindow = stem.ownerDocument.defaultView
+                expect(stem.id, 'Stem TinyMCE element id').not.to.be.empty
+                expect(editorWindow.tinymce, 'TinyMCE API').to.exist
+                expect(
+                    editorWindow.tinymce.get(stem.id),
+                    'initialized Stem TinyMCE editor'
+                ).to.exist
+            })
+            .then($stem => {
+                const stem = $stem[0]
+                const editorWindow = stem.ownerDocument.defaultView
+                const editor = editorWindow.tinymce.get(stem.id)
+                editor.setContent(`<p>${stemText}</p>`)
+                editor.setDirty(true)
+                editor.fire('input')
+                editor.fire('change')
+                editor.save()
+            })
 
         cy.get('#stem > .ebook_item_text', { timeout: 30000 })
             .should('contain.text', stemText)
