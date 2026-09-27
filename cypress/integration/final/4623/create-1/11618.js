@@ -244,12 +244,12 @@ describe('Create Area - Add Item', () => {
             'Sample Test Question'
         )
 
-        setEditorText(
-            '#stem .ebook_item_text, #stem [contenteditable="true"], ' +
-            '#stem textarea, #stem input, #stem',
+        const stemText =
             'Which of the following is the primary function of an ' +
             'operating system?'
-        )
+        setEditorText('#stem > .ebook_item_text', stemText)
+        cy.get('#stem > .ebook_item_text', { timeout: 30000 })
+            .should('contain.text', stemText)
 
         // Mark option A as the correct answer without toggling it off on retry.
         cy.get('#userans-A, input[type="checkbox"]', { timeout: 30000 })
