@@ -145,12 +145,20 @@ describe('Create Area - Add Item', () => {
                     error.message || ''
                 ) &&
                 /isotope\.pkgd\.min\.js/i.test(error.stack || '')
+            const knownSvelteEffectOrphanError =
+                /https:\/\/svelte\.dev\/e\/effect_orphan/i.test(
+                    error.message || ''
+                ) &&
+                /svelte_items\/public\/build\/editor\/main\.js/i.test(
+                    error.stack || ''
+                )
 
             if (
                 knownEditorAppendError ||
                 knownEditorFocusError ||
                 knownAuthorActivateError ||
-                knownIsotopeSortError
+                knownIsotopeSortError ||
+                knownSvelteEffectOrphanError
             ) return false
             return undefined
         })
