@@ -321,6 +321,7 @@ describe('Create Area - Add Item', () => {
                             force: true,
                             delay: 0,
                         })
+                        .blur({ force: true })
                 })
 
             cy.get(selector, { timeout: 30000 })
@@ -336,7 +337,7 @@ describe('Create Area - Add Item', () => {
             'Which of the following is the primary function of an ' +
             'operating system?'
         setRichText(
-            '#stem > .ebook_item_text',
+            '#stem .ebook_item_text',
             stemText,
             `<p>${stemText}</p>`
         )
@@ -356,7 +357,7 @@ describe('Create Area - Add Item', () => {
 
         // Re-verify every required authoring field immediately before Save.
         cy.get('#title').should('contain.text', titleText)
-        cy.get('#stem > .ebook_item_text').should('contain.text', stemText)
+        cy.get('#stem .ebook_item_text').should('contain.text', stemText)
         cy.get('#userans-A, input[type="checkbox"]')
             .filter(':visible')
             .first()
