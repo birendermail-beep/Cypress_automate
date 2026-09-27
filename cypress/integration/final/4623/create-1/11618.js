@@ -311,11 +311,16 @@ describe('Create Area - Add Item', () => {
                         return
                     }
 
-                    field.focus()
-                    field.innerHTML = html
-                    field.dispatchEvent(new editorWindow.Event('input', { bubbles: true }))
-                    field.dispatchEvent(new editorWindow.Event('change', { bubbles: true }))
-                    field.dispatchEvent(new editorWindow.Event('blur', { bubbles: true }))
+                    // Use real keyboard input for the Svelte fallback.
+                    // Direct innerHTML changes are discarded on its next render.
+                    cy.wrap($field).click({ force: true })
+                    cy.get(selector, { timeout: 30000 })
+                        .filter(':visible')
+                        .first()
+                        .type(`{selectall}{backspace}${text}`, {
+                            force: true,
+                            delay: 0,
+                        })
                 })
 
             cy.get(selector, { timeout: 30000 })
