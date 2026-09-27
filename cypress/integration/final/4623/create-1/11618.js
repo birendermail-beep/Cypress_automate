@@ -339,7 +339,7 @@ describe('Create Area - Add Item', () => {
         // Enter Stem first. Activating Stem can re-render and reset Title,
         // so Title is intentionally entered last, immediately before Save.
         setRichText(
-            '#stem .ebook_item_text',
+            '#stem .ebook_item_text, #stem[contenteditable="true"], #stem textarea, #stem input',
             stemText,
             `<p>${stemText}</p>`
         )
@@ -363,7 +363,7 @@ describe('Create Area - Add Item', () => {
 
         // Re-verify every required authoring field immediately before Save.
         cy.get('#title').should('contain.text', titleText)
-        cy.get('#stem .ebook_item_text').should('contain.text', stemText)
+        cy.get('#stem .ebook_item_text, #stem[contenteditable="true"], #stem textarea, #stem input').should('contain.text', stemText)
         cy.get('#userans-A, input[type="checkbox"]')
             .filter(':visible')
             .first()
