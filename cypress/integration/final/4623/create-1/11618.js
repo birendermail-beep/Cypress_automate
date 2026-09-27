@@ -238,11 +238,14 @@ describe('Create Area - Add Item', () => {
 
         // Editor 2.0 can report a zero-height body while its fixed authoring
         // surface is fully rendered. Wait for the actual required fields.
+        const titleText = 'Sample Test Question'
         setEditorText(
             '#title .ebook_item_text, #title [contenteditable="true"], ' +
             '#title textarea, #title input, #title',
-            'Sample Test Question'
+            titleText
         )
+        cy.get('#title', { timeout: 30000 })
+            .should('contain.text', titleText)
 
         const stemText =
             'Which of the following is the primary function of an ' +
@@ -284,10 +287,19 @@ describe('Create Area - Add Item', () => {
             .then($answer => {
                 if ($answer.is(':checkbox')) {
                     cy.wrap($answer).check({ force: true })
+                    cy.wrap($answer).should('be.checked')
                 } else if (!$answer.hasClass('active')) {
                     cy.wrap($answer).click({ force: true })
                 }
             })
+
+        // Re-verify every required authoring field immediately before Save.
+        cy.get('#title').should('contain.text', titleText)
+        cy.get('#stem > .ebook_item_text').should('contain.text', stemText)
+        cy.get('#userans-A, input[type="checkbox"]')
+            .filter(':visible')
+            .first()
+            .should('be.checked')
 
         // Accept a native confirmation if this editor build uses one.
         cy.on('window:confirm', () => true)
@@ -330,5 +342,80 @@ describe('Create Area - Add Item', () => {
                     .to.be.greaterThan(0)
                 cy.wrap(confirm).click({ force: true })
             })
+
+        // Complete Content Settings before performing the final Save.
+        const getContentSettingsDialog = () =>
+            cy.contains(':visible', /^\s*Content\s+Settings\s*$/i, {
+                timeout: 30000,
+            }).should('be.visible')
+                .then($heading => {
+                    const dialog = $heading.parents().filter((_, container) => {
+                        const actions = Cypress.$(container)
+                            .find('button, a, [role="button"]')
+                            .filter(':visible')
+                        const labels = actions.toArray().map(action =>
+                            (action.textContent || '').trim()
+                        )
+                        return labels.includes('Close') &&
+                            labels.includes('Save')
+                    }).first()
+
+                    expect(dialog.length, 'Content Settings dialog')
+                        .to.be.greaterThan(0)
+                    return cy.wrap(dialog)
+                })
+
+        getContentSettingsDialog()
+            .find('select')
+            .should('have.length.at.least', 3)
+
+        getContentSettingsDialog()
+            .find('select')
+            .eq(0)
+            .should('contain.text', '1 Java Building Blocks')
+            .select('1 Java Building Blocks', { force: true })
+
+        getContentSettingsDialog()
+            .find('select')
+            .eq(1)
+            .should(
+                'contain.text',
+                '1.1 Understanding the Java Class Structure'
+            )
+            .select(
+                '1.1 Understanding the Java Class Structure',
+                { force: true }
+            )
+
+        getContentSettingsDialog()
+            .find('select')
+            .eq(2)
+            .should('contain.text', 'Exercise')
+            .select('Exercise', { force: true })
+
+        // Verify every coverage field has its requested value before Save.
+        getContentSettingsDialog().find('select').eq(0)
+            .find('option:selected')
+            .should('have.text', '1 Java Building Blocks')
+        getContentSettingsDialog().find('select').eq(1)
+            .find('option:selected')
+            .should('have.text', '1.1 Understanding the Java Class Structure')
+        getContentSettingsDialog().find('select').eq(2)
+            .find('option:selected')
+            .should('have.text', 'Exercise')
+
+        getContentSettingsDialog().then($dialog => {
+            const save = $dialog
+                .find('button, a, [role="button"]')
+                .filter(':visible')
+                .filter((_, control) =>
+                    /^\s*Save\s*$/i.test(control.textContent || '')
+                )
+                .first()
+
+            expect(save.length, 'Content Settings Save action')
+                .to.be.greaterThan(0)
+            cy.wrap(save).click({ force: true })
+        })
     })
 })
