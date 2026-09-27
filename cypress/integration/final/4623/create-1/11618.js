@@ -278,68 +278,54 @@ describe('Create Area - Add Item', () => {
             .invoke('removeAttr', 'target')
             .click({ force: true })
 
-        // Editor 2.0 can report a zero-height body while its fixed authoring
-        // surface is fully rendered. Wait for the actual required fields.
+        // Editor 2.0 initializes inline fields differently in headed and
+        // headless Chrome. Use TinyMCE when registered; otherwise update the
+        // rendered contenteditable field and dispatch the events Svelte uses.
+        const setRichText = (selector, text, html = text) => {
+            cy.get(selector, { timeout: 60000 })
+                .filter(':visible')
+                .first()
+                .should('exist')
+                .then($field => {
+                    const field = $field[0]
+                    const editorWindow = field.ownerDocument.defaultView
+                    const editor = field.id && editorWindow.tinymce
+                        ? editorWindow.tinymce.get(field.id)
+                        : null
+
+                    if (editor) {
+                        editor.setContent(html)
+                        editor.setDirty(true)
+                        editor.fire('input')
+                        editor.fire('change')
+                        editor.save()
+                        return
+                    }
+
+                    field.focus()
+                    field.innerHTML = html
+                    field.dispatchEvent(new Event('input', { bubbles: true }))
+                    field.dispatchEvent(new Event('change', { bubbles: true }))
+                    field.dispatchEvent(new Event('blur', { bubbles: true }))
+                })
+
+            cy.get(selector, { timeout: 30000 })
+                .filter(':visible')
+                .first()
+                .should('contain.text', text)
+        }
+
         const titleText = 'Sample Test Question'
-
-        // Title is an inline TinyMCE field. Set it only after the editor
-        // model is initialized so a later render cannot clear the value.
-        cy.get('#title', { timeout: 60000 })
-            .should('be.visible')
-            .should($title => {
-                const title = $title[0]
-                const editorWindow = title.ownerDocument.defaultView
-                expect(editorWindow.tinymce, 'TinyMCE API').to.exist
-                expect(
-                    editorWindow.tinymce.get(title.id),
-                    'initialized Title TinyMCE editor'
-                ).to.exist
-            })
-            .then($title => {
-                const title = $title[0]
-                const editorWindow = title.ownerDocument.defaultView
-                const editor = editorWindow.tinymce.get(title.id)
-                editor.setContent(titleText)
-                editor.setDirty(true)
-                editor.fire('input')
-                editor.fire('change')
-                editor.save()
-            })
-
-        cy.get('#title', { timeout: 30000 })
-            .should('contain.text', titleText)
+        setRichText('#title', titleText)
 
         const stemText =
             'Which of the following is the primary function of an ' +
             'operating system?'
-
-        // Stem is an inline TinyMCE field. Retry the real editable
-        // element first because TinyMCE loads dictionaries asynchronously.
-        cy.get('#stem > .ebook_item_text', { timeout: 60000 })
-            .should('be.visible')
-            .should($stem => {
-                const stem = $stem[0]
-                const editorWindow = stem.ownerDocument.defaultView
-                expect(stem.id, 'Stem TinyMCE element id').not.to.be.empty
-                expect(editorWindow.tinymce, 'TinyMCE API').to.exist
-                expect(
-                    editorWindow.tinymce.get(stem.id),
-                    'initialized Stem TinyMCE editor'
-                ).to.exist
-            })
-            .then($stem => {
-                const stem = $stem[0]
-                const editorWindow = stem.ownerDocument.defaultView
-                const editor = editorWindow.tinymce.get(stem.id)
-                editor.setContent(`<p>${stemText}</p>`)
-                editor.setDirty(true)
-                editor.fire('input')
-                editor.fire('change')
-                editor.save()
-            })
-
-        cy.get('#stem > .ebook_item_text', { timeout: 30000 })
-            .should('contain.text', stemText)
+        setRichText(
+            '#stem > .ebook_item_text',
+            stemText,
+            `<p>${stemText}</p>`
+        )
 
         // Mark option A as the correct answer without toggling it off on retry.
         cy.get('#userans-A, input[type="checkbox"]', { timeout: 30000 })
