@@ -332,11 +332,12 @@ describe('Create Area - Add Item', () => {
         }
 
         const titleText = 'Sample Test Question'
-        setRichText('#title', titleText)
-
         const stemText =
             'Which of the following is the primary function of an ' +
             'operating system?'
+
+        // Enter Stem first. Activating Stem can re-render and reset Title,
+        // so Title is intentionally entered last, immediately before Save.
         setRichText(
             '#stem .ebook_item_text',
             stemText,
@@ -355,6 +356,10 @@ describe('Create Area - Add Item', () => {
                     cy.wrap($answer).click({ force: true })
                 }
             })
+
+        // Enter Title last because activating another rich-text field can
+        // reset this editor's unsaved Title state.
+        setRichText('#title', titleText)
 
         // Re-verify every required authoring field immediately before Save.
         cy.get('#title').should('contain.text', titleText)
