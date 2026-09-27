@@ -247,7 +247,33 @@ describe('Create Area - Add Item', () => {
         const stemText =
             'Which of the following is the primary function of an ' +
             'operating system?'
-        setEditorText('#stem > .ebook_item_text', stemText)
+
+        // Stem is an inline TinyMCE field. Typing before TinyMCE finishes
+        // initialization is overwritten when the editor loads its model.
+        cy.window({ timeout: 30000 }).should(win => {
+            const stem = win.document.querySelector(
+                '#stem > .ebook_item_text'
+            )
+            expect(stem, 'Stem editable area').to.exist
+            expect(stem.id, 'Stem TinyMCE element id').not.to.be.empty
+            expect(win.tinymce, 'TinyMCE API').to.exist
+            expect(
+                win.tinymce.get(stem.id),
+                'initialized Stem TinyMCE editor'
+            ).to.exist
+        }).then(win => {
+            const stem = win.document.querySelector(
+                '#stem > .ebook_item_text'
+            )
+            const editor = win.tinymce.get(stem.id)
+            editor.setContent(`<p>${stemText}</p>`)
+            editor.setDirty(true)
+            editor.fire('input')
+            editor.fire('change')
+            editor.save()
+            editor.fire('blur')
+        })
+
         cy.get('#stem > .ebook_item_text', { timeout: 30000 })
             .should('contain.text', stemText)
 
