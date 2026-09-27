@@ -292,10 +292,14 @@ describe('Create Area - Add Item', () => {
         // headless Chrome. Use TinyMCE when registered; otherwise update the
         // rendered contenteditable field and dispatch the events Svelte uses.
         const setRichText = (selector, text, html = text) => {
-            // Editor 2.0 can render its inline TinyMCE body with zero computed
-            // height in headless Chrome. Cypress then marks it hidden even
-            // though the editor exists and accepts forced keyboard input.
+            // The first click only activates Editor 2.0. Re-query afterwards
+            // because Svelte replaces the placeholder with a TinyMCE editor.
             cy.get(selector, { timeout: 60000 })
+                .first()
+                .should('exist')
+                .click({ force: true })
+
+            cy.get(selector, { timeout: 30000 })
                 .first()
                 .should('exist')
                 .then($field => {
@@ -306,6 +310,7 @@ describe('Create Area - Add Item', () => {
                         : null
 
                     if (editor) {
+                        editor.focus()
                         editor.setContent(html)
                         editor.setDirty(true)
                         editor.fire('input')
@@ -314,12 +319,18 @@ describe('Create Area - Add Item', () => {
                         return
                     }
 
+                    const isTextInput = $field.is('input, textarea')
+                    const isEditable =
+                        field.getAttribute('contenteditable') === 'true'
+
+                    expect(
+                        isTextInput || isEditable,
+                        `activated rich-text field: ${selector}`
+                    ).to.equal(true)
+
                     cy.wrap($field)
-                        .click({ force: true })
-                        .type(`{selectall}{backspace}${text}`, {
-                            force: true,
-                            delay: 0,
-                        })
+                        .clear({ force: true })
+                        .type(text, { force: true, delay: 0 })
                         .blur({ force: true })
                 })
 
