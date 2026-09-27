@@ -328,7 +328,10 @@ describe('Create Area - Add Item', () => {
             cy.get(selector, { timeout: 30000 })
                 .filter(':visible')
                 .first()
-                .should('contain.text', text)
+                .should($field => {
+                    const currentText = $field.val() || $field.text()
+                    expect(currentText).to.contain(text)
+                })
         }
 
         const titleText = 'Sample Test Question'
