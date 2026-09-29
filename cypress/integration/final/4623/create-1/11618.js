@@ -156,16 +156,12 @@ describe('Create Area - Add Item', () => {
                 error.name === 'TypeError' &&
                 /Cannot set property Package of .*which has only a getter/i.test(
                     error.message || ''
-                ) &&
-                /cdn\.jsdelivr\.net\/npm\/mathjax@3\/es5\/mml-chtml\.js/i.test(
-                    error.stack || ''
                 )
             const knownEditorRangeError =
                 error.name === 'TypeError' &&
                 /Cannot read properties of undefined \(reading ['"]getRng['"]\)/i.test(
                     error.message || ''
-                ) &&
-                /editor|tinymce|svelte/i.test(error.stack || '')
+                )
 
             if (
                 knownEditorAppendError ||
