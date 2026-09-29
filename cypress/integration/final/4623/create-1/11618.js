@@ -307,9 +307,14 @@ describe('Create Area - Add Item', () => {
                 .then($field => {
                     const field = $field[0]
                     const editorWindow = field.ownerDocument.defaultView
-                    const editor = field.id && editorWindow.tinymce
-                        ? editorWindow.tinymce.get(field.id)
-                        : null
+                    const tinyMce = editorWindow.tinymce
+                    const namedEditor =
+                        tinyMce && field.id ? tinyMce.get(field.id) : null
+                    const editor =
+                        namedEditor ||
+                        (tinyMce && tinyMce.activeEditor
+                            ? tinyMce.activeEditor
+                            : null)
 
                     if (editor) {
                         editor.focus()
@@ -338,14 +343,16 @@ describe('Create Area - Add Item', () => {
                         return
                     }
 
-                    // Cypress.clear() uses the editor selection API and causes
-                    // Editor 2.0 to throw "getRng" for contenteditable fields.
-                    // Remove only the placeholder DOM text, then type normally.
-                    field.textContent = ''
-                    cy.wrap($field)
-                        .click({ force: true })
-                        .type(text, { force: true, delay: 0 })
-                        .blur({ force: true })
+                    // Do not use Cypress.type() for Editor 2.0 contenteditable
+                    // fields. Its selection plug-in calls getRng before the
+                    // editor is ready. Update the activated field directly.
+                    field.innerHTML = html
+                    field.dispatchEvent(
+                        new editorWindow.Event('change', { bubbles: true })
+                    )
+                    field.dispatchEvent(
+                        new editorWindow.FocusEvent('blur', { bubbles: true })
+                    )
                 })
 
             cy.get(selector, { timeout: 30000 })
