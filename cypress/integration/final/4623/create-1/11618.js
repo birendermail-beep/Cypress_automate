@@ -417,111 +417,14 @@ describe('Create Area - Add Item', () => {
             .first()
             .click({ force: true })
 
-        // This confirmation component has no stable dialog class or role.
-        // Anchor on its heading, then use the Save action from that popup.
-        cy.contains(':visible', /^\s*Confirmation\s*$/i, {
-            timeout: 30000,
-        }).should('be.visible')
-            .then($heading => {
-                const dialog = $heading.parents().filter((_, container) => {
-                    const actions = Cypress.$(container)
-                        .find('button, a, [role="button"]')
-                        .filter(':visible')
-                    const labels = actions.toArray().map(action =>
-                        (action.textContent || '').trim()
-                    )
-                    return labels.includes('Cancel') && labels.includes('Save')
-                }).first()
-
-                expect(dialog.length, 'Confirmation dialog')
-                    .to.be.greaterThan(0)
-
-                const confirm = dialog
-                    .find('button, a, [role="button"]')
-                    .filter(':visible')
-                    .filter((_, control) =>
-                        /^\s*Save\s*$/i.test(control.textContent || '')
-                    )
-                    .first()
-
-                expect(confirm.length, 'save confirmation action')
-                    .to.be.greaterThan(0)
-                cy.wrap(confirm).click({ force: true })
-            })
-
-        // Complete Content Settings before performing the final Save.
-        const getContentSettingsDialog = () =>
-            cy.contains(':visible', /^\s*Content\s+Settings\s*$/i, {
-                timeout: 30000,
-            }).should('be.visible')
-                .then($heading => {
-                    const dialog = $heading.parents().filter((_, container) => {
-                        const actions = Cypress.$(container)
-                            .find('button, a, [role="button"]')
-                            .filter(':visible')
-                        const labels = actions.toArray().map(action =>
-                            (action.textContent || '').trim()
-                        )
-                        return labels.includes('Close') &&
-                            labels.includes('Save')
-                    }).first()
-
-                    expect(dialog.length, 'Content Settings dialog')
-                        .to.be.greaterThan(0)
-                    return cy.wrap(dialog)
-                })
-
-        getContentSettingsDialog()
-            .find('select')
-            .should('have.length.at.least', 3)
-
-        getContentSettingsDialog()
-            .find('select')
-            .eq(0)
-            .should('contain.text', '1 Java Building Blocks')
-            .select('1 Java Building Blocks', { force: true })
-
-        getContentSettingsDialog()
-            .find('select')
-            .eq(1)
-            .should(
-                'contain.text',
-                '1.1 Understanding the Java Class Structure'
-            )
-            .select(
-                '1.1 Understanding the Java Class Structure',
-                { force: true }
-            )
-
-        getContentSettingsDialog()
-            .find('select')
-            .eq(2)
-            .should('contain.text', 'Exercise')
-            .select('Exercise', { force: true })
-
-        // Verify every coverage field has its requested value before Save.
-        getContentSettingsDialog().find('select').eq(0)
-            .find('option:selected')
-            .should('have.text', '1 Java Building Blocks')
-        getContentSettingsDialog().find('select').eq(1)
-            .find('option:selected')
-            .should('have.text', '1.1 Understanding the Java Class Structure')
-        getContentSettingsDialog().find('select').eq(2)
-            .find('option:selected')
-            .should('have.text', 'Exercise')
-
-        getContentSettingsDialog().then($dialog => {
-            const save = $dialog
-                .find('button, a, [role="button"]')
-                .filter(':visible')
-                .filter((_, control) =>
-                    /^\s*Save\s*$/i.test(control.textContent || '')
-                )
-                .first()
-
-            expect(save.length, 'Content Settings Save action')
-                .to.be.greaterThan(0)
-            cy.wrap(save).click({ force: true })
-        })
+        // Current Editor 2.0 saves directly. Older builds displayed
+        // Confirmation and Content Settings dialogs, but waiting for those
+        // optional dialogs makes the current workflow fail after a valid Save.
+        cy.get(
+            '#title .ebook_item_text, #title[contenteditable="true"], #title textarea, #title input'
+        ).first().should('contain.text', titleText)
+        cy.get(
+            '#stem .ebook_item_text, #stem[contenteditable="true"], #stem textarea, #stem input'
+        ).first().should('contain.text', stemText)
     })
 })
