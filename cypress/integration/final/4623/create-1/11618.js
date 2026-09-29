@@ -317,12 +317,13 @@ describe('Create Area - Add Item', () => {
                             : null)
 
                     if (editor) {
-                        // Do not call editor.focus(): this Editor 2.0 build
-                        // invokes TinyMCE getRng before its selection is ready.
-                        editor.setContent(html)
+                        // Editor 2.0's selection object is not initialized, so
+                        // focus() and setContent() throw getRng/select errors.
+                        // Update the inline editor body without using selection.
+                        const editorBody = editor.getBody()
+                        expect(editorBody, 'active TinyMCE editor body').to.exist
+                        editorBody.innerHTML = html
                         editor.setDirty(true)
-                        editor.fire('input')
-                        editor.fire('change')
                         editor.save()
                         return
                     }
