@@ -317,20 +317,21 @@ describe('Create Area - Add Item', () => {
                             : null)
 
                     if (editor) {
-                        // Editor 2.0's selection object is not initialized, so
-                        // focus() and setContent() throw getRng/select errors.
-                        // Update the inline editor body without using selection.
+                        // Editor 2.0 may register TinyMCE before its body exists.
+                        // Use it only after getBody() returns the real editor node.
                         const editorBody = editor.getBody()
-                        expect(editorBody, 'active TinyMCE editor body').to.exist
-                        editorBody.innerHTML = html
-                        editor.setDirty(true)
-                        editor.save()
-                        return
+                        if (editorBody) {
+                            editorBody.innerHTML = html
+                            editor.setDirty(true)
+                            editor.save()
+                            return
+                        }
                     }
 
                     const isTextInput = $field.is('input, textarea')
                     const isEditable =
-                        field.getAttribute('contenteditable') === 'true'
+                        field.getAttribute('contenteditable') === 'true' ||
+                        $field.hasClass('ebook_item_text')
 
                     expect(
                         isTextInput || isEditable,
@@ -393,7 +394,10 @@ describe('Create Area - Add Item', () => {
 
         // Enter Title last because activating another rich-text field can
         // reset this editor's unsaved Title state.
-        setRichText('#title', titleText)
+        setRichText(
+            '#title .ebook_item_text, #title[contenteditable="true"], #title textarea, #title input',
+            titleText
+        )
 
         // Re-verify every required authoring field immediately before Save.
         cy.get('#title').should('contain.text', titleText)
