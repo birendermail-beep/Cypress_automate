@@ -1,78 +1,315 @@
 /*
-@author: Anirudha Pratap
-@master_project_id: 6607
-@phase_id:
 @story_id: 10924
-@story_name: Link with Instructor with Section Key
+@story_name: Link with Instructor using Section Key
 @path: final/6607/Student
-@test_case_name: Link with Instructor with Section Key
-@description : na
-@test_steps:
-^Leave the section key blank
--Open dashboard of prepkit
--Click the Link with Instructor button
--A dialog box will appear
--Leave the section key blank and click Add
--The textbox should be highlighted with red color
 
-^Enter any invalid section key 
--Open dashboard of prepkit
--Click the Link with Instructor button
--A dialog box will appear
--Enter any invalid section key and click Add
--A message should appear saying invalid section key
-
-^Enter valid section key
--Open dashboard of prepkit
--Click the Link with Instructor button
--A dialog box will appear
--Enter valid section key and click Add
--A message should appear saying added successfully
-
-@test_data: n/a
-@result: The textbox should be highlighted with red color and message should appear saying invalid section key and a message should appear saying added successfully
+Set CYPRESS_LINK_INSTRUCTOR_COURSE_CRN for a course that provides this feature.
+The default course is Demo.AA1.
+Set CYPRESS_SECTION_KEY only when the successful-link scenario should run.
 */
-import { Navbar, login_username, login_password, LoginPage, StudentPage } from '../../../../page-objects/pages/index'
-describe('Link With Instructor', function() {
-    beforeEach('this is login', function() {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
+import {
+    Navbar,
+    login_username,
+    login_password,
+    LoginPage,
+} from '../../../../page-objects/pages/index'
+
+describe('Link with Instructor using Section Key', () => {
+    const normalize = value => String(value || '').replace(/\s+/g, ' ').trim()
+    const codeSelector =
+        '#code:visible, input[name="code"]:visible, ' +
+        'input[name*="section"]:visible, ' +
+        '.modal:visible input[type="text"]:visible, ' +
+        '[role="dialog"]:visible input[type="text"]:visible'
+
+
+    const clickDialogOption = pattern => {
+        cy.get('.modal:visible, [role="dialog"]:visible', {
+            timeout: 30000,
+        })
+            .last()
+            .then($dialog => {
+                const $label = $dialog
+                    .find('*')
+                    .filter(':visible')
+                    .filter((_, element) =>
+                        pattern.test(normalize(element.textContent))
+                    )
+                    .filter((_, element) =>
+                        !Array.from(element.children).some(child =>
+                            pattern.test(normalize(child.textContent))
+                        )
+                    )
+                    .last()
+
+                expect($label.length, String(pattern) + ' option')
+                    .to.be.greaterThan(0)
+
+                const $control = $label.closest(
+                    'a, button, label, [role="button"], [role="tab"], ' +
+                    '[onclick], [tabindex]'
+                )
+                cy.wrap($control.length ? $control : $label)
+                    .click({ force: true })
+            })
+    }
+
+    const openSectionKeyForm = () => {
+        cy.location('href', { timeout: 30000 }).should('not.eq', 'about:blank')
+        cy.get('body', { timeout: 30000 }).should($body => {
+            expect(normalize($body.text()), 'course page is not blank')
+                .not.to.eq('')
+            expect($body.text()).not.to.include('Default blank page')
+        })
+
+        cy.get('body').then($body => {
+            let $setup = $body.find('[data-cy="setup_tab"]:visible').first()
+
+            if (!$setup.length) {
+                $setup = $body
+                    .find('a, button, [role="button"], [onclick], [tabindex]')
+                    .filter(':visible')
+                    .filter((_, element) =>
+                        /^SETUP(?:\s+\d+)?$/i.test(
+                            normalize(element.textContent)
+                        )
+                    )
+                    .first()
+            }
+
+            expect($setup.length, 'SETUP control').to.be.greaterThan(0)
+            cy.wrap($setup).click({ force: true })
+        })
+
+        cy.get('.modal:visible, [role="dialog"]:visible', {
+            timeout: 30000,
+        }).should('be.visible')
+
+        clickDialogOption(/^Instruction\s+Type$/i)
+        clickDialogOption(/^Instructor-Led$/i)
+        clickDialogOption(/^By\s+section\s+key$/i)
+
+        cy.get('.modal:visible, [role="dialog"]:visible')
+            .last()
+            .then($dialog => {
+                const hasSectionKeyInput =
+                    $dialog.find('#code:visible').length > 0 ||
+                    $dialog.find('input[name="code"]:visible').length > 0 ||
+                    $dialog.find('input[name*="section"]:visible').length > 0
+
+                if (hasSectionKeyInput) {
+                    return
+                }
+
+                const $remove = $dialog
+                    .find('button, a, [role="button"]')
+                    .filter(':visible')
+                    .filter((_, element) =>
+                        /^REMOVE$/i.test(normalize(element.textContent))
+                    )
+                    .first()
+
+                expect(
+                    $remove.length,
+                    'Remove control for an existing section link'
+                ).to.be.greaterThan(0)
+
+                cy.wrap($remove).click({ force: true })
+
+                cy.contains(
+                    'button:visible, a:visible, [role="button"]:visible',
+                    /^\s*YES\s*$/i,
+                    { timeout: 30000 }
+                )
+                    .should('be.visible')
+                    .click({ force: true })
+
+                cy.contains(
+                    'button:visible, a:visible, [role="button"]:visible',
+                    /^\s*YES\s*$/i
+                ).should('not.exist')
+
+                cy.get('body').then($body => {
+                    const dialogIsOpen =
+                        $body.find(
+                            '.modal:visible, [role="dialog"]:visible'
+                        ).length > 0
+
+                    if (!dialogIsOpen) {
+                        let $setup = $body
+                            .find('[data-cy="setup_tab"]:visible')
+                            .first()
+
+                        if (!$setup.length) {
+                            $setup = $body
+                                .find(
+                                    'a, button, [role="button"], ' +
+                                    '[onclick], [tabindex]'
+                                )
+                                .filter(':visible')
+                                .filter((_, element) =>
+                                    /^SETUP(?:\s+\d+)?$/i.test(
+                                        normalize(element.textContent)
+                                    )
+                                )
+                                .first()
+                        }
+
+                        expect(
+                            $setup.length,
+                            'SETUP control after removing section'
+                        ).to.be.greaterThan(0)
+                        cy.wrap($setup).click({ force: true })
+                    }
+                })
+
+                cy.get('.modal:visible, [role="dialog"]:visible', {
+                    timeout: 30000,
+                }).should('be.visible')
+
+                clickDialogOption(/^Instruction\s+Type$/i)
+                clickDialogOption(/^Instructor-Led$/i)
+                clickDialogOption(/^By\s+section\s+key$/i)
+            })
+
+        cy.get(codeSelector, { timeout: 30000 })
+            .first()
+            .should('be.visible')
+            .and('be.enabled')
+        cy.get(
+            '#add:visible, .modal:visible button:visible, ' +
+            '[role="dialog"]:visible button:visible'
+        ).filter((_, element) =>
+            /^ADD$/i.test(normalize(element.textContent)) ||
+            element.id === 'add'
+        )
+            .first()
+            .should('be.visible')
+            .and('be.enabled')
+    }
+
+    const submitSectionKey = value => {
+        cy.get(codeSelector).first().clear({ force: true })
+
+        if (value) {
+            cy.get(codeSelector).first().type(value, { log: false })
+        }
+
+        cy.get(
+            '#add:visible, .modal:visible button:visible, ' +
+            '[role="dialog"]:visible button:visible'
+        ).filter((_, element) =>
+            /^ADD$/i.test(normalize(element.textContent)) ||
+            element.id === 'add'
+        )
+            .first()
+            .click({ force: true })
+    }
+
+    beforeEach(function() {
+        const course =
+            Cypress.env('LINK_INSTRUCTOR_COURSE_CRN') ||
+            'Demo.AA1'
+
+        cy.visit('/')
+        Navbar.clickOnLogin()
+        LoginPage.loginPage(login_username, login_password)
+
+        const learnerPath =
+            '/app/?func=load_course&course=' +
+            encodeURIComponent(course)
+
+        cy.visit(learnerPath, {
+            onBeforeLoad(win) {
+                Object.defineProperty(win, 'open', {
+                    configurable: true,
+                    value(url) {
+                        if (url && url !== win.location.href) {
+                            win.location.assign(url)
+                        }
+                        return win
+                    },
+                })
+                Object.defineProperty(win, 'close', {
+                    configurable: true,
+                    value() {},
+                })
+            },
+        })
+        cy.location('search', { timeout: 30000 })
+            .should('include', 'func=load_course')
+            .and('include', 'course=' + encodeURIComponent(course))
+            .and('not.include', 'class_code=')
+        openSectionKeyForm()
+    })
+
+    it('shows validation when the section key is blank', () => {
+        submitSectionKey('')
+
+        cy.get(codeSelector).first().should($field => {
+            const field = $field[0]
+            const style = field.ownerDocument.defaultView
+                .getComputedStyle(field)
+            const rgb = (style.borderColor.match(/\d+/g) || []).map(Number)
+            const redBorder = rgb.length >= 3 &&
+                rgb[0] > 150 && rgb[1] < 150 && rgb[2] < 150
+            const invalid =
+                !field.checkValidity() ||
+                field.getAttribute('aria-invalid') === 'true' ||
+                /invalid|error|danger/i.test(field.className) ||
+                redBorder
+
+            expect(invalid, 'blank section key is visibly invalid')
+                .to.eq(true)
         })
     })
-    it('Link with Instructor without section key', function() {
-        cy.get('[data-cy="mylibrary"]').click({ force: true })
-        cy.get('[data-cy="searchbox"]').type('CIW 1D0-671')
-        cy.fixture('global').then(data => {
-            cy.visit(data.url + '/?func=load_course&course=1D0-671&theme_view=classic')
-        })
-        cy.get('[data-cy=setup_tab]').click()
-        cy.get('.radio-b').click()
-        cy.get('#code').clear({ force: true })
-        cy.get('#add').click()
+
+    it('rejects an invalid section key', () => {
+        const invalidKey =
+            Cypress.env('INVALID_SECTION_KEY') || 'INVALID-SECTION-KEY'
+        submitSectionKey(invalidKey)
+
+        cy.contains(
+            '.msg:visible, [role="alert"]:visible, .alert:visible',
+            /invalid|incorrect|not\s+valid|not\s+found|unable\s+to\s+link/i,
+            { timeout: 30000 }
+        ).should('be.visible')
     })
-    it('Link with Instructor with invalid section key', function() {
-        cy.get('[data-cy="mylibrary"]').click({ force: true })
-        cy.get('[data-cy="searchbox"]').type('CIW 1D0-671')
-        cy.fixture('global').then(data => {
-            cy.visit(data.url + '/?func=load_course&course=1D0-671&theme_view=classic')
+
+    it('links using a configured valid section key', function() {
+        const sectionKey = Cypress.env('SECTION_KEY')
+
+        if (!sectionKey) {
+            cy.log(
+                'Set CYPRESS_SECTION_KEY to run the successful-link scenario'
+            )
+            this.skip()
+        }
+
+        submitSectionKey(sectionKey)
+
+        cy.get('.modal:visible, [role="dialog"]:visible', {
+            timeout: 30000,
         })
-        cy.get('[data-cy=setup_tab]').click()
-        cy.get('.radio-b').click()
-        cy.get('#code').type('K-WJJP-JNX9-000')
-        cy.get('#add').click()
-        cy.get('.msg').contains('Invalid Section Key.')
+            .last()
+            .should($dialog => {
+                const text = normalize($dialog.text())
+                const successMessage =
+                    /added\s+successfully|linked\s+successfully|already\s+linked|already\s+in\s+a\s+section/i
+                        .test(text)
+                const linkedDetails =
+                    /class\s+name/i.test(text) &&
+                    /section\s+key/i.test(text) &&
+                    $dialog
+                        .find('button, a, [role="button"]')
+                        .filter((_, element) =>
+                            /^REMOVE$/i.test(normalize(element.textContent))
+                        ).length > 0
+
+                expect(
+                    successMessage || linkedDetails,
+                    'success message or linked-section details'
+                ).to.eq(true)
+            })
     })
-    it('Link with Instructor with valid section key', function() {
-        cy.get('[data-cy="mylibrary"]').click({ force: true })
-        cy.get('[data-cy="searchbox"]').type('CIW 1D0-671')
-        cy.fixture('global').then(data => {
-            cy.visit(data.url + '/?func=load_course&course=1D0-671&theme_view=classic')
-        })
-        cy.get('[data-cy=setup_tab]').click()
-        cy.get('.radio-b').click()
-        cy.get('#code').type('K-WJJP-JNX9-B39X')
-        cy.get('#add').click()
-    })
-});
+})

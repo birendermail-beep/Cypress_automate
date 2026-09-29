@@ -39,7 +39,7 @@ describe('question.itemList1', function() {
             cy.get('#btn-confirmed').click({ force: true })
         })
         /** Test the Item List in Question Area*/
-    it.only('Item List in Question Area', function() {
+    it('Item List in Question Area', function() {
         cy.get('[data-cy=chapters]').click({ force: true }).then(() => {
             cy.get('#ebook_toc').should('exist')
         })

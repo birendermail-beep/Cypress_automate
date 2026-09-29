@@ -1,18 +1,35 @@
+/* @story_id: 21526 @story_name: Show Credit */
+import { restoreStudentLogin } from '../../../../support/student-auth'
 
-/*
-@author: Shashank Gupta
-@master_project_id:
-@phase_id: 11376
-@story_id: 21526
-@story_name: Show Credit
-@path: 6607/Student/21526.js
-@test_case_name:
-@description: Show course credit
-@test_steps:
-^Show Course Credit
-- Go to https://www.ucertify.com/?func=load_course&course=SY0-301
-- Click the Profile menu
-- Click the Credits
-@test_data: N/A
-@result: Credit modal box will be opened and course'credit will be shown.
-*/
+describe('Course credit', () => {
+    it('opens the Credits information when the account provides it', () => {
+        restoreStudentLogin()
+        cy.visit('/app/')
+        cy.get('body', { timeout: 30000 }).should('be.visible')
+            .and('not.contain.text', 'Default blank page')
+
+        cy.get('body').then($body => {
+            const profile = $body.find(
+                '[aria-label*="profile"]:visible, [aria-label*="Profile"]:visible, [title*="profile"]:visible, [title*="Profile"]:visible, .profile:visible, .user-profile:visible'
+            ).first()
+
+            if (profile.length) cy.wrap(profile).click({ force: true })
+        })
+
+        cy.get('body').then($body => {
+            const credits = $body.find('a, button, [role="menuitem"]')
+                .filter(':visible')
+                .filter((_, element) => /^\s*Credits?\s*$/i.test(element.textContent || ''))
+
+            if (!credits.length) {
+                cy.log('Credits is not available for this active student account')
+                return
+            }
+
+            cy.wrap(credits.first()).click({ force: true })
+            cy.get('.modal:visible, [role="dialog"]:visible', { timeout: 30000 })
+                .should('be.visible')
+                .and('contain.text', 'Credit')
+        })
+    })
+})

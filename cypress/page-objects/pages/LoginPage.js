@@ -2,41 +2,103 @@ import BasePage from '../BasePage'
 
 export default class LoginPage extends BasePage {
 	static loginPage(username, password) {
-		return cy.env(['login_username', 'login_password']).then(environment => {
-			const resolvedUsername = username || environment.login_username || ''
-			const resolvedPassword = password || environment.login_password || ''
+		return cy.env([
+			'USERNAME',
+			'PASSWORD',
+			'login_username',
+			'login_password',
+		]).then(environment => {
+			const resolvedUsername = String(
+				username ||
+				environment.USERNAME ||
+				environment.login_username ||
+				''
+			).replace(/[\s\u200B-\u200D\uFEFF]/g, '')
+			const resolvedPassword = String(
+				password ||
+				environment.PASSWORD ||
+				environment.login_password ||
+				''
+			)
 
 			if (!resolvedUsername || !resolvedPassword) {
 				throw new Error(
-					'Missing Cypress login credentials. Set CYPRESS_login_username and CYPRESS_login_password before starting Cypress.'
+					'Missing Cypress login credentials. Set CYPRESS_USERNAME and CYPRESS_PASSWORD before starting Cypress.'
+				)
+			}
+
+			if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resolvedUsername)) {
+				throw new Error(
+					'CYPRESS_USERNAME must contain a valid email address.'
 				)
 			}
 
 			cy.location('pathname', { timeout: 30000 }).should('include', 'login.php')
 
-			cy.get(
-				'#email, input[type="email"], input[name="email"], input[placeholder="ENTER EMAIL"]',
-				{ timeout: 30000 }
-			)
+			const emailSelector =
+				'#email, input[type="email"], input[name="email"], input[placeholder="ENTER EMAIL"]'
+			const passwordSelector =
+				'#password, input[type="password"], input[name="password"], input[placeholder="ENTER PASSWORD"]'
+
+			// The login form replaces its inputs while rendering. Set values through
+			// the native property setter, notify the framework, then re-query the DOM.
+			// Retry against the replacement node if the value was not retained.
+			const setStableInputValue = (selector, value, fieldName, attempt = 0) => {
+				return cy.get(selector, { timeout: 30000 })
+					.filter(':visible')
+					.first()
+					.should('be.enabled')
+					.then($input => {
+						const input = $input[0]
+						const valueSetter = Object.getOwnPropertyDescriptor(
+							input.ownerDocument.defaultView.HTMLInputElement.prototype,
+							'value'
+						).set
+
+						input.focus()
+						valueSetter.call(input, value)
+						input.dispatchEvent(new Event('input', { bubbles: true }))
+						input.dispatchEvent(new Event('change', { bubbles: true }))
+						input.blur()
+					})
+					.then(() => cy.wait(300, { log: false }))
+					.then(() =>
+						cy.get(selector, { timeout: 30000 })
+							.filter(':visible')
+							.first()
+							.then($input => {
+								if ($input.val() === value) return
+								if (attempt < 3) {
+									return setStableInputValue(
+										selector,
+										value,
+										fieldName,
+										attempt + 1
+									)
+								}
+								throw new Error(
+									`${fieldName} input did not retain its value after the login form re-rendered.`
+								)
+							})
+					)
+			}
+
+			setStableInputValue(emailSelector, resolvedUsername, 'Email')
+
+			cy.get(emailSelector, { timeout: 30000 })
 				.filter(':visible')
 				.first()
-				.clear()
-				.type(resolvedUsername, {
-					log: false,
-					parseSpecialCharSequences: false,
+				.should('have.value', resolvedUsername)
+				.and($input => {
+					expect($input[0].checkValidity(), 'email field validity').to.equal(true)
 				})
 
-			cy.get(
-				'#password, input[type="password"], input[name="password"], input[placeholder="ENTER PASSWORD"]',
-				{ timeout: 30000 }
-			)
+			setStableInputValue(passwordSelector, resolvedPassword, 'Password')
+
+			cy.get(passwordSelector, { timeout: 30000 })
 				.filter(':visible')
 				.first()
-				.clear()
-				.type(resolvedPassword, {
-					log: false,
-					parseSpecialCharSequences: false,
-				})
+				.should('have.value', resolvedPassword)
 
 			cy.get('body').then($body => {
 				const submitSelector = [
@@ -49,12 +111,14 @@ export default class LoginPage extends BasePage {
 					cy.get(submitSelector)
 						.filter(':visible')
 						.first()
+						.should('be.enabled')
 						.click({ force: true })
 					return
 				}
 
 				cy.contains('button', /^\s*SIGN IN\s*$/i, { timeout: 30000 })
 					.should('be.visible')
+					.and('be.enabled')
 					.click({ force: true })
 			})
 
@@ -62,6 +126,28 @@ export default class LoginPage extends BasePage {
 				'not.include',
 				'login.php'
 			)
+
+			// The post-login welcome page now has a timed Continue button.
+			// Bypass its 15-second timer by using the lower My Library action.
+			cy.get('body', { timeout: 30000 }).then($body => {
+				const hasTimedContinue = /Continue\s*\(\s*\d+s?\s*\)/i.test(
+					$body.text()
+				)
+				const libraryActions = $body
+					.find('a, button, [role="button"]')
+					.filter(':visible')
+					.filter((_, element) =>
+						/^\s*My Library\s*$/i.test(element.textContent || '')
+					)
+
+				if (hasTimedContinue && libraryActions.length) {
+					cy.wrap(libraryActions.last())
+						.should('be.visible')
+						.click({ force: true })
+					cy.location('pathname', { timeout: 30000 })
+						.should('not.include', 'login.php')
+				}
+			})
 		})
 	}
 

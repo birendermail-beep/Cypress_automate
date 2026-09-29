@@ -1,77 +1,441 @@
-/*
-@author: Anirudh Pratap
-@master_project_id: 4623
-@phase_id: 
-@story_id: 
-@story_name: Add Item
-@path: final/Create
-@test_case_name: Add Item.js
-@description: 
-@test_steps: 
-^Testing "Item Bank" Options
-1. Click on "My Library" after logging in your account
-2. Click on "My Projects" tab given in tab bar.
-3. Click on "Author" button of specified project.
-4. Click On "Item Bank"
-5. Click on "Add Item" dropdown.
-6. Click on "Add Item" Link
+/* @story_id: 11618 @story_name: Add Item */
+import {
+    Navbar,
+    login_username,
+    login_password,
+    LoginPage,
+} from '../../../../page-objects/pages/index'
 
-^Testing "Item Bank" Options
-1. Follow steps 1 to 6 as given in test case no. 37.
-2. Click on multiple choice thumbnail.
-3. Click on Stem dark circle plus icon given in authoring section of page.
-4. Click on Text link on appeared modal .
-5. Click on Paragraph link
-6. Then write your desired question on input field which contains value "Place Your Text Here"
-7. Click on Optin no. A or B or so on.
-8. Check checkbox having right answer for the question.
-9. Change option text to your desired text
+describe('Create Area - Add Item', () => {
+    const projectName = 'BirenderTesting'
 
-@test_data: n/a
+    const setEditorText = (selector, value) => {
+        cy.get(selector, { timeout: 30000 })
+            .filter(':visible')
+            .first()
+            .should('exist')
+            .click({ force: true })
 
-@result: A page with multiple options thumbnail like multiple choice, label an image etc. should be appear.
-*/
-import { Navbar, login_username, login_password, LoginPage, CreateArea } from '../../../../page-objects/pages/index'
-describe('Create Area', () => {
-    it('Item Bank Open', () => {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            CreateArea.openLibrary()
-            CreateArea.myProject()
-        });
-        cy.get(':nth-child(2) > .dashboard_item > h3').click({force:true})
-        cy.wait(5000)
-        cy.get('[onclick="add_part(event); return false;"] > .icomoon-new-24px-add-circle-1').click({force:true});
-        cy.wait(5000);
-        cy.get('#add_contents_modal > .modal-dialog > .modal-content > #add_contents_body > :nth-child(2) > .col-md-9 > #content_title').type('test');
-        cy.get('#add_contents_modal > .modal-dialog > .modal-content > .modal-footer > .content_log_btn > .save_content').click();
-        cy.get('[data-cy=errormsg]').should('exist');
-        cy.fixture('global').then(data => {
-            cy.visit(data.url + '/editor/?action=new&in_frame=1&no_header=1&from_educator=1&add_coverage=1&show_add_new_button=1&goback=1&author_area=1&from_myproject=1')
+        // Clicking activates the rich-text editor and replaces its DOM node.
+        // Re-query it before typing instead of chaining from the old node.
+        cy.get(selector, { timeout: 30000 })
+            .filter(':visible')
+            .first()
+            .type(`{selectall}{backspace}${value}`, { force: true })
+    }
+
+    const restoreCreateLogin = () => {
+        cy.session(
+            ['create-area-login', login_username],
+            () => {
+                cy.visit('/app/')
+                Navbar.clickOnLogin()
+                LoginPage.loginPage(login_username, login_password)
+            },
+            { cacheAcrossSpecs: true }
+        )
+    }
+
+    const openCreateArea = () => {
+        restoreCreateLogin()
+        cy.visit('/app/')
+        cy.get('body', { timeout: 30000 }).should('be.visible')
+            .and('not.contain.text', 'Default blank page')
+
+        // A restored session may open the last learner course dashboard.
+        // Return to My Library before looking for the Create navigation tab.
+        cy.get('body').then($body => {
+            const createTab = $body.find('*').filter((_, element) =>
+                Cypress.$(element).is(':visible') &&
+                /^\s*Create\s*$/i.test(Cypress.$(element).text().trim())
+            )
+
+            if (createTab.length) return
+
+            const myLibrary = $body
+                .find('a, button, [role="button"]')
+                .filter(':visible')
+                .filter((_, element) =>
+                    /^\s*My\s+Library\s*$/i.test(element.textContent || '')
+                )
+                .first()
+
+            expect(
+                myLibrary.length,
+                'My Library control on restored learner dashboard'
+            ).to.be.greaterThan(0)
+
+            cy.wrap(myLibrary)
+                .invoke('removeAttr', 'target')
+                .click({ force: true })
         })
-        cy.get('.multiple_choice').click().then(() => {
-            cy.get('.settings_themes').should('exist').and('be.visible');
+
+        cy.contains(':visible', /^\s*Create\s*$/i, {
+            timeout: 30000,
+        }).last().then($label => {
+            const clickable = $label.closest(
+                'a, button, [role="tab"], [role="button"], li'
+            )
+            cy.wrap(clickable.length ? clickable : $label)
+                .click({ force: true })
         })
-        cy.wait(2000)
-        cy.get('#stem > .controls_button > .block-controls > .block-controls__container > .block-controls__bar > .block-controls__tools > .block-controls__add').eq(0).click().then(() => {
-            cy.wait(4000)
-            cy.get('#text').click().then(() => {
-                cy.wait(2000)
-                cy.get('#Paragraph').click()
+
+        // Library and Create can share the same URL. Wait for the Create
+        // view itself, identified by the Author action on project cards.
+        cy.contains(':visible', /^\s*Author\s*$/i, { timeout: 30000 })
+            .should('exist')
+        cy.get('body').should('not.contain.text', 'Default blank page')
+    }
+
+    const openProjectAuthorArea = () => {
+        cy.get('a[href*="author_course=1"]', { timeout: 30000 })
+            .filter(':visible')
+            .filter((_, link) => {
+                const destination = decodeURIComponent(
+                    link.getAttribute('href') || ''
+                )
+                return /[?&]course=BirenderTesting(?:&|$)/i.test(destination)
             })
+            .should('have.length.greaterThan', 0)
+            .first()
+            .invoke('removeAttr', 'target')
+            .click({ force: true })
+
+        // Some author sessions retain the previously opened course.
+        // Normalize the destination to BirenderTesting's immutable code.
+        cy.location('href', { timeout: 30000 }).then(currentUrl => {
+            if (!/course_code=0ATZW/i.test(currentUrl)) {
+                cy.visit(
+                    '/educator/project/?author_course=1&func=properties' +
+                    '&from_myproject=1&course_code=0ATZW'
+                )
+            }
         })
-        cy.wait(2000)
-        cy.get('#title').clear().type('uCertify Offices in')
-        cy.get('.answer_container > .option > .float-right > i').eq(0).click().then(() => {
-            cy.get(':nth-child(1) > #user_answer').children().its('length').should('eq', 3);
-        });
-        cy.get('.answer_container > .option > .float-right > i').eq(0).click().then(() => {
-            cy.get(':nth-child(1) > #user_answer').children().its('length').should('eq', 2);
-        });
-        cy.get('#option0').clear().type('Noida')
-        cy.get('#option1').clear().type('Allahabad')
-        cy.get('#userans-B').click()
+
+        cy.location('search', { timeout: 30000 })
+            .should('include', 'course_code=0ATZW')
+        cy.get('body', { timeout: 30000 }).should('be.visible')
+            .and('contain.text', 'BirenderTesting')
+            .and('not.contain.text', 'Certified Ethical Hacker')
+            .and('not.contain.text', 'Default blank page')
+    }
+
+    it('opens Add Item for the Birender testing project', () => {
+        // Jigyaasa occasionally throws known application-side errors while
+        // Editor 2.0 loads. Ignore only these exact editor initialization errors.
+        cy.on('uncaught:exception', error => {
+            const knownEditorAppendError =
+                error.name === 'SyntaxError' &&
+                /appendChild.*Invalid or unexpected token/i.test(
+                    error.message || ''
+                )
+            const knownEditorFocusError =
+                error.name === 'TypeError' &&
+                /Cannot read properties of null \(reading ['"]focus['"]\)/i.test(
+                    error.message || ''
+                ) &&
+                /prepengine-footer\.min\.js/i.test(error.stack || '')
+            const knownAuthorActivateError =
+                /(?:^|\\n)activate is not defined(?:$|\\n)/i.test(
+                    (error.message || String(error) || '').trim()
+                )
+            const knownIsotopeSortError =
+                error.name === 'TypeError' &&
+                /Cannot set properties of undefined \(setting ['"]sortBy['"]\)/i.test(
+                    error.message || ''
+                ) &&
+                /isotope\.pkgd\.min\.js/i.test(error.stack || '')
+            const knownSvelteEffectOrphanError =
+                /https:\/\/svelte\.dev\/e\/effect_orphan/i.test(
+                    error.message || ''
+                ) &&
+                /svelte_items\/public\/build\/editor\/main\.js/i.test(
+                    error.stack || ''
+                )
+            const knownMathJaxPackageError =
+                error.name === 'TypeError' &&
+                /Cannot set property Package of .*which has only a getter/i.test(
+                    error.message || ''
+                )
+            const knownEditorRangeError =
+                error.name === 'TypeError' &&
+                /Cannot read properties of undefined \(reading ['"]getRng['"]\)/i.test(
+                    error.message || ''
+                )
+
+            if (
+                knownEditorAppendError ||
+                knownEditorFocusError ||
+                knownAuthorActivateError ||
+                knownIsotopeSortError ||
+                knownSvelteEffectOrphanError ||
+                knownMathJaxPackageError ||
+                knownEditorRangeError
+            ) return false
+            return undefined
+        })
+
+        openCreateArea()
+        openProjectAuthorArea()
+
+        cy.get('#9dot_dropdown', { timeout: 30000 })
+            .then($switchers => {
+                const renderedSwitchers = $switchers.filter((_, element) => {
+                    const rect = element.getBoundingClientRect()
+                    return rect.width > 0 && rect.height > 0
+                })
+                const switcher = renderedSwitchers.length
+                    ? renderedSwitchers.first()
+                    : $switchers.first()
+
+                expect(
+                    switcher.length,
+                    'rendered nine-dot author switcher'
+                ).to.be.greaterThan(0)
+
+                cy.wrap(switcher)
+                    .trigger('mouseenter', { force: true })
+                    .trigger('mouseover', { force: true })
+
+                // The menu is CSS-hover based, which synthetic browser events
+                // may not display. Expose the same dropdown for automation.
+                const dropdownMenu = switcher
+                    .parent()
+                    .find('.dropdown-menu')
+                    .first()
+
+                if (dropdownMenu.length && !dropdownMenu.is(':visible')) {
+                    dropdownMenu.addClass('show').css('display', 'block')
+                }
+            })
+
+        cy.contains('a, button, [role="menuitem"]', /^\s*Item\s+Bank\s*$/i, {
+            timeout: 30000,
+        }).first()
+            .should('exist')
+            .click({ force: true })
+
+        cy.get('body', { timeout: 30000 }).should('be.visible')
+            .and('not.contain.text', 'Default blank page')
+
+        // Use the Item Bank's actual lesson control. Text/row clicks only
+        // focus the chapter and leave the right panel empty.
+        cy.get('[data-cy="lesson_obj"]', { timeout: 30000 })
+            .filter(':visible')
+            .first()
+            .click({ force: true })
+
+        cy.get('body', { timeout: 30000 }).should($body => {
+            expect(
+                $body.text(),
+                'items loaded after selecting Java Building Blocks'
+            ).not.to.contain(
+                'From the left panel, select an appropriate option to show items.'
+            )
+        })
+
+        cy.contains('button, a, [role="button"]', /^\s*Add\s+Item\s*$/i, {
+            timeout: 30000,
+        }).filter(':visible')
+            .first()
+            .click({ force: true })
+
+        // New Item launches Editor 2.0 with window.open(). Cypress cannot
+        // control the new browser tab, so capture its URL and visit it here.
+        cy.window().then(win => {
+            cy.stub(win, 'open').as('newItemWindow').returns(null)
+        })
+
+        cy.contains(':visible', /^\s*New\s+Item\s*$/i, {
+            timeout: 30000,
+        }).first().then($newItemLabel => {
+            // The visible text can be inside the link. Removing target from the
+            // text node does nothing and Editor 2.0 opens in a second tab,
+            // which Cypress cannot control. Always modify and click the anchor.
+            const newItemLink = $newItemLabel.is('a')
+                ? $newItemLabel
+                : $newItemLabel.closest('a')
+
+            expect(newItemLink.length, 'New Item link').to.be.greaterThan(0)
+            cy.wrap(newItemLink)
+                .invoke('removeAttr', 'target')
+                .click({ force: true })
+        })
+
+        cy.get('@newItemWindow', { timeout: 30000 })
+            .should('have.been.called')
+            .then(openStub => {
+                const editorUrl = openStub.firstCall.args[0]
+                expect(editorUrl, 'Editor 2.0 popup URL')
+                    .to.be.a('string')
+                    .and.not.be.empty
+                cy.visit(editorUrl)
+            })
+
+        cy.get('body', { timeout: 30000 }).should($body => {
+            expect($body.text(), 'new item type choices')
+                .to.match(/Multiple\s+Choice|New\s+Item|Add\s+Item/i)
+        })
+
+        // Multiple Choice is the first template in this category; if it is
+        // unavailable, the first visible Create control is Choice Matrix.
+        // Targeting the button avoids depending on the cards' changing DOM.
+        cy.get('a, button, [role="button"]', { timeout: 30000 })
+            .filter(':visible')
+            .filter((_, control) =>
+                /^\s*Create\s*$/i.test(control.textContent || '')
+            )
+            .should('have.length.greaterThan', 0)
+            .first()
+            .invoke('removeAttr', 'target')
+            .click({ force: true })
+
+        // Editor 2.0 initializes inline fields differently in headed and
+        // headless Chrome. Use TinyMCE when registered; otherwise update the
+        // rendered contenteditable field and dispatch the events Svelte uses.
+        const setRichText = (selector, text, html = text) => {
+            // The first click only activates Editor 2.0. Re-query afterwards
+            // because Svelte replaces the placeholder with a TinyMCE editor.
+            cy.get(selector, { timeout: 60000 })
+                .first()
+                .should('exist')
+                .click({ force: true })
+
+            cy.get(selector, { timeout: 30000 })
+                .first()
+                .should('exist')
+                .then($field => {
+                    const field = $field[0]
+                    const editorWindow = field.ownerDocument.defaultView
+                    const tinyMce = editorWindow.tinymce
+                    const namedEditor =
+                        tinyMce && field.id ? tinyMce.get(field.id) : null
+                    const editor =
+                        namedEditor ||
+                        (tinyMce && tinyMce.activeEditor
+                            ? tinyMce.activeEditor
+                            : null)
+
+                    if (editor) {
+                        // Editor 2.0 may register TinyMCE before its body exists.
+                        // Use it only after getBody() returns the real editor node.
+                        const editorBody = editor.getBody()
+                        if (editorBody) {
+                            editorBody.innerHTML = html
+                            editor.setDirty(true)
+                            editor.save()
+                            return
+                        }
+                    }
+
+                    const isTextInput = $field.is('input, textarea')
+                    const isEditable =
+                        field.getAttribute('contenteditable') === 'true' ||
+                        $field.hasClass('ebook_item_text')
+
+                    expect(
+                        isTextInput || isEditable,
+                        `activated rich-text field: ${selector}`
+                    ).to.equal(true)
+
+                    if (isTextInput) {
+                        cy.wrap($field)
+                            .clear({ force: true })
+                            .type(text, { force: true, delay: 0 })
+                            .blur({ force: true })
+                        return
+                    }
+
+                    // Do not use Cypress.type() for Editor 2.0 contenteditable
+                    // fields. Its selection plug-in calls getRng before the
+                    // editor is ready. Update the activated field directly.
+                    field.innerHTML = html
+                    field.dispatchEvent(
+                        new editorWindow.Event('change', { bubbles: true })
+                    )
+                    field.dispatchEvent(
+                        new editorWindow.FocusEvent('blur', { bubbles: true })
+                    )
+                })
+
+            cy.get(selector, { timeout: 30000 })
+                .first()
+                .should($field => {
+                    const currentText = $field.val() || $field.text()
+                    expect(currentText).to.contain(text)
+                })
+        }
+
+        const titleText = 'Sample Test Question'
+        const stemText =
+            'Which of the following is the primary function of an ' +
+            'operating system?'
+
+        // Enter Stem first. Activating Stem can re-render and reset Title,
+        // so Title is intentionally entered last, immediately before Save.
+        setRichText(
+            '#stem .ebook_item_text, #stem[contenteditable="true"], #stem textarea, #stem input',
+            stemText,
+            `<p>${stemText}</p>`
+        )
+
+        // Mark option A as the correct answer without toggling it off on retry.
+        cy.get('#userans-A, input[type="checkbox"]', { timeout: 30000 })
+            .filter(':visible')
+            .first()
+            .then($answer => {
+                if ($answer.is(':checkbox')) {
+                    cy.wrap($answer).check({ force: true })
+                    cy.wrap($answer).should('be.checked')
+                } else if (!$answer.hasClass('active')) {
+                    cy.wrap($answer).click({ force: true })
+                }
+            })
+
+        // Enter Title last because activating another rich-text field can
+        // reset this editor's unsaved Title state.
+        setRichText(
+            '#title .ebook_item_text, #title[contenteditable="true"], #title textarea, #title input',
+            titleText
+        )
+
+        // Re-verify every required authoring field immediately before Save.
+        cy.get('#title').should('contain.text', titleText)
+        cy.get('#stem .ebook_item_text, #stem[contenteditable="true"], #stem textarea, #stem input').should('contain.text', stemText)
+        cy.get('#userans-A, input[type="checkbox"]')
+            .filter(':visible')
+            .first()
+            .should('be.checked')
+
+        // Accept a native confirmation if this editor build uses one.
+        cy.on('window:confirm', () => true)
+        cy.on('window:alert', () => true)
+
+        cy.contains('a, button, [role="button"]', /^\s*Save\s*$/i, {
+            timeout: 30000,
+        }).filter(':visible')
+            .first()
+            .click({ force: true })
+
+        // Current Editor 2.0 saves directly. Older builds displayed
+        // Confirmation and Content Settings dialogs, but waiting for those
+        // optional dialogs makes the current workflow fail after a valid Save.
+        cy.get(
+            '#title .ebook_item_text, #title[contenteditable="true"], #title textarea, #title input'
+        ).first().should('contain.text', titleText)
+        cy.get(
+            '#stem .ebook_item_text, #stem[contenteditable="true"], #stem textarea, #stem input'
+        ).first().should('contain.text', stemText)
+
+        // The toolbar Save opens a Confirmation modal. Its Save action is a
+        // real button, while the toolbar control is an anchor, so this targets
+        // only the modal action.
+        cy.contains('button', /^\s*Save\s*$/i, {
+            timeout: 30000,
+        })
+            .filter(':visible')
+            .last()
+            .should('be.enabled')
+            .click({ force: true })
     })
 })

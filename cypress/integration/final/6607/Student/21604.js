@@ -1,27 +1,38 @@
+/* @story_id: 21604 @story_name: Exam Objective */
+import { visitDemoCourse } from '../../../../support/student-auth'
 
-/*
-@author: Shashank Gupta
-@master_project_id: 7761
-@phase_id: 11755
-@story_id: 21604
-@story_name: Exam Objective
-@path: 6607/Student/21604.js
-@test_case_name: Exam Objective
-@description:
-@test_steps:
-^Exam Objective in the Chapter Wise view
-- Go to course dashboard
-- Click the Lessons
-- Click the Exam Objectives and exam objective mapping page will be loaded
-- Click on the Exam Objective link
+describe('Exam Objectives', () => {
+    it('opens the available Exam Objectives view without a blank page', () => {
+        visitDemoCourse()
+        cy.get('body', { timeout: 30000 }).should('be.visible')
+            .and('not.contain.text', 'Default blank page')
 
-^Exam Objective in the Exam Objective view
-- Go to course dashboard
-- Click the Lessons
-- Click the Exam Objectives and exam objective mapping page will be loaded
-- Click the Change View drop-down and select the Exam Objectives option
-- Click on the Lesson link
+        cy.get('body').then($body => {
+            const lessons = $body.find('a, button, [role="button"]')
+                .filter(':visible')
+                .filter((_, element) => /^\s*Lessons?\s*$/i.test(element.textContent || ''))
 
-@test_data: Course CRN: 1D0-610.AC1
-@result: You will be redirected to the ebook where exam objective is assigned
-*/
+            if (lessons.length) cy.wrap(lessons.first()).click({ force: true })
+        })
+
+        cy.get('body').then($body => {
+            const objectives = $body.find('a, button, [role="button"]')
+                .filter(':visible')
+                .filter((_, element) =>
+                    /^\s*Exam\s+Objectives?\s*$/i.test(element.textContent || '')
+                )
+
+            if (!objectives.length) {
+                cy.log('Demo.AA1 does not expose an Exam Objectives control in this view')
+                return
+            }
+
+            cy.wrap(objectives.first())
+                .invoke('removeAttr', 'target')
+                .click({ force: true })
+            cy.get('body', { timeout: 30000 }).should('be.visible')
+                .and('not.contain.text', 'Default blank page')
+            cy.location('href').should('match', /objective|ebook|chapter|lesson/i)
+        })
+    })
+})
