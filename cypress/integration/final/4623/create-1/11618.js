@@ -426,5 +426,16 @@ describe('Create Area - Add Item', () => {
         cy.get(
             '#stem .ebook_item_text, #stem[contenteditable="true"], #stem textarea, #stem input'
         ).first().should('contain.text', stemText)
+
+        // The toolbar Save opens a Confirmation modal. Its Save action is a
+        // real button, while the toolbar control is an anchor, so this targets
+        // only the modal action.
+        cy.contains('button', /^\s*Save\s*$/i, {
+            timeout: 30000,
+        })
+            .filter(':visible')
+            .last()
+            .should('be.enabled')
+            .click({ force: true })
     })
 })
