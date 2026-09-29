@@ -317,7 +317,8 @@ describe('Create Area - Add Item', () => {
                             : null)
 
                     if (editor) {
-                        editor.focus()
+                        // Do not call editor.focus(): this Editor 2.0 build
+                        // invokes TinyMCE getRng before its selection is ready.
                         editor.setContent(html)
                         editor.setDirty(true)
                         editor.fire('input')
