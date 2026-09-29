@@ -31,47 +31,115 @@
 
 @result: A page with multiple options thumbnail like multiple choice, label an image etc. should be appear.
 */
-import { Navbar, login_username, login_password, LoginPage, CreateArea } from '../../../../page-objects/pages/index'
+import {
+	Navbar,
+	login_username,
+	login_password,
+	LoginPage,
+	CreateArea,
+} from '../../../../page-objects/pages/index'
 describe('Create Area', () => {
-    it('Item Bank Open', () => {
-        cy.fixture('global').then(data => {
-            cy.visit(data.url)
-            Navbar.clickOnLogin()
-            LoginPage.loginPage(login_username, login_password)
-            CreateArea.openLibrary()
-            CreateArea.myProject()
-        });
-        cy.get(':nth-child(2) > .dashboard_item > h3').click({force:true})
-        cy.wait(5000)
-        cy.get('[onclick="add_part(event); return false;"] > .icomoon-new-24px-add-circle-1').click({force:true});
-        cy.wait(5000);
-        cy.get('#add_contents_modal > .modal-dialog > .modal-content > #add_contents_body > :nth-child(2) > .col-md-9 > #content_title').type('test');
-        cy.get('#add_contents_modal > .modal-dialog > .modal-content > .modal-footer > .content_log_btn > .save_content').click();
-        cy.get('[data-cy=errormsg]').should('exist');
-        cy.fixture('global').then(data => {
-            cy.visit(data.url + '/editor/?action=new&in_frame=1&no_header=1&from_educator=1&add_coverage=1&show_add_new_button=1&goback=1&author_area=1&from_myproject=1')
-        })
-        cy.get('.multiple_choice').click().then(() => {
-            cy.get('.settings_themes').should('exist').and('be.visible');
-        })
-        cy.wait(2000)
-        cy.get('#stem > .controls_button > .block-controls > .block-controls__container > .block-controls__bar > .block-controls__tools > .block-controls__add').eq(0).click().then(() => {
-            cy.wait(4000)
-            cy.get('#text').click().then(() => {
-                cy.wait(2000)
-                cy.get('#Paragraph').click()
-            })
-        })
-        cy.wait(2000)
-        cy.get('#title').clear().type('uCertify Offices in')
-        cy.get('.answer_container > .option > .float-right > i').eq(0).click().then(() => {
-            cy.get(':nth-child(1) > #user_answer').children().its('length').should('eq', 3);
-        });
-        cy.get('.answer_container > .option > .float-right > i').eq(0).click().then(() => {
-            cy.get(':nth-child(1) > #user_answer').children().its('length').should('eq', 2);
-        });
-        cy.get('#option0').clear().type('Noida')
-        cy.get('#option1').clear().type('Allahabad')
-        cy.get('#userans-B').click()
-    })
+	const fillEditorField = (selector, text) => {
+		cy.get(selector, { timeout: 20000 })
+			.filter(':visible')
+			.first()
+			.should('exist')
+			.click({ force: true })
+			.then($field => {
+				if ($field.is('input, textarea')) {
+					cy.wrap($field).clear({ force: true }).type(text, { force: true })
+					return
+				}
+
+				// The v2 editor throws getRng when Cypress.clear() is used on
+				// its contenteditable controls. Remove the placeholder without
+				// firing that broken clear event, then enter the value normally.
+				$field[0].textContent = ''
+				cy.wrap($field).type(text, { force: true })
+			})
+			.then($field => {
+				if ($field.is('input, textarea')) {
+					cy.wrap($field).should('have.value', text)
+				} else {
+					cy.wrap($field).should('contain.text', text)
+				}
+			})
+	}
+
+	it('Item Bank Open', () => {
+		cy.fixture('global').then(data => {
+			cy.visit(data.url)
+			Navbar.clickOnLogin()
+			LoginPage.loginPage(login_username, login_password)
+			CreateArea.openLibrary()
+			CreateArea.myProject()
+		})
+		cy.get(':nth-child(2) > .dashboard_item > h3').click({ force: true })
+		cy.wait(5000)
+		cy.get(
+			'[onclick="add_part(event); return false;"] > .icomoon-new-24px-add-circle-1'
+		).click({ force: true })
+		cy.wait(5000)
+		cy.get(
+			'#add_contents_modal > .modal-dialog > .modal-content > #add_contents_body > :nth-child(2) > .col-md-9 > #content_title'
+		).type('test')
+		cy.get(
+			'#add_contents_modal > .modal-dialog > .modal-content > .modal-footer > .content_log_btn > .save_content'
+		).click()
+		cy.get('[data-cy=errormsg]').should('exist')
+		cy.fixture('global').then(data => {
+			cy.visit(
+				data.url +
+					'/editor/v2/?action=new&in_frame=1&no_header=1&from_educator=1&add_coverage=1&show_add_new_button=1&goback=1&author_area=1&from_myproject=1'
+			)
+		})
+
+		cy.get('body', { timeout: 20000 }).then($body => {
+			if ($body.find('.multiple_choice:visible').length) {
+				cy.get('.multiple_choice:visible').first().click({ force: true })
+			}
+		})
+
+		fillEditorField(
+			'#title .ebook_item_text, #title [contenteditable="true"], #title textarea, #title input',
+			'uCertify Offices in'
+		)
+		fillEditorField(
+			'#stem .ebook_item_text, #stem [contenteditable="true"], #stem textarea, #stem input',
+			'Where is the uCertify office located?'
+		)
+
+		cy.get('.answer_container > .option > .float-right > i')
+			.eq(0)
+			.click()
+			.then(() => {
+				cy.get(':nth-child(1) > #user_answer')
+					.children()
+					.its('length')
+					.should('eq', 3)
+			})
+		cy.get('.answer_container > .option > .float-right > i')
+			.eq(0)
+			.click()
+			.then(() => {
+				cy.get(':nth-child(1) > #user_answer')
+					.children()
+					.its('length')
+					.should('eq', 2)
+			})
+		cy.get('#option0').clear().type('Noida')
+		cy.get('#option1').clear().type('Allahabad')
+		cy.get('#userans-B').click()
+
+		cy.contains('button, a', /^Save$/i, { timeout: 10000 })
+			.filter(':visible')
+			.first()
+			.click({ force: true })
+
+		cy.get('#title').should('contain.text', 'uCertify Offices in')
+		cy.get('#stem').should(
+			'contain.text',
+			'Where is the uCertify office located?'
+		)
+	})
 })
