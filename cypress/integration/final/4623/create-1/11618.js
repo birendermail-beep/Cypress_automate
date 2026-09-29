@@ -327,8 +327,20 @@ describe('Create Area - Add Item', () => {
                         `activated rich-text field: ${selector}`
                     ).to.equal(true)
 
+                    if (isTextInput) {
+                        cy.wrap($field)
+                            .clear({ force: true })
+                            .type(text, { force: true, delay: 0 })
+                            .blur({ force: true })
+                        return
+                    }
+
+                    // Cypress.clear() uses the editor selection API and causes
+                    // Editor 2.0 to throw "getRng" for contenteditable fields.
+                    // Remove only the placeholder DOM text, then type normally.
+                    field.textContent = ''
                     cy.wrap($field)
-                        .clear({ force: true })
+                        .click({ force: true })
                         .type(text, { force: true, delay: 0 })
                         .blur({ force: true })
                 })
